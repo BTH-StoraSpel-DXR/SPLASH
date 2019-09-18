@@ -17,6 +17,7 @@ MenuState::MenuState(StateStack& stack)
 
 MenuState::~MenuState() {
 	delete this->inputIP;
+	delete this->inputName;
 }
 
 bool MenuState::processInput(float dt) {
