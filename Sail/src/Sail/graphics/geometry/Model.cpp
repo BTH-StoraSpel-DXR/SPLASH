@@ -67,13 +67,13 @@ Mesh* Model::addMesh(std::unique_ptr<Mesh> mesh) {
 //
 //}
 
-void Model::draw(const Renderer& renderer) {
-
-	//m_material->bind();
-	for (auto& mesh : m_meshes)
-		mesh->draw(renderer);
-
-}
+//void Model::draw(const Renderer& renderer) {
+//
+//	//m_material->bind();
+//	for (auto& mesh : m_meshes)
+//		mesh->draw(renderer);
+//
+//}
 
 Mesh* Model::getMesh(unsigned int index) {
 	assert(m_meshes.size() > index);

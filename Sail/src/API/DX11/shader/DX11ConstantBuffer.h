@@ -1,7 +1,7 @@
 #pragma once
-
-#include <d3d11.h>
 #include "Sail/api/shader/ConstantBuffer.h"
+
+struct ID3D11Buffer;
 
 namespace ShaderComponent {
 

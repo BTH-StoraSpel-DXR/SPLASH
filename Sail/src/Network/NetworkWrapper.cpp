@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "Network/NetworkModule.hpp"
 #include "NetworkWrapper.h"
-#include "Sail.h"
 
 #include "../../SPLASH/src/game/events/NetworkJoinedEvent.h"
 #include "../../SPLASH/src/game/events/NetworkDisconnectEvent.h"

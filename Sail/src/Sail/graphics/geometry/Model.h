@@ -1,14 +1,17 @@
 #pragma once
 
-#include <d3d11.h>
+//#include <d3d11.h>
 #include <vector>
 #include "Sail/api/Mesh.h"
-#include "Sail/api/Renderer.h"
-#include "Sail/utils/Utils.h"
+//#include "Sail/api/Renderer.h"
+//#include "Sail/utils/Utils.h"
+#include <memory>
 
 // Forward declarations
-class ShaderPipeline;
-class Material;
+//class ShaderPipeline;
+//class Material;
+
+class Shader;
 
 class Model {
 public:
@@ -27,7 +30,7 @@ public:
 	//void buildBufferForShader(ShaderSet* shader);
 
 	// Draws the model using its material
-	void draw(const Renderer& renderer);
+	//void draw(const Renderer& renderer);
 
 	Mesh* getMesh(unsigned int index);
 	unsigned int getNumberOfMeshes() const;

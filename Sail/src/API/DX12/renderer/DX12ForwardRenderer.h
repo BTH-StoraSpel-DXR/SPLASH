@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Sail/api/Renderer.h"
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
 #include "../DX12API.h"
 
 class DX12ForwardRenderer : public Renderer {

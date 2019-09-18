@@ -1,11 +1,12 @@
 #pragma once
 
-#include <d3d11.h>
-#include <glm/glm.hpp>
-#include "Sail/api/shader/ShaderPipeline.h"
+//#include <d3d11.h>
+//#include <glm/glm.hpp>
+#include <glm/vec4.hpp>
+//#include "Sail/api/shader/ShaderPipeline.h"
 //#include "../../Lights.h"
 #include "Sail/graphics/shader/Shader.h"
-#include "../../geometry/Material.h"
+//#include "../../geometry/Material.h"
 
 class MaterialShader : public Shader {
 public:

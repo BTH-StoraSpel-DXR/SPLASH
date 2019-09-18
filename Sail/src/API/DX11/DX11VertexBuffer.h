@@ -1,7 +1,9 @@
 #pragma once
-#include <d3d11.h>
+//#include <d3d11.h>
 #include "shader/DX11InputLayout.h"
 #include "Sail/api/VertexBuffer.h"
+
+struct ID3D11Buffer;
 
 class DX11VertexBuffer : public VertexBuffer {
 public:

@@ -1,6 +1,7 @@
 #pragma once
 
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
+#include <glm/vec4.hpp>
 
 class RenderableTexture {
 public:

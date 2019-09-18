@@ -1,14 +1,15 @@
 #pragma once
 
 #include <memory>
-#include <d3d11.h>
-#include <d3dcompiler.h>
-#include <iostream>
-#include <glm/glm.hpp>
+//#include <d3d11.h>
+//#include <d3dcompiler.h>
+//#include <iostream>
+//#include <glm/glm.hpp>
+#include <glm/vec4.hpp>
 
 #include "Sail/api/shader/ConstantBuffer.h"
 #include "Sail/api/shader/Sampler.h"
-#include "Sail/graphics/geometry/Model.h"
+//#include "Sail/graphics/geometry/Model.h"
 #include "Sail/graphics/camera/Camera.h"
 #include "Sail/utils/Utils.h"
 #include "InputLayout.h"

@@ -1,6 +1,9 @@
 #pragma once
 
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 #include <memory>
 #include "Sail/graphics/geometry/Material.h"
 #include "Sail/api/Renderer.h"
