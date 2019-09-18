@@ -1,5 +1,4 @@
 #pragma once
-#include <d3d11.h>
 #include <glm/glm.hpp>
 
 class PointLight {

@@ -1,7 +1,6 @@
 #pragma once
 #include <memory>
 
-
 /*
 	Any component of type T created should inherit from Component<T>.
 	Their IDs will automatically be assigned, and can be accessed via T::ID.
@@ -10,8 +9,6 @@
 
 	Example: See PhysicsComponent.h
 */
-
-
 
 typedef int ComponentTypeID;
 

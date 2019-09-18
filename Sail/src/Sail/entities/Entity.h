@@ -1,13 +1,8 @@
 #pragma once
-
 #include <unordered_map>
-#include <memory>
 #include "components/Component.h"
 
-//#define MOVE(x) std::move(x)
-
 class ECS;
-
 
 class Entity {
 public:
