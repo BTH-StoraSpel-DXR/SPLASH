@@ -52,3 +52,60 @@ void Game::update(float dt) {
 void Game::render(float dt) {
 	m_stateStack.render(dt);
 }
+
+//TCP_CONNECTION_ID NetworkWrapper::parseID(std::string& data) {
+//	if (data.size() > 63) {
+//		return 0;
+//	}
+//	if (data.size() < 1) {
+//		return 0;
+//	}
+//	else {
+//		// Remove opening ':' / '?' marker.
+//		data.erase(0, 1);
+//
+//		std::string id_string = "";
+//		int lastIndex;
+//		for (lastIndex = 0; lastIndex < data.size(); lastIndex++) {
+//			if (data[lastIndex] == '\0' || data[lastIndex] == ':') {
+//				break;
+//			}
+//			else {
+//				id_string += data[lastIndex];
+//			}
+//		}
+//
+//		data.erase(0, lastIndex);
+//		if (id_string != "") {
+//			return stoi(id_string);
+//		}
+//		else {
+//			return 0;
+//		}
+//
+//	}
+//}
+//
+//std::string NetworkWrapper::parseName(std::string& data) {
+//	if (data.size() < 1) {
+//		return data;
+//	}
+//	else {
+//		// Remove first ':' marker
+//		data.erase(0, 1);
+//
+//		int lastIndex;
+//		std::string parsedName = "";
+//		for (lastIndex = 0; lastIndex < MAX_PACKAGE_SIZE; lastIndex++) {
+//			if (data[lastIndex] == ':') { // Does parseID also remove the last ':'? no?
+//				break;
+//			}
+//			else {
+//				parsedName += data[lastIndex];
+//			}
+//		}
+//
+//		data.erase(0, lastIndex);
+//		return parsedName;
+//	}
+//}

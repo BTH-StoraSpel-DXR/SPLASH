@@ -3,6 +3,7 @@
 #include "Sail.h"
 #include "../controllers/PlayerController.h"
 
+class NetworkTestEvent;
 class PhysicSystem;
 
 class GameState : public State {
@@ -23,6 +24,7 @@ public:
 
 private:
 	bool onResize(WindowResizeEvent& event);
+	bool onNetworkTest(NetworkTestEvent& event);
 	bool renderImguiConsole(float dt);
 	bool renderImguiProfiler(float dt);
 	// Where to updates the component systems. Responsibility can be moved to other places

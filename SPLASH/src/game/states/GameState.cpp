@@ -4,6 +4,8 @@
 #include "..//Sail/src/Sail/entities/ECS.h"
 #include <sstream>
 #include <iomanip>
+#include "Network/NetworkWrapper.h"
+#include "../SPLASH/src/game/events/NetworkTestEvent.h"
 
 GameState::GameState(StateStack& stack)
 : State(stack)
@@ -346,7 +348,24 @@ bool GameState::processInput(float dt) {
 
 	if (Input::IsKeyPressed(SAIL_KEY_G)) {
 		glm::vec3 color(1.0f, 1.0f, 1.0f);
-		m_lights.setDirectionalLight(DirectionalLight(color, m_cam.getDirection()));
+		//m_lights.setDirectionalLight(DirectionalLight(color, m_cam.getDirection()));
+		float x = ((int)(m_cam.getDirection().x * 100 + .5)) / 100.0f;
+		float y = ((int)(m_cam.getDirection().y * 100 + .5)) / 100.0f;
+		float z = ((int)(m_cam.getDirection().z * 100 + .5)) / 100.0f;
+		std::string message = "t" + std::to_string(x) + 
+			":" + std::to_string(y) + 
+			":" + std::to_string(z) + ":";
+		//printf(message.c_str());
+		
+		if (NetworkWrapper::getInstance().isHost())
+		{
+			m_lights.setDirectionalLight(DirectionalLight(color, m_cam.getDirection()));
+			NetworkWrapper::getInstance().sendMsgAllClients(message);
+		}
+		else
+		{
+			NetworkWrapper::getInstance().sendMsg(message);
+		}
 	}
 	if (Input::WasKeyJustPressed(SAIL_KEY_OEM_5)) {
 		m_cc.toggle();
@@ -420,6 +439,7 @@ bool GameState::onEvent(Event& event) {
 	Logger::Log("Received event: " + std::to_string(event.getType()));
 
 	EventHandler::dispatch<WindowResizeEvent>(event, SAIL_BIND_EVENT(&GameState::onResize));
+	EventHandler::dispatch<NetworkTestEvent>(event, SAIL_BIND_EVENT(&GameState::onNetworkTest));
 
 	// Forward events
 	m_scene.onEvent(event);
@@ -431,6 +451,59 @@ bool GameState::onResize(WindowResizeEvent& event) {
 	m_cam.resize(event.getWidth(), event.getHeight());
 	return true;
 }
+
+bool GameState::onNetworkTest(NetworkTestEvent& event)
+{
+	bool yFlag = false;
+	bool zFlag = false;
+	float x, y, z = 0;
+	std::string tmpX, tmpY, tmpZ = "";
+
+	std::string message = event.getMessage();
+	message.erase(0, 1);
+
+	for (size_t i = 0; i < message.size(); i++)
+	{
+		if (message[i] == '\0' || message[i] == ':')
+		{
+			if (!yFlag)
+			{
+				yFlag = true;
+			}
+			else
+			{
+				zFlag = true;
+			}
+
+			continue;
+		}
+
+		if (!yFlag) // x
+		{
+			tmpX += message[i];
+		}
+		else if (zFlag) // z
+		{
+			tmpZ += message[i];
+		}
+		else // y
+		{
+			tmpY += message[i];
+		}
+	}
+	x = std::stof(tmpX);
+	y = std::stof(tmpY);
+	z = std::stof(tmpZ);
+
+	glm::vec3 color(1.0f, 1.0f, 1.0f);
+	glm::vec3 tmpPos(x, y, z);
+	m_lights.setDirectionalLight(DirectionalLight(color, tmpPos));
+
+	//printf(event.getMessage().c_str());
+	return false;
+}
+
+
 
 bool GameState::update(float dt) {
 
@@ -445,6 +518,12 @@ bool GameState::update(float dt) {
 	counter += dt * 2;
 
 	updateComponentSystems(dt);
+
+	// Check for packages if network is connected
+	if (NetworkWrapper::getInstance().isInitialized())
+	{
+		NetworkWrapper::getInstance().checkForPackages();
+	}
 
 	/*if (m_texturedCubeEntity) {
 		//Translations, rotations and scales done here are non-constant, meaning they change between updates

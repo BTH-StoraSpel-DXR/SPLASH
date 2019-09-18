@@ -7,6 +7,7 @@
 #include "../../SPLASH/src/game/events/NetworkDisconnectEvent.h"
 #include "../../SPLASH/src/game/events/NetworkChatEvent.h"
 #include "../../SPLASH/src/game/events/NetworkWelcomeEvent.h"
+#include "../../SPLASH/src/game/events/NetworkTestEvent.h"
 #include "../../SPLASH/src/game/states/LobbyState.h"
 
 void NetworkWrapper::initialize() {
@@ -117,6 +118,12 @@ void NetworkWrapper::decodeMessage(NetworkEvent nEvent) {
 	player currentPlayer{ -1, "" };	// up here
 	int charCounter = 0;			//
 
+	// for case 't'
+	float x, y, z = 0;
+	std::string tmpX, tmpY, tmpZ = "";
+	bool yFlag = false;
+	bool zFlag = false;
+
 	switch (nEvent.data->msg[0])
 	{
 	case 'm':
@@ -180,6 +187,50 @@ void NetworkWrapper::decodeMessage(NetworkEvent nEvent) {
 		Application::getInstance()->dispatchEvent(NetworkJoinedEvent(player{ userID, "who?" }));
 		break;
 
+	case 't':
+	
+		if (m_network->isServer())
+		{
+			sendMsgAllClients(nEvent.data->msg);
+		}
+		message = std::string(nEvent.data->msg);
+		message.erase(0, 1);
+		
+		for (size_t i = 0; i < message.size(); i++)
+		{
+			if (message[i] == '\0' || message[i] == ':')
+			{
+				if (!yFlag)
+				{
+					yFlag = true;
+				}
+				else
+				{
+					zFlag = true;
+				}
+
+				continue;
+			}
+
+			if (!yFlag) // x
+			{
+				tmpX += message[i];
+			}
+			else if (zFlag) // z
+			{
+				tmpZ += message[i];
+			}
+			else // y
+			{
+				tmpY += message[i];
+			}
+		}
+		message = tmpX + ':' + tmpY + ':' + tmpZ + ':';
+		//printf(message.c_str());
+
+		Application::getInstance()->dispatchEvent(NetworkTestEvent(message));
+
+		break;
 	case 'w':
 
 		// Parse the welcome-package. Hosts should never recieve welcome packages
