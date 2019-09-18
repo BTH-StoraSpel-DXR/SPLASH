@@ -198,7 +198,7 @@ void NetworkWrapper::decodeMessage(NetworkEvent nEvent) {
 			}
 		}
 
-		for (charCounter; charCounter < MAX_PACKAGE_SIZE; charCounter++)
+		for (; charCounter < MAX_PACKAGE_SIZE; charCounter++)
 		{
 			// If delimiter, we just finished with a player name
 			if (nEvent.data->msg[charCounter] == ':') {
