@@ -25,6 +25,7 @@ public:
 private:
 	bool onResize(WindowResizeEvent& event);
 	bool onNetworkTest(NetworkStartGameEvent& event);
+	bool toggleCandle();
 	bool renderImguiConsole(float dt);
 	bool renderImguiProfiler(float dt);
 	// Where to updates the component systems. Responsibility can be moved to other places

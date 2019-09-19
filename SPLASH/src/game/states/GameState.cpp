@@ -354,19 +354,7 @@ bool GameState::processInput(float dt) {
 		{
 			//m_lights.setDirectionalLight(DirectionalLight(color, m_cam.getDirection()));
 			NetworkWrapper::getInstance().sendMsgAllClients(message);
-
-			if (m_scene.getEntityByName("Candle2")->hasComponent<LightComponent>()) {
-				m_scene.getEntityByName("Candle2")->removeComponent<LightComponent>();
-			}
-			else if (!m_scene.getEntityByName("Candle2")->hasComponent<LightComponent>()) {
-				PointLight pl;
-				glm::vec3 pos = m_scene.getEntityByName("Candle2")->getComponent<TransformComponent>()->getTranslation();
-				pl.setColor(glm::vec3(1.f, 1.f, 1.f));
-				pl.setPosition(glm::vec3(pos.x, pos.y + 3.1, pos.z));
-				pl.setAttenuation(.0f, 0.1f, 0.02f);
-				pl.setIndex(1);
-				m_scene.getEntityByName("Candle2")->addComponent<LightComponent>(pl);
-			}
+			toggleCandle();
 		}
 		else
 		{
@@ -442,6 +430,13 @@ bool GameState::onResize(WindowResizeEvent& event) {
 }
 
 bool GameState::onNetworkTest(NetworkStartGameEvent& event)
+{
+	toggleCandle();
+
+	return false;
+}
+
+bool GameState::toggleCandle()
 {
 	if (m_scene.getEntityByName("Candle2")->hasComponent<LightComponent>()) {
 		m_scene.getEntityByName("Candle2")->removeComponent<LightComponent>();
