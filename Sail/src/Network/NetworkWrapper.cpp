@@ -78,7 +78,7 @@ void NetworkWrapper::sendChatMsg(std::string msg) {
 		m_network->send(msg.c_str(), msg.length(), -1);
 		msg.erase(0, 1);
 		msg = msg + std::string("\n");
-		printf(msg.c_str());
+		//printf(msg.c_str());
 	}
 	else
 	{
@@ -142,14 +142,14 @@ void NetworkWrapper::decodeMessage(NetworkEvent nEvent) {
 			// Print to screen
 			message = message + std::string("\n");
 			message.erase(0, 1);
-			printf(message.c_str());
+			//printf(message.c_str());
 		}
 		else
 		{
 			// Print to screen
 			message = nEvent.data->msg + std::string("\n");
 			message.erase(0, 1);
-			printf(message.c_str());
+			//printf(message.c_str());
 		}
 
 		Application::getInstance()->dispatchEvent(NetworkChatEvent(message));
@@ -167,7 +167,7 @@ void NetworkWrapper::decodeMessage(NetworkEvent nEvent) {
 
 		// TODO:
 		// Remove the user with this ID from the lobby and print out that it disconnected.
-		printf((std::to_string(userID) + " disconnected. \n").c_str());
+		//printf((std::to_string(userID) + " disconnected. \n").c_str());
 		Application::getInstance()->dispatchEvent(NetworkDisconnectEvent(userID));
 		break;
 
@@ -183,7 +183,7 @@ void NetworkWrapper::decodeMessage(NetworkEvent nEvent) {
 		// TODO:
 		// Add this user id to the list of players in the lobby.
 		// Print out that this ID joined the lobby.
-		printf((std::to_string(userID) + " joined. \n").c_str());
+		//printf((std::to_string(userID) + " joined. \n").c_str());
 		Application::getInstance()->dispatchEvent(NetworkJoinedEvent(player{ userID, "who?" }));
 		break;
 
@@ -292,15 +292,15 @@ void NetworkWrapper::playerDisconnected(ConnectionID id) {
 		// Send to all clients that soneone disconnected and which id.
 		m_network->send(msg, sizeof(msg), -1);
 
-		printf((std::to_string(intid) + " disconnected. \n").c_str());
+		//printf((std::to_string(intid) + " disconnected. \n").c_str());
 
 		// Send id to menu / game state
 		Application::getInstance()->dispatchEvent(NetworkDisconnectEvent(intid));
 	}
-	else
+	/*else
 	{
 		printf("Host disconnected. \n");
-	}
+	}*/
 }
 
 void NetworkWrapper::playerReconnected(ConnectionID id) {
@@ -326,7 +326,7 @@ void NetworkWrapper::playerJoined(ConnectionID id) {
 
 		// Add this user id to the list of players in the lobby.
 		// Print out that this ID joined the lobby.
-		printf((std::to_string(intid) + " joined. \n").c_str());
+		//printf((std::to_string(intid) + " joined. \n").c_str());
 
 		Application::getInstance()->dispatchEvent(NetworkJoinedEvent(player{ intid, "" }));
 	}
