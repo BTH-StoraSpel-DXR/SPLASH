@@ -1,6 +1,10 @@
 #pragma once
 
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
+#include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
+#include <string>
+#include <memory>
 //#include <SpriteBatch.h>
 
 class SailFont;

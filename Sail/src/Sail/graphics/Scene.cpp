@@ -6,6 +6,7 @@
 #include "../utils/Utils.h"
 #include "Sail/Application.h"
 #include "Sail/api/Renderer.h"
+#include "Sail/api/Window.h"
 
 
 Scene::Scene() 

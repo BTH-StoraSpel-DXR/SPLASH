@@ -3,6 +3,7 @@
 #include <windowsx.h>
 #include "sail/Application.h"
 #include "Win32Window.h"
+#include "Sail/api/GraphicsAPI.h"
 
 Input* Input::m_Instance = SAIL_NEW Win32Input();
 

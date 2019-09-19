@@ -3,6 +3,7 @@
 #include "Sail/api/shader/ShaderPipeline.h"
 #include "Sail/graphics/shader/Shader.h"
 #include "Sail/Application.h"
+#include "Sail/resources/ResourceManager.h"
 
 Material::Material(Shader* shader)
 	: m_numTextures(3)
@@ -88,7 +89,7 @@ void Material::setSpecularTextureFromHandle(Texture* srv) {
 
 
 void Material::getAndInsertTexture(const std::string& filename, int arraySlot) {
-	Texture* t = &Application::getInstance()->getResourceManager().getTexture(filename);
+	Texture* t = &Application::getInstance()->getResourceManager()->getTexture(filename);
 	m_textures[arraySlot] = t;
 }
 

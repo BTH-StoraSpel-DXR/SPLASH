@@ -2,6 +2,7 @@
 #include "TextComponent.h"
 #include "Sail/Application.h"
 #include "Sail/api/shader/ShaderPipeline.h"
+#include "Sail/api/GraphicsAPI.h"
 
 TextComponent::TextComponent() {
 	//m_spriteBatch = std::make_unique<DirectX::SpriteBatch>(Application::getInstance()->getAPI()->getDeviceContext());

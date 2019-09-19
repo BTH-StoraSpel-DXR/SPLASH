@@ -5,6 +5,7 @@
 #include "../../utils/Utils.h"
 #include "../../graphics/geometry/factory/CubeModel.h"
 #include "Sail/Application.h"
+#include "Sail/resources/ResourceManager.h"
 
 FbxManager* FBXLoader::s_manager = FbxManager::Create();
 FbxIOSettings* FBXLoader::s_ios = FbxIOSettings::Create(s_manager, IOSROOT);
@@ -329,7 +330,7 @@ void FBXLoader::getMaterial(FbxNode* pNode, Material* material) {
 	if (pNode->GetSrcObjectCount<FbxSurfacePhong>() > 0) {
 
 		auto phong = pNode->GetSrcObject<FbxSurfacePhong>();
-		auto& resman = Application::getInstance()->getResourceManager();
+		auto& resman = *Application::getInstance()->getResourceManager();
 
 		FbxFileTexture* diffTex = phong->Diffuse.GetSrcObject<FbxFileTexture>();
 		if (diffTex) {

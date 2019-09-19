@@ -3,6 +3,7 @@
 #include "Sail/api/shader/ShaderPipeline.h"
 #include "Sail/graphics/light/LightSetup.h"
 #include "Sail/graphics/shader/Shader.h"
+#include "Sail/api/Mesh.h"
 #include "Sail/Application.h"
 #include "../DX12Utils.h"
 #include "../shader/DX12ShaderPipeline.h"

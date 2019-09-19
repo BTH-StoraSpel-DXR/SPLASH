@@ -2,6 +2,8 @@
 #include "StateStack.h"
 #include "Sail/Application.h"
 #include "Sail/api/Input.h"
+#include "Sail/api/GraphicsAPI.h"
+#include "Sail/api/ImGuiHandler.h"
 #include "Sail/KeyCodes.h"
 
 StateStack::StateStack()

@@ -3,6 +3,9 @@
 #include "..//Sail/src/Sail/entities/systems/physics/PhysicSystem.h"
 #include "..//Sail/src/Sail/entities/ECS.h"
 #include "..//Sail/src/Sail/api/Input.h"
+#include "..//Sail/src/Sail/api/GraphicsAPI.h"
+#include "..//Sail/src/Sail/api/Window.h"
+#include "..//Sail/src/Sail/resources/ResourceManager.h"
 #include <sstream>
 #include <iomanip>
 
@@ -75,16 +78,18 @@ GameState::GameState(StateStack& stack)
 
 	// Textures needs to be loaded before they can be used
 	// TODO: automatically load textures when needed so the following can be removed
-	Application::getInstance()->getResourceManager().loadTexture("sponza/textures/spnza_bricks_a_ddn.tga");
-	Application::getInstance()->getResourceManager().loadTexture("sponza/textures/spnza_bricks_a_diff.tga");
-	Application::getInstance()->getResourceManager().loadTexture("sponza/textures/spnza_bricks_a_spec.tga");
-	Application::getInstance()->getResourceManager().loadTexture("sponza/textures/arenaBasicTexture.tga");
-	Application::getInstance()->getResourceManager().loadTexture("sponza/textures/barrierBasicTexture.tga");
-	Application::getInstance()->getResourceManager().loadTexture("sponza/textures/containerBasicTexture.tga");
-	Application::getInstance()->getResourceManager().loadTexture("sponza/textures/rampBasicTexture.tga");
-	//Application::getInstance()->getResourceManager().loadTexture("sponza/textures/boxOrientationTexture.tga");
-	Application::getInstance()->getResourceManager().loadTexture("sponza/textures/candleBasicTexture.tga");
-	Application::getInstance()->getResourceManager().loadTexture("sponza/textures/character1texture.tga");
+	ResourceManager* resourceManager = m_app->getResourceManager();
+	
+	resourceManager->loadTexture("sponza/textures/spnza_bricks_a_ddn.tga");
+	resourceManager->loadTexture("sponza/textures/spnza_bricks_a_diff.tga");
+	resourceManager->loadTexture("sponza/textures/spnza_bricks_a_spec.tga");
+	resourceManager->loadTexture("sponza/textures/arenaBasicTexture.tga");
+	resourceManager->loadTexture("sponza/textures/barrierBasicTexture.tga");
+	resourceManager->loadTexture("sponza/textures/containerBasicTexture.tga");
+	resourceManager->loadTexture("sponza/textures/rampBasicTexture.tga");
+	resourceManager->loadTexture("sponza/textures/boxOrientationTexture.tga");
+	resourceManager->loadTexture("sponza/textures/candleBasicTexture.tga");
+	resourceManager->loadTexture("sponza/textures/character1texture.tga");
 
 
 
@@ -134,7 +139,7 @@ GameState::GameState(StateStack& stack)
 	// Disable culling for testing purposes
 	m_app->getAPI()->setFaceCulling(GraphicsAPI::NO_CULLING);
 
-	auto* shader = &m_app->getResourceManager().getShaderSet<MaterialShader>();
+	auto* shader = &resourceManager->getShaderSet<MaterialShader>();
 
 	// Create/load models
 	m_cubeModel = ModelFactory::CubeModel::Create(glm::vec3(0.5f), shader);
@@ -144,33 +149,33 @@ GameState::GameState(StateStack& stack)
 	m_planeModel->getMesh(0)->getMaterial()->setNormalTexture("sponza/textures/spnza_bricks_a_ddn.tga");
 	m_planeModel->getMesh(0)->getMaterial()->setSpecularTexture("sponza/textures/spnza_bricks_a_spec.tga");
 	
-	Model* fbxModel = &m_app->getResourceManager().getModel("sphere.fbx", shader);
+	Model* fbxModel = &resourceManager->getModel("sphere.fbx", shader);
 	fbxModel->getMesh(0)->getMaterial()->setDiffuseTexture("sponza/textures/spnza_bricks_a_diff.tga");
 	fbxModel->getMesh(0)->getMaterial()->setNormalTexture("sponza/textures/spnza_bricks_a_ddn.tga");
 	fbxModel->getMesh(0)->getMaterial()->setSpecularTexture("sponza/textures/spnza_bricks_a_spec.tga");
 
 
-	Model* arenaModel= &m_app->getResourceManager().getModel("arenaBasic.fbx", shader);
+	Model* arenaModel= &resourceManager->getModel("arenaBasic.fbx", shader);
 	arenaModel->getMesh(0)->getMaterial()->setDiffuseTexture("sponza/textures/arenaBasicTexture.tga");
 
-	Model* barrierModel = &m_app->getResourceManager().getModel("barrierBasic.fbx", shader);
+	Model* barrierModel = &resourceManager->getModel("barrierBasic.fbx", shader);
 	barrierModel->getMesh(0)->getMaterial()->setDiffuseTexture("sponza/textures/barrierBasicTexture.tga");
 
-	Model* containerModel= &m_app->getResourceManager().getModel("containerBasic.fbx", shader);
+	Model* containerModel= &resourceManager->getModel("containerBasic.fbx", shader);
 	containerModel->getMesh(0)->getMaterial()->setDiffuseTexture("sponza/textures/containerBasicTexture.tga");
 
-	Model* rampModel = &m_app->getResourceManager().getModel("rampBasic.fbx", shader);
+	Model* rampModel = &resourceManager->getModel("rampBasic.fbx", shader);
 	rampModel->getMesh(0)->getMaterial()->setDiffuseTexture("sponza/textures/rampBasicTexture.tga");
 
 	//For testing purposes only
-	//Model* boxOrientation = &m_app->getResourceManager().getModel("boxOrientation.fbx", shader);
+	//Model* boxOrientation = &resourceManager->getModel("boxOrientation.fbx", shader);
 	//boxOrientation->getMesh(0)->getMaterial()->setDiffuseTexture("sponza/textures/boxOrientationTexture.tga");
-	//Model* lrTest= &m_app->getResourceManager().getModel("lrTest.fbx", shader);
+	//Model* lrTest= &resourceManager->getModel("lrTest.fbx", shader);
 
-	Model* lightModel = &m_app->getResourceManager().getModel("candleExported.fbx", shader);
+	Model* lightModel = &resourceManager->getModel("candleExported.fbx", shader);
 	lightModel->getMesh(0)->getMaterial()->setDiffuseTexture("sponza/textures/candleBasicTexture.tga");
 
-	Model* characterModel = &m_app->getResourceManager().getModel("character1.fbx", shader);
+	Model* characterModel = &resourceManager->getModel("character1.fbx", shader);
 	characterModel->getMesh(0)->getMaterial()->setDiffuseTexture("sponza/textures/character1texture.tga");
 
 	// Temporary projectile model for the player's gun
@@ -360,7 +365,7 @@ bool GameState::processInput(float dt) {
 
 	// Reload shaders
 	if (Input::WasKeyJustPressed(SAIL_KEY_R)) {
-		m_app->getResourceManager().reloadShader<MaterialShader>();
+		m_app->getResourceManager()->reloadShader<MaterialShader>();
 		Event e(Event::POTATO);
 		m_app->dispatchEvent(e);
 	}

@@ -2,6 +2,7 @@
 #include "Profiler.h"
 #include <Psapi.h>
 #include "Sail/Application.h"
+#include "Sail/api/GraphicsAPI.h"
 
 Profiler::Profiler(const bool windowState) : SailImGuiWindow(windowState) {
 	init();

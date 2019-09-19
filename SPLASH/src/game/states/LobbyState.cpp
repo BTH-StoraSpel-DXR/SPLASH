@@ -8,6 +8,7 @@
 #include "../SPLASH/src/game/events/NetworkJoinedEvent.h"
 #include "Network/NetworkWrapper.h"
 #include "Sail/api/Input.h"
+#include "Sail/api/Window.h"
 
 #include <string>
 using namespace std;

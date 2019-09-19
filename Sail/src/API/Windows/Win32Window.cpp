@@ -5,6 +5,7 @@
 #include "Win32Input.h"
 //#include <dxgi.h>
 #include <wrl.h>
+#include "Sail/utils/Utils.h"
 
 namespace {
 	// Used to forward messages to user defined proc function
