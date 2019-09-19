@@ -47,19 +47,18 @@ public:
 
 	//void setTextures(ID3D11ShaderResourceView** srvs, UINT numTextures);
 
-	/*	Returns an array of textures, numTextures get set
-		Default texture order in array is as follows
+	/*	Returns a texture
+		Default texture id is as follows
 		0 - Diffuse texture
 		1 - Normal map
 		2 - Specular map
 	*/ 
-	//ID3D11ShaderResourceView* const* getTextures(UINT& numTextures);
+	Texture* getTexture(unsigned int id) const;
 
 	//const glm::vec4& getColor() const;
 	const PhongSettings& getPhongSettings() const;
 
 	Shader* getShader() const;
-
 	//const bool* getTextureFlags() const;// TODO: remove
 
 private:

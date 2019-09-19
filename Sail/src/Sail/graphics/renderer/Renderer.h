@@ -32,7 +32,7 @@ public:
 	virtual void setLightSetup(LightSetup* lightSetup) = 0;
 	virtual void end() = 0;
 	virtual void present(RenderableTexture* output = nullptr) = 0;
-	virtual void onEvent(Event& event) override { };
+	virtual bool onEvent(Event& event) override { };
 	
 protected:
 	std::vector<RenderCommand> commandQueue;

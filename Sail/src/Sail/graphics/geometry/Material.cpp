@@ -21,10 +21,13 @@ Material::Material(Shader* shader)
 }
 Material::~Material() { }
 
+/*Not safe for multithreaded commandlist recording(d3d12)*/
 void Material::bind(void* cmdList) {
 	ShaderPipeline* pipeline = m_shader->getPipeline();
 	pipeline->trySetCBufferVar("sys_material", (void*)&getPhongSettings(), sizeof(PhongSettings));
 
+	// TODO: check if this causes a problem in DX12
+	// when a normal or specular texture is bound but not a diffuse one, the order will probably be wrong in dx12 shaders
 	if (m_phongSettings.hasDiffuseTexture)
 		pipeline->setTexture2D("sys_texDiffuse", m_textures[0], cmdList);
 	if (m_phongSettings.hasNormalTexture)
@@ -99,6 +102,10 @@ void Material::getAndInsertTexture(const std::string& filename, int arraySlot) {
 //	else
 //		return m_srvs;
 //}
+
+Texture* Material::getTexture(unsigned int id) const {
+	return m_textures[id];
+}
 
 const Material::PhongSettings& Material::getPhongSettings() const {
 	return m_phongSettings;

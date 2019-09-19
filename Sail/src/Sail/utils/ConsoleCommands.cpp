@@ -124,12 +124,12 @@ std::string ConsoleCommands::prune(const std::string& command) {
 	return temp;
 }
 const std::string ConsoleCommands::parseCommand(const std::string& command) {
-	int location = command.find_first_of(" ");
+	size_t location = command.find_first_of(" ");
 	if (location == std::string::npos)
 		return command;
 	std::string parsedCommand = command.substr(0, location);
 	while (location != std::string::npos) {
-		int nextLocation = command.find(" ", location+1);
+		size_t nextLocation = command.find(" ", location+1);
 		std::string section = command.substr(location+1, nextLocation - location -1);
 		if (Reg::TextCharacterStar.match(section.c_str()) == section.size()) {
 			parsedCommand += " <string>";
@@ -163,8 +163,8 @@ const bool ConsoleCommands::voidMatch(const std::string& command) {
 const bool ConsoleCommands::intMatch(const std::string& command, const std::string& parsedCommand) {
 	for (int i = 0; i < m_numberCommands.size(); i++) {
 		if (m_numberCommands[i].first == parsedCommand) {
-			int location = command.find(" ");
-			int size = command.find(" ", location + 1) - location - 1;
+			size_t location = command.find(" ");
+			size_t size = command.find(" ", location + 1) - location - 1;
 			std::string section = command.substr(location + 1, size);
 			if (section.size() > 9)
 				section = section.substr(0, 9);
@@ -172,7 +172,7 @@ const bool ConsoleCommands::intMatch(const std::string& command, const std::stri
 			
 			m_textLog.emplace_back(m_textField);
 			m_commandHistory.emplace_back(command);
-			m_textLog.emplace_back(m_numberCommands[i].second(value));
+			m_textLog.emplace_back(m_numberCommands[i].second(static_cast<float>(value)));
 			m_textField = "";
 			return true;
 		}
@@ -183,9 +183,9 @@ const bool ConsoleCommands::intArrayMatch(const std::string& command, const std:
 	for (int i = 0; i < m_intArrayCommands.size(); i++) {
 		if (m_intArrayCommands[i].first == parsedCommand) {
 			std::vector<int> arr;
-			int location = command.find(" ");
+			size_t location = command.find(" ");
 			while (location != std::string::npos) {
-				int nextLocation = command.find(" ", location + 1);
+				size_t nextLocation = command.find(" ", location + 1);
 				std::string section = command.substr(location + 1, nextLocation - location - 1);
 				if (section.size() > 9)
 					section = section.substr(0, 9);
@@ -206,8 +206,8 @@ const bool ConsoleCommands::intArrayMatch(const std::string& command, const std:
 const bool ConsoleCommands::floatMatch(const std::string& command, const std::string& parsedCommand) {
 	for (int i = 0; i < m_numberCommands.size(); i++) {
 		if (m_numberCommands[i].first == parsedCommand) {
-			int location = command.find(" ");
-			int size = command.find(" ", location + 1) - location - 1;
+			size_t location = command.find(" ");
+			size_t size = command.find(" ", location + 1) - location - 1;
 
 			std::string section = command.substr(location + 1, size);
 			if (section.size() > 9)
@@ -227,9 +227,9 @@ const bool ConsoleCommands::floatArrayMatch(const std::string& command, const st
 	for (int i = 0; i < m_floatArrayCommands.size(); i++) {
 		if (m_floatArrayCommands[i].first == parsedCommand) {
 			std::vector<float> arr;
-			int location = command.find(" ");
+			size_t location = command.find(" ");
 			while (location != std::string::npos) {
-				int nextLocation = command.find(" ", location + 1);
+				size_t nextLocation = command.find(" ", location + 1);
 				std::string section = command.substr(location + 1, nextLocation - location - 1);
 				if (section.size() > 9)
 					section = section.substr(0, 9);
@@ -250,8 +250,8 @@ const bool ConsoleCommands::floatArrayMatch(const std::string& command, const st
 const bool ConsoleCommands::stringMatch(const std::string& command, const std::string& parsedCommand) {
 	for (int i = 0; i < m_stringCommands.size(); i++) {
 		if (m_stringCommands[i].first == parsedCommand) {
-			int location = command.find(" ");
-			int size = command.find(" ", location + 1) - location - 1;
+			size_t location = command.find(" ");
+			size_t size = command.find(" ", location + 1) - location - 1;
 			std::string value = command.substr(location + 1, size);
 
 			m_textLog.emplace_back(m_textField);

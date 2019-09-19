@@ -8,6 +8,7 @@ public:
 	~DX12IndexBuffer();
 
 	virtual void bind(void* cmdList) const override;
+	ID3D12Resource1* getBuffer() const;
 
 private:
 	wComPtr<ID3D12Resource1> m_indexBuffer;

@@ -10,8 +10,7 @@ VertexBuffer* VertexBuffer::Create(const InputLayout& inputLayout, Mesh::Data& m
 // TODO: Take in usage (Static or Dynamic) and create a default heap for static only
 // TODO: updateData and/or setData
 DX12VertexBuffer::DX12VertexBuffer(const InputLayout& inputLayout, Mesh::Data& modelData)
-	: VertexBuffer(inputLayout, modelData)
-{
+	: VertexBuffer(inputLayout, modelData) {
 	DX12API* context = Application::getInstance()->getAPI<DX12API>();
 	void* vertices = getVertexData(modelData);
 
@@ -42,4 +41,8 @@ void DX12VertexBuffer::bind(void* cmdList) const {
 	vbView.StrideInBytes = static_cast<UINT>(getVertexDataStride());
 	// Later update to just put in a buffer on the renderer to set multiple vertex buffers at once
 	dxCmdList->IASetVertexBuffers(0, 1, &vbView);
+}
+
+ID3D12Resource1* DX12VertexBuffer::getBuffer() const {
+	return m_vertexBuffer.Get();
 }

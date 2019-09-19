@@ -8,11 +8,12 @@ Texture* Texture::Create(const std::string& filename) {
 }
 
 DX12Texture::DX12Texture(const std::string& filename) 
-	: m_cpuDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1)
-	, m_isInitialized(false)
+	: m_isInitialized(false)
 	, m_textureData(getTextureData(filename))
 {
-	m_context = Application::getInstance()->getAPI<DX12API>();
+	context = Application::getInstance()->getAPI<DX12API>();
+	// Dont create one resource per swap buffer
+	useOneResource = true;
 
 	m_textureDesc = {};
 	m_textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // TODO: read this from texture data
@@ -27,11 +28,9 @@ DX12Texture::DX12Texture(const std::string& filename)
 	m_textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 
 	// A texture rarely updates its data, if at all, so it is stored in a default heap
-	ThrowIfFailed(m_context->getDevice()->CreateCommittedResource(&DX12Utils::sDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &m_textureDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_textureDefaultBuffer)));
-	m_textureDefaultBuffer->SetName((std::wstring(L"Texture default buffer for ") + std::wstring(filename.begin(), filename.end())).c_str());
-
-	// Store the cpu descriptor handle that will contain the srv for this texture
-	m_heapCDH = m_cpuDescHeap.getCPUDescriptorHandleForIndex(0);
+	state[0] = D3D12_RESOURCE_STATE_COPY_DEST;
+	ThrowIfFailed(context->getDevice()->CreateCommittedResource(&DX12Utils::sDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &m_textureDesc, state[0], nullptr, IID_PPV_ARGS(&textureDefaultBuffers[0])));
+	textureDefaultBuffers[0]->SetName((std::wstring(L"Texture default buffer for ") + std::wstring(filename.begin(), filename.end())).c_str());
 
 	// Create a shader resource view (descriptor that points to the texture and describes it)
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -39,8 +38,11 @@ DX12Texture::DX12Texture(const std::string& filename)
 	srvDesc.Format = m_textureDesc.Format;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = 1;
-	m_context->getDevice()->CreateShaderResourceView(m_textureDefaultBuffer.Get(), &srvDesc, m_heapCDH);
-	
+	context->getDevice()->CreateShaderResourceView(textureDefaultBuffers[0].Get(), &srvDesc, srvHeapCDHs[0]);
+
+	// Dont allow UAV access
+	uavHeapCDHs[0] = {0};
+
 }
 
 DX12Texture::~DX12Texture() {
@@ -48,16 +50,21 @@ DX12Texture::~DX12Texture() {
 }
 
 void DX12Texture::initBuffers(ID3D12GraphicsCommandList4* cmdList) {
+	//The lock_guard will make sure multiple threads wont try to initialize the same texture
+	std::lock_guard<std::mutex> lock(m_initializeMutex);
+	if (m_isInitialized)
+		return;
+
 	UINT64 textureUploadBufferSize;
 	// this function gets the size an upload buffer needs to be to upload a texture to the gpu.
 	// each row must be 256 byte aligned except for the last row, which can just be the size in bytes of the row
 	// eg. textureUploadBufferSize = ((((width * numBytesPerPixel) + 255) & ~255) * (height - 1)) + (width * numBytesPerPixel);
-	m_context->getDevice()->GetCopyableFootprints(&m_textureDesc, 0, 1, 0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
+	context->getDevice()->GetCopyableFootprints(&m_textureDesc, 0, 1, 0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
 
 	// Create the upload heap
 	// TODO: release the upload heap when it has been copied to the default buffer
 	// This could be done in a buffer manager owned by dx12api
-	m_textureUploadBuffer.Attach(DX12Utils::CreateBuffer(m_context->getDevice(), textureUploadBufferSize, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, DX12Utils::sUploadHeapProperties));
+	m_textureUploadBuffer.Attach(DX12Utils::CreateBuffer(context->getDevice(), textureUploadBufferSize, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, DX12Utils::sUploadHeapProperties));
 	m_textureUploadBuffer->SetName(L"Texture upload buffer");
 
 	D3D12_SUBRESOURCE_DATA textureData = {};
@@ -65,8 +72,9 @@ void DX12Texture::initBuffers(ID3D12GraphicsCommandList4* cmdList) {
 	textureData.RowPitch = m_textureData.getWidth() * m_textureData.getBytesPerPixel();
 	textureData.SlicePitch = textureData.RowPitch * m_textureData.getHeight();
 	// Copy the upload buffer contents to the default heap using a helper method from d3dx12.h
-	DX12Utils::UpdateSubresources(cmdList, m_textureDefaultBuffer.Get(), m_textureUploadBuffer.Get(), 0, 0, 1, &textureData);
-	DX12Utils::SetResourceTransitionBarrier(cmdList, m_textureDefaultBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	DX12Utils::UpdateSubresources(cmdList, textureDefaultBuffers[0].Get(), m_textureUploadBuffer.Get(), 0, 0, 1, &textureData);
+	//DX12Utils::SetResourceTransitionBarrier(cmdList, textureDefaultBuffer.Get(), state, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	//transitionStateTo(cmdList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	m_isInitialized = true;
 }
@@ -75,6 +83,6 @@ bool DX12Texture::hasBeenInitialized() const {
 	return m_isInitialized;
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE DX12Texture::getCDH() const {
-	return m_heapCDH;
+ID3D12Resource1* DX12Texture::getResource() const {
+	return textureDefaultBuffers[0].Get();
 }

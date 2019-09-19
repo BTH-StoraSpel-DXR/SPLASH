@@ -2,6 +2,7 @@
 
 #include "Sail/api/shader/ConstantBuffer.h"
 #include "../DX12API.h"
+#include <mutex>
 
 namespace ShaderComponent {
 
@@ -11,16 +12,24 @@ namespace ShaderComponent {
 		DX12ConstantBuffer(void* initData, unsigned int size, BIND_SHADER bindShader, unsigned int slot = 0);
 		~DX12ConstantBuffer();
 
+		/*[deprecated]. Use updateData_new() for thread safety.*/
 		virtual void updateData(const void* newData, unsigned int bufferSize, unsigned int offset = 0U) override;
+		virtual void updateData_new(const void* newData, unsigned int bufferSize, int meshIndex, unsigned int offset = 0U);
+		/*[deprecated]. Use bind_new() for thread safety.*/
 		virtual void bind(void* cmdList) const override;
+		virtual void bind_new(void* cmdList, int meshIndex) const;
 
-		void setResourceHeapMeshIndex(unsigned int index);
+		void checkBufferSize(unsigned int nMeshes);
+
+		ID3D12Resource* getBuffer() const;
 
 	private:
 		void createBuffers();
 
 	private:
 		DX12API* m_context;
+		std::mutex m_mutex_bufferExpander;
+		bool expanding = false;
 
 		//void* m_newData;
 		//bool* m_needsUpdate;

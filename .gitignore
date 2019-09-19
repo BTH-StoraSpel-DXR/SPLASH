@@ -56,7 +56,7 @@ plan\.txt
 /.scannerwork
 
 # Imgui configs
-/Demo/imgui.ini
+/SPLASH/imgui.ini
 
 #bin
 bin/*

@@ -1,32 +1,25 @@
 #pragma once
 
-#include "API/DX11/DX11RenderableTexture.h"
-#include "../../shader/ShaderPipeline.h"
-#include "../../renderer/Renderer.h"
+#include "Sail/api/RenderableTexture.h"
+#include "Sail/api/shader/ShaderPipeline.h"
 
 class Model;
 
-class PostProcessStage : public ShaderSet, public IEventListener {
+class PostProcessStage : public ShaderPipeline, public IEventListener {
 public:
-	PostProcessStage(const Renderer& renderer, const std::string& filename, UINT width, UINT height, Mesh* fullscreenQuad, UINT outputTexBindFlags = 0);
+	PostProcessStage(const std::string& filename, UINT width, UINT height);
 	virtual ~PostProcessStage();
 
-	virtual void run(DX11RenderableTexture& inputTexture);
-	DX11RenderableTexture& getOutput();
+	virtual void run(RenderableTexture& inputTexture);
+	RenderableTexture& getOutput();
 
-	virtual void onEvent(Event& event) override;
+	virtual bool onEvent(Event& event) override;
 
 protected:
 	virtual bool onResize(WindowResizeEvent& event);
 
 protected:
-	DX11RenderableTexture OutputTexture;
-	Mesh* FullscreenQuad;
+	RenderableTexture* OutputTexture;
 	UINT Width, Height;
-	const Renderer& RendererRef;
-
-	struct Vertex {
-		glm::vec3 position;
-	};
 
 };

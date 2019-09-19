@@ -1,16 +1,31 @@
 #pragma once
 
 #include <d3d12.h>
+#include <wrl/client.h>
+#include <functional>
+#include <map>
 
-class DX12Utils {
-public:
+namespace DX12Utils {
 
-	static const D3D12_HEAP_PROPERTIES sUploadHeapProperties;
-	static const D3D12_HEAP_PROPERTIES sDefaultHeapProps;
+	const D3D12_HEAP_PROPERTIES sUploadHeapProperties = {
+		D3D12_HEAP_TYPE_UPLOAD,
+		D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+		D3D12_MEMORY_POOL_UNKNOWN,
+		0,
+		0,
+	};
 
-	static void UpdateDefaultBufferData(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const void* data, UINT64 byteSize, UINT64 offset, ID3D12Resource1* defaultBuffer, ID3D12Resource1** uploadBuffer);
-	static ID3D12Resource1* CreateBuffer(ID3D12Device5* device, UINT64 size, D3D12_RESOURCE_FLAGS flags, D3D12_RESOURCE_STATES initState, const D3D12_HEAP_PROPERTIES& heapProps, D3D12_RESOURCE_DESC* bufDesc = nullptr);
-	static void SetResourceTransitionBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* resource, D3D12_RESOURCE_STATES StateBefore, D3D12_RESOURCE_STATES StateAfter);
+	const D3D12_HEAP_PROPERTIES sDefaultHeapProps = {
+		D3D12_HEAP_TYPE_DEFAULT,
+		D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+		D3D12_MEMORY_POOL_UNKNOWN,
+		0,
+		0
+	};
+
+	void UpdateDefaultBufferData(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const void* data, UINT64 byteSize, UINT64 offset, ID3D12Resource1* defaultBuffer, ID3D12Resource1** uploadBuffer);
+	ID3D12Resource1* CreateBuffer(ID3D12Device5* device, UINT64 size, D3D12_RESOURCE_FLAGS flags, D3D12_RESOURCE_STATES initState, const D3D12_HEAP_PROPERTIES& heapProps, D3D12_RESOURCE_DESC* bufDesc = nullptr);
+	void SetResourceTransitionBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* resource, D3D12_RESOURCE_STATES StateBefore, D3D12_RESOURCE_STATES StateAfter);
 
 
 
@@ -20,7 +35,7 @@ public:
 
 	//------------------------------------------------------------------------------------------------
 	// Row-by-row memcpy
-	inline static void MemcpySubresource(
+	inline void MemcpySubresource(
 		_In_ const D3D12_MEMCPY_DEST* pDest,
 		_In_ const D3D12_SUBRESOURCE_DATA* pSrc,
 		SIZE_T RowSizeInBytes,
@@ -39,7 +54,7 @@ public:
 
 	//------------------------------------------------------------------------------------------------
 	// All arrays must be populated (e.g. by calling GetCopyableFootprints)
-	inline static UINT64 UpdateSubresources(
+	inline UINT64 UpdateSubresources(
 		_In_ ID3D12GraphicsCommandList* pCmdList,
 		_In_ ID3D12Resource* pDestinationResource,
 		_In_ ID3D12Resource* pIntermediate,
@@ -97,7 +112,7 @@ public:
 
 	//------------------------------------------------------------------------------------------------
 	// Heap-allocating UpdateSubresources implementation
-	inline static UINT64 UpdateSubresources(
+	inline UINT64 UpdateSubresources(
 		_In_ ID3D12GraphicsCommandList* pCmdList,
 		_In_ ID3D12Resource* pDestinationResource,
 		_In_ ID3D12Resource* pIntermediate,
@@ -129,4 +144,35 @@ public:
 		return Result;
 	}
 
-};
+
+
+
+	class RootSignature {
+	private:
+		static D3D12_STATIC_SAMPLER_DESC sDefaultSampler;
+	public:
+		RootSignature(const std::string& name);
+
+		void add32BitConstants();
+		void addDescriptorTable(const std::string& name, D3D12_DESCRIPTOR_RANGE_TYPE type, unsigned int shaderRegister, unsigned int space = 0, unsigned int numDescriptors = 1);
+		void addCBV(const std::string& name, unsigned int shaderRegister, unsigned int space = 0);
+		void addSRV(const std::string& name, unsigned int shaderRegister, unsigned int space = 0);
+		void addUAV(const std::string& name, unsigned int shaderRegister, unsigned int space = 0);
+		void addStaticSampler(const D3D12_STATIC_SAMPLER_DESC& desc = sDefaultSampler);
+
+		void build(ID3D12Device5* device, const D3D12_ROOT_SIGNATURE_FLAGS& flags = D3D12_ROOT_SIGNATURE_FLAG_NONE);
+		ID3D12RootSignature** get();
+		unsigned int getIndex(const std::string& name);
+
+		// Allows an unordered specification to run in root parameter order
+		void doInOrder(std::function<void(const std::string&)> func);
+
+	private:
+		std::string m_name;
+		std::vector<D3D12_ROOT_PARAMETER> m_rootParams;
+		std::vector<D3D12_STATIC_SAMPLER_DESC> m_staticSamplerDescs;
+		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_signature;
+		std::vector<std::string> m_order;
+	};
+
+}

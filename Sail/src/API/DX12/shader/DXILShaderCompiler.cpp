@@ -1,13 +1,13 @@
 #include "pch.h"
 #include "DXILShaderCompiler.h"
 #include "../../../Sail/utils/Utils.h"
+#include <atlstr.h>
 
-DXILShaderCompiler::DXILShaderCompiler() 
+DXILShaderCompiler::DXILShaderCompiler()
 	: m_linker(nullptr)
 	, m_library(nullptr)
 	, m_includeHandler(nullptr)
-	, m_compiler(nullptr)
-{
+	, m_compiler(nullptr) {
 
 }
 
@@ -101,9 +101,9 @@ HRESULT DXILShaderCompiler::compile(Desc* desc, IDxcBlob** ppResult) {
 		}
 	}
 
-	if (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) {
-		std::string errMsg("Shader not found");
-		MessageBoxA(0, errMsg.c_str(), "", 0);
+	if (hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) {
+		std::string errMsg("Missing shader: " + std::string(CW2A(desc->filePath)) + "\n");
+		MessageBoxA(0, errMsg.c_str(), "DXILShaderCompiler Error", 0);
 		OutputDebugStringA(errMsg.c_str());
 
 	}

@@ -8,6 +8,7 @@
 
 #include "Sail/api/shader/ConstantBuffer.h"
 #include "Sail/api/shader/Sampler.h"
+#include "Sail/api/RenderableTexture.h"
 #include "Sail/api/GraphicsAPI.h"
 #include "Sail/graphics/geometry/Model.h"
 #include "Sail/graphics/camera/Camera.h"
@@ -27,20 +28,24 @@ public:
 
 	// The following static methods are to be implemented in APIs
 	virtual void bind(void* cmdList = nullptr) = 0;
+	virtual void dispatch(unsigned int threadGroupCountX, unsigned int threadGroupCountY, unsigned int threadGroupCountZ, void* cmdList = nullptr) = 0; // Only used by compute shaders
 	// filepath is used for include paths and error messages 
 	virtual void* compileShader(const std::string& source, const std::string& filepath, ShaderComponent::BIND_SHADER shaderType) = 0;
 	virtual void setTexture2D(const std::string& name, Texture* texture, void* cmdList = nullptr) = 0;
+	virtual void setTexture2D(const std::string& name, RenderableTexture* texture, void* cmdList = nullptr) = 0;
 
 	virtual void updateCamera(Camera& cam) {};
 	virtual void setClippingPlane(const glm::vec4& clippingPlane) {};
 	virtual void setWireframe(bool wireframeState);
 	virtual void setCullMode(GraphicsAPI::Culling newCullMode);
 
+	bool isComputeShader() const;
 	InputLayout& getInputLayout();
 	void* getVsBlob();
 	const std::string& getName() const;
+	RenderableTexture* getRenderableTexture(const std::string& name) const;
 
-	void setCBufferVar(const std::string& name, const void* data, UINT size);
+	virtual void setCBufferVar(const std::string& name, const void* data, UINT size);
 	bool trySetCBufferVar(const std::string& name, const void* data, UINT size);
 
 protected:
@@ -63,7 +68,7 @@ protected:
 	void* psBlob;
 	void* dsBlob;
 	void* hsBlob;
-
+	void* csBlob;
 
 	struct ShaderResource {
 		ShaderResource(const std::string& name, UINT slot)
@@ -96,16 +101,29 @@ protected:
 		ShaderResource res;
 		std::unique_ptr<ShaderComponent::Sampler> sampler;
 	};
+	struct ShaderRenderableTexture {
+		ShaderRenderableTexture(ShaderResource res)
+			: res(res)
+		{
+			renderableTexture = std::unique_ptr<RenderableTexture>(RenderableTexture::Create(320, 180, "Renderable Texture owned by a ShaderPipeline"));
+		}
+		ShaderResource res;
+		std::unique_ptr<RenderableTexture> renderableTexture;
+	};
 	struct ParsedData {
-		bool hasVS = false, hasPS = false, hasGS = false, hasDS = false, hasHS = false;
+		bool hasVS = false, hasPS = false, hasGS = false, hasDS = false, hasHS = false, hasCS = false;
 		std::vector<ShaderCBuffer> cBuffers;
 		std::vector<ShaderSampler> samplers;
 		std::vector<ShaderResource> textures;
+		std::vector<ShaderResource> structuredBuffers;
+		std::vector<ShaderRenderableTexture> renderableTextures;
 		void clear() {
-			hasVS = false; hasPS = false; hasGS = false; hasDS = false; hasHS = false;
+			hasVS = false; hasPS = false; hasGS = false; hasDS = false; hasHS = false, hasCS = false;
 			cBuffers.clear();
 			samplers.clear();
 			textures.clear();
+			structuredBuffers.clear();
+			renderableTextures.clear();
 		}
 	};
 	ParsedData parsedData;
@@ -120,14 +138,11 @@ private:
 	void parseCBuffer(const std::string& source);
 	void parseSampler(const char* source);
 	void parseTexture(const char* source);
+	void parseRWTexture(const char* source);
+	void parseStructuredBuffer(const char* source);
 	std::string nextTokenAsName(const char* source, UINT& outTokenSize, bool allowArray = false) const;
+	std::string nextTokenAsType(const char* source, UINT& outTokenSize) const;
 	ShaderComponent::BIND_SHADER getBindShaderFromName(const std::string& name) const;
-
-	//void setVertexShader(void* blob);
-	//void setGeometryShader(void* blob);
-	//void setPixelShader(void* blob);
-	//void setDomainShader(void* blob);
-	//void setHullShader(void* blob);
 
 	UINT getSizeOfType(const std::string& typeName) const;
 

@@ -30,7 +30,7 @@ public:
 	void draw(const Renderer& renderer);
 
 	Mesh* getMesh(unsigned int index);
-	unsigned int getNumberOfMeshes() const;
+	UINT getNumberOfMeshes() const;
 	/*ShaderSet* getShader() const;
 	Material* getMaterial();*/
 	//const AABB& getAABB() const;

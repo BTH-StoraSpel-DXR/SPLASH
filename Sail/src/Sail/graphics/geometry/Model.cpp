@@ -80,8 +80,8 @@ Mesh* Model::getMesh(unsigned int index) {
 	return m_meshes[index].get();
 }
 
-unsigned int Model::getNumberOfMeshes() const {
-	return m_meshes.size();
+UINT Model::getNumberOfMeshes() const {
+	return static_cast<UINT>(m_meshes.size());
 }
 
 //ShaderSet* Model::getShader() const {

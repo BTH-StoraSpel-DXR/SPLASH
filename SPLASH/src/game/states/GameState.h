@@ -19,7 +19,7 @@ public:
 	// Updates the state
 	virtual bool update(float dt) override;
 	// Renders the state
-	virtual bool render(float dt) override;
+	virtual bool render(float alpha) override;
 	// Renders imgui
 	virtual bool renderImgui(float dt) override;
 
@@ -27,6 +27,7 @@ private:
 	bool onResize(WindowResizeEvent& event);
 	bool renderImguiConsole(float dt);
 	bool renderImguiProfiler(float dt);
+	bool renderImGuiRenderSettings(float dt);
 	// Where to updates the component systems. Responsibility can be moved to other places
 	void updateComponentSystems(float dt);
 

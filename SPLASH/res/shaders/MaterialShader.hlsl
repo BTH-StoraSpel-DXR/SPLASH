@@ -45,7 +45,7 @@ PSIn VSMain(VSIn input) {
 	// Copy over the directional light
 	output.lights.dirLight = dirLight;
 	// Copy over point lights
-    for (uint i = 0; i < NUM_POINT_LIGHTS; i++) {
+    for (uint i = 0; i < dirLight.direction.x; i++) {
         output.lights.pointLights[i].attConstant = pointLights[i].attConstant;
         output.lights.pointLights[i].attLinear = 0.1f;
         output.lights.pointLights[i].attQuadratic = 0.02f;
@@ -97,7 +97,6 @@ PSIn VSMain(VSIn input) {
 	return output;
 
 }
-
 
 Texture2D sys_texDiffuse : register(t0);
 Texture2D sys_texNormal : register(t1);
