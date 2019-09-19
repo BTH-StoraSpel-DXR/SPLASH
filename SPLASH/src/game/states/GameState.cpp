@@ -347,15 +347,8 @@ bool GameState::processInput(float dt) {
 #endif
 
 	if (Input::WasKeyJustPressed(SAIL_KEY_G)) {
-		glm::vec3 color(1.0f, 1.0f, 1.0f);
-		//m_lights.setDirectionalLight(DirectionalLight(color, m_cam.getDirection()));
-		float x = ((int)(m_cam.getDirection().x * 100 + .5)) / 100.0f;
-		float y = ((int)(m_cam.getDirection().y * 100 + .5)) / 100.0f;
-		float z = ((int)(m_cam.getDirection().z * 100 + .5)) / 100.0f;
-		std::string message = "t" + std::to_string(x) + 
-			":" + std::to_string(y) + 
-			":" + std::to_string(z) + ":";
-		//printf(message.c_str());
+
+		std::string message = "t";
 		
 		if (NetworkWrapper::getInstance().isHost())
 		{
@@ -373,7 +366,6 @@ bool GameState::processInput(float dt) {
 				pl.setAttenuation(.0f, 0.1f, 0.02f);
 				pl.setIndex(1);
 				m_scene.getEntityByName("Candle2")->addComponent<LightComponent>(pl);
-				//m_lights.addPointLight(pl);
 			}
 		}
 		else
@@ -410,18 +402,6 @@ bool GameState::processInput(float dt) {
 			//m_lights.addPointLight(pl);
 		}
 	}
-	if (Input::WasKeyJustPressed(SAIL_KEY_V)) {
-		if (!m_scene.getEntityByName("Candle2")->hasComponent<LightComponent>()) {
-			PointLight pl;
-			glm::vec3 pos = m_scene.getEntityByName("Candle2")->getComponent<TransformComponent>()->getTranslation();
-			pl.setColor(glm::vec3(1.f, 1.f, 1.f));
-			pl.setPosition(glm::vec3(pos.x, pos.y + 3.1, pos.z));
-			pl.setAttenuation(.0f, 0.1f, 0.02f);
-			pl.setIndex(1);
-			m_scene.getEntityByName("Candle2")->addComponent<LightComponent>(pl);
-			//m_lights.addPointLight(pl);
-		}
-	}
 
 	//removes first added pointlight in arena
 	if (Input::WasKeyJustPressed(SAIL_KEY_X)) {
@@ -440,12 +420,7 @@ bool GameState::processInput(float dt) {
 		}
 		//m_lights.removePLByIndex(0);
 	}
-	if (Input::WasKeyJustPressed(SAIL_KEY_N)) {
-		if (m_scene.getEntityByName("Candle2")->hasComponent<LightComponent>()) {
-			m_scene.getEntityByName("Candle2")->removeComponent<LightComponent>();
-		}
-		//m_lights.removePLByIndex(1);
-	}
+
 	return true;
 }
 
@@ -482,53 +457,6 @@ bool GameState::onNetworkTest(NetworkStartGameEvent& event)
 		//m_lights.addPointLight(pl);
 	}
 
-
-	//bool yFlag = false;
-	//bool zFlag = false;
-	//float x, y, z = 0;
-	//std::string tmpX, tmpY, tmpZ = "";
-
-	//std::string message = event.getMessage();
-	//message.erase(0, 1);
-
-	//for (size_t i = 0; i < message.size(); i++)
-	//{
-	//	if (message[i] == '\0' || message[i] == ':')
-	//	{
-	//		if (!yFlag)
-	//		{
-	//			yFlag = true;
-	//		}
-	//		else
-	//		{
-	//			zFlag = true;
-	//		}
-
-	//		continue;
-	//	}
-
-	//	if (!yFlag) // x
-	//	{
-	//		tmpX += message[i];
-	//	}
-	//	else if (zFlag) // z
-	//	{
-	//		tmpZ += message[i];
-	//	}
-	//	else // y
-	//	{
-	//		tmpY += message[i];
-	//	}
-	//}
-	//x = std::stof(tmpX);
-	//y = std::stof(tmpY);
-	//z = std::stof(tmpZ);
-
-	//glm::vec3 color(1.0f, 1.0f, 1.0f);
-	//glm::vec3 tmpPos(x, y, z);
-	//m_lights.setDirectionalLight(DirectionalLight(color, tmpPos));
-
-	//printf(event.getMessage().c_str());
 	return false;
 }
 
