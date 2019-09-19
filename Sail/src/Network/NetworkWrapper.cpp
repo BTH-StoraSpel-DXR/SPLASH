@@ -7,7 +7,7 @@
 #include "../../SPLASH/src/game/events/NetworkDisconnectEvent.h"
 #include "../../SPLASH/src/game/events/NetworkChatEvent.h"
 #include "../../SPLASH/src/game/events/NetworkWelcomeEvent.h"
-#include "../../SPLASH/src/game/events/NetworkTestEvent.h"
+#include "../../SPLASH/src/game/events/NetworkStartGameEvent.h"
 #include "../../SPLASH/src/game/states/LobbyState.h"
 
 void NetworkWrapper::initialize() {
@@ -193,42 +193,39 @@ void NetworkWrapper::decodeMessage(NetworkEvent nEvent) {
 		{
 			sendMsgAllClients(nEvent.data->msg);
 		}
-		message = std::string(nEvent.data->msg);
-		message.erase(0, 1);
-		
-		for (size_t i = 0; i < message.size(); i++)
-		{
-			if (message[i] == '\0' || message[i] == ':')
-			{
-				if (!yFlag)
-				{
-					yFlag = true;
-				}
-				else
-				{
-					zFlag = true;
-				}
+		//message = std::string(nEvent.data->msg);
+		//message.erase(0, 1);
+		//
+		//for (size_t i = 0; i < message.size(); i++)
+		//{
+		//	if (message[i] == '\0' || message[i] == ':')
+		//	{
+		//		if (!yFlag)
+		//		{
+		//			yFlag = true;
+		//		}
+		//		else
+		//		{
+		//			zFlag = true;
+		//		}
+		//		continue;
+		//	}
+		//	if (!yFlag) // x
+		//	{
+		//		tmpX += message[i];
+		//	}
+		//	else if (zFlag) // z
+		//	{
+		//		tmpZ += message[i];
+		//	}
+		//	else // y
+		//	{
+		//		tmpY += message[i];
+		//	}
+		//}
+		//message = tmpX + ':' + tmpY + ':' + tmpZ + ':';
 
-				continue;
-			}
-
-			if (!yFlag) // x
-			{
-				tmpX += message[i];
-			}
-			else if (zFlag) // z
-			{
-				tmpZ += message[i];
-			}
-			else // y
-			{
-				tmpY += message[i];
-			}
-		}
-		message = tmpX + ':' + tmpY + ':' + tmpZ + ':';
-		//printf(message.c_str());
-
-		Application::getInstance()->dispatchEvent(NetworkTestEvent(message));
+		Application::getInstance()->dispatchEvent(NetworkStartGameEvent());
 
 		break;
 	case 'w':

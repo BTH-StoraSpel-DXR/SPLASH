@@ -47,9 +47,10 @@ bool LobbyState::processInput(float dt) {
 	// Did user want to send the message?
 	// ---
 
-	if (m_input->IsMouseButtonPressed(0)) {
-		m_chatFocus = false;
-	}
+	// moved this to each of the lobby states
+	//if (m_input->IsMouseButtonPressed(0)) {
+	//	m_chatFocus = false;
+	//}
 
 	// Purely a function for testing
 //	this->doTestStuff();
@@ -115,7 +116,9 @@ bool LobbyState::renderImgui(float dt) {
 	renderSettings();
 
 	// ------- START BUTTON ------- 
-	renderStartButton();
+	if (m_network->getInstance().isHost()) {
+		renderStartButton();
+	}
 
 	return false;
 }
@@ -269,13 +272,21 @@ void LobbyState::renderStartButton() {
 		m_screenWidth - (m_outerPadding + m_screenWidth / 10.0f),
 		m_screenHeight - (m_outerPadding + m_screenHeight / 10.0f)
 	));
-	ImGui::Begin("Press 0 once");
+	//ImGui::Begin("Press 0 once", NULL, flags);
+	ImGui::Begin("Start Game");
 
 	// SetKeyBoardFocusHere on the chatbox prevents the button from working,
 	// so if we click with the mouse, temporarily set focus to the button.
 
 	if (ImGui::Button("S.P.L.A.S.H")) {
 		// Queue a removal of LobbyState, then a push of gamestate
+
+		// Do network stuff if it's initilized
+		if (m_network->isInitialized())
+		{
+			m_network->sendMsgAllClients("t");
+		}
+
 		this->requestStackPop();
 		this->requestStackPush(States::Game);
 	}

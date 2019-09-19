@@ -33,7 +33,7 @@ public:
 	virtual ~LobbyState();
 
 	// Process input for the state
-	bool processInput(float dt);
+	virtual bool processInput(float dt);
 	// Updates the state
 	virtual bool update(float dt);
 	// Renders the state
@@ -51,6 +51,14 @@ protected:
 	string m_myName;
 	std::list<message> m_messages;
 	std::list<player> m_players;
+
+	// Render ImGui Stuff --------- WILL BE REPLACED BY OTHER GRAPHICS.
+	unsigned int m_outerPadding;
+	unsigned int m_screenWidth;
+	unsigned int m_screenHeight;
+	unsigned int m_textHeight;
+
+	bool m_chatFocus = true;	// Used solely for ImGui
 
 	// Front-End Functions
 	bool inputToChatLog(MSG& msg);
@@ -80,18 +88,13 @@ private:
 	unsigned int m_messageCount;
 	unsigned int m_messageLimit;
 	bool m_firstFrame = true;	// Used solely for ImGui
-	bool m_chatFocus = true;	// Used solely for ImGui
 	unsigned int m_tempID = 0; // used as id counter until id's are gotten through network shit.
 	Scene m_scene;
 
 	// Purely for testing
 	void addTestData();
 
-	// Render ImGui Stuff --------- WILL BE REPLACED BY OTHER GRAPHICS.
-	unsigned int m_outerPadding;
-	unsigned int m_screenWidth;
-	unsigned int m_screenHeight;
-	unsigned int m_textHeight;
+	
 	void renderPlayerList();
 	void renderStartButton();
 	void renderSettings();		// Currently empty

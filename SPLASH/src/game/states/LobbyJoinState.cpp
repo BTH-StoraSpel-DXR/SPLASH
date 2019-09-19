@@ -1,6 +1,7 @@
 #include "LobbyJoinState.h"
 
 #include "../SPLASH/src/game/events/TextInputEvent.h"
+#include "../SPLASH/src/game/events/NetworkStartGameEvent.h"
 #include "Network/NetworkWrapper.h"
 
 LobbyJoinState::LobbyJoinState(StateStack& stack)
@@ -18,8 +19,17 @@ bool LobbyJoinState::onEvent(Event& event) {
 	EventHandler::dispatch<NetworkJoinedEvent>(event, SAIL_BIND_EVENT(&LobbyJoinState::onPlayerJoined));
 	EventHandler::dispatch<NetworkDisconnectEvent>(event, SAIL_BIND_EVENT(&LobbyJoinState::onPlayerDisconnected));
 	EventHandler::dispatch<NetworkWelcomeEvent>(event, SAIL_BIND_EVENT(&LobbyJoinState::onPlayerWelcomed));
+	EventHandler::dispatch<NetworkStartGameEvent>(event, SAIL_BIND_EVENT(&LobbyJoinState::onStartGame));
 
 	return true;
+}
+
+bool LobbyJoinState::processInput(float dt)
+{
+	if (m_input->IsMouseButtonPressed(0)) {
+		m_chatFocus = false;
+	}
+	return false;
 }
 
 bool LobbyJoinState::onMyTextInput(TextInputEvent& event) {
@@ -60,6 +70,15 @@ bool LobbyJoinState::onPlayerWelcomed(NetworkWelcomeEvent& event) {
 	for (auto currentName : list) {
 		m_players.push_back(currentName);
 	}
+
+	return false;
+}
+
+bool LobbyJoinState::onStartGame(NetworkStartGameEvent& event)
+{
+
+	this->requestStackPop();
+	this->requestStackPush(States::Game);
 
 	return false;
 }

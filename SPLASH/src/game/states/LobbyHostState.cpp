@@ -1,5 +1,5 @@
 #include "LobbyHostState.h"
-
+#include "../libraries/imgui/imgui.h"
 
 LobbyHostState::LobbyHostState(StateStack& stack)
 	: LobbyState(stack)
@@ -16,6 +16,15 @@ bool LobbyHostState::onEvent(Event& event)
 	EventHandler::dispatch<NetworkChatEvent>(event, SAIL_BIND_EVENT(&LobbyHostState::onRecievedText));
 	EventHandler::dispatch<NetworkJoinedEvent>(event, SAIL_BIND_EVENT(&LobbyHostState::onPlayerJoined));
 	EventHandler::dispatch<NetworkDisconnectEvent>(event, SAIL_BIND_EVENT(&LobbyHostState::onPlayerDisconnected));
+
+	return false;
+}
+
+bool LobbyHostState::processInput(float dt)
+{
+	if (m_input->IsMouseButtonPressed(0)) {
+		m_chatFocus = false;
+	}
 
 	return false;
 }
@@ -69,3 +78,4 @@ bool LobbyHostState::onPlayerDisconnected(NetworkDisconnectEvent& event) {
 	
 	return false;
 }
+

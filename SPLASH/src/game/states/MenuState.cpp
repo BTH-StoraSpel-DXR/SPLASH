@@ -12,7 +12,7 @@ MenuState::MenuState(StateStack& stack)
 	m_app = Application::getInstance();
 
 	this->inputIP = new char[100]{ "127.0.0.1:54000" };
-	this->inputName = new char[100]{ "Gottem420" };
+	this->inputName = new char[100]{ "Hans" };
 }
 
 MenuState::~MenuState() {

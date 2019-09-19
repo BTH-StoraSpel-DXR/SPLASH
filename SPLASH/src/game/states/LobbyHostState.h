@@ -16,8 +16,10 @@ public:
 	bool onEvent(Event& event);
 
 private:
+	bool processInput(float dt);
 	bool onMyTextInput(TextInputEvent& event);
 	bool onRecievedText(NetworkChatEvent& event);
 	bool onPlayerJoined(NetworkJoinedEvent& event);
 	bool onPlayerDisconnected(NetworkDisconnectEvent& event);
+
 };
