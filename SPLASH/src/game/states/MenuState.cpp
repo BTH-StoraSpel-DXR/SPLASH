@@ -3,6 +3,7 @@
 #include "Sail.h"
 #include "Network/NetworkWrapper.h"
 #include "../libraries/imgui/imgui.h"
+#include "..//Sail/src/Sail/api/Input.h"
 
 MenuState::MenuState(StateStack& stack) 
 	: State(stack)

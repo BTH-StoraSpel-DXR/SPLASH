@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "StateStack.h"
 #include "Sail/Application.h"
+#include "Sail/api/Input.h"
 #include "Sail/KeyCodes.h"
 
 StateStack::StateStack()

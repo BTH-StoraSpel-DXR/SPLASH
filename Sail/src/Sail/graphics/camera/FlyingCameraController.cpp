@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "FlyingCameraController.h"
 #include "Sail/Application.h"
+#include "..//Sail/src/Sail/api/Input.h"
 #include "../../KeyCodes.h"
 #include "../../MouseButtonCodes.h"
 

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "PlayerController.h"
+#include "Sail/api/Input.h"
 #include "Sail.h"
 
 PlayerController::PlayerController(Camera* cam, Scene* scene) {

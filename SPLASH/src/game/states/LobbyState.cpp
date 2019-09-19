@@ -7,6 +7,7 @@
 #include "../SPLASH/src/game/events/TextInputEvent.h"
 #include "../SPLASH/src/game/events/NetworkJoinedEvent.h"
 #include "Network/NetworkWrapper.h"
+#include "Sail/api/Input.h"
 
 #include <string>
 using namespace std;

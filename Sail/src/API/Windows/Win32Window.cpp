@@ -3,7 +3,7 @@
 #include "Sail/Application.h"
 #include "imgui.h"
 #include "Win32Input.h"
-#include <dxgi.h>
+//#include <dxgi.h>
 #include <wrl.h>
 
 namespace {

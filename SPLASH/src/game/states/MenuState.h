@@ -1,8 +1,15 @@
 #pragma once
+//#include "Sail.h"
+#include "Sail/states/State.h"
+#include "Sail/graphics/Scene.h"
+//#include "Network/NetworkWrapper.h"
+#include "Network/NetworkStructs.hpp"
+//#include "Sail/api/Input.h"
+#include "Sail/events/Event.h"
 
-#include "Sail.h"
-#include "Network/NetworkWrapper.h"
-
+class Input;
+class Application;
+class NetworkWrapper;
 
 class MenuState : public State, public NetworkEvent {
 

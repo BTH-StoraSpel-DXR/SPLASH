@@ -1,11 +1,12 @@
 #pragma once
 
 #include <exception>
-#include <iostream>
 #include <string>
-#include <sstream>
 #include <random>
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 #define BIT(x) 1 << x
 
@@ -22,12 +23,12 @@
 #endif
 
 // Inherit this to make a class non-inheritable
-template<typename T>
-class MakeFinal {
-private:
-	~MakeFinal() { };
-	friend T;
-};
+//template<typename T>		(this was not used anywhere, and you can just write "final" after the class name instead)
+//class MakeFinal {
+//private:
+//	~MakeFinal() { };
+//	friend T;
+//};
 
 class Memory {
 
@@ -69,70 +70,16 @@ public:
 			(*t) = nullptr;
 		}
 	}
-
 };
 
 class Logger {
-
 public:
-
-	inline static void Log(const std::string& msg) {
-
-		HANDLE hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
-
-		// Save currently set color
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		GetConsoleScreenBufferInfo(hstdout, &csbi);
-
-		SetConsoleTextAttribute(hstdout, 0x0F);
-		std::cout << "LOG: " << msg << std::endl;
-
-		// Revert color
-		SetConsoleTextAttribute(hstdout, csbi.wAttributes);
-
-
-	}
-
-
-	inline static void Warning(const std::string& msg) {
-		
-		HANDLE hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
-
-		// Save currently set color
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		GetConsoleScreenBufferInfo(hstdout, &csbi);
-
-		SetConsoleTextAttribute(hstdout, 0xE0);
-		std::cout << "WARNING: " << msg << std::endl;
-
-		// Revert color
-		SetConsoleTextAttribute(hstdout, csbi.wAttributes);
-
-#ifdef _SAIL_BREAK_ON_WARNING
- 		__debugbreak();
-#endif
-	}
-
-	inline static void Error(const std::string& msg) {
-
-		HANDLE hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
-
-		// Save currently set color
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		GetConsoleScreenBufferInfo(hstdout, &csbi);
-
-		SetConsoleTextAttribute(hstdout, 0xC0);
-		std::cout << "ERROR: " << msg << std::endl;
-
-		// Revert color
-		SetConsoleTextAttribute(hstdout, csbi.wAttributes);
-
-
-#ifdef _SAIL_BREAK_ON_ERROR
-		__debugbreak();
-#endif
-	}
-
+	/*inline static void Log(const std::string& msg);
+	inline static void Warning(const std::string& msg);
+	inline static void Error(const std::string& msg);*/
+	static void Log(const std::string& msg);
+	static void Warning(const std::string& msg);
+	static void Error(const std::string& msg);
 };
 
 namespace Utils {
@@ -159,5 +106,4 @@ namespace Utils {
 		std::string removeComments(const std::string& source);
 		bool startsWith(const char* source, const std::string& prefix);
 	};
-
 };

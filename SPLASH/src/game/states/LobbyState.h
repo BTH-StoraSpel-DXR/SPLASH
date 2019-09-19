@@ -6,6 +6,7 @@
 #include "Network/NetworkWrapper.h"
 using namespace std;
 
+class Input;
 class TextInputEvent;
 class NetworkJoinedEvent;
 

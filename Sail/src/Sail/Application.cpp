@@ -3,6 +3,7 @@
 #include "events/WindowResizeEvent.h"
 #include "../../SPLASH/src/game/events/TextInputEvent.h" // ONLY 2 BITCH
 #include "KeyCodes.h"
+#include "api/Input.h"
 
 Application* Application::m_instance = nullptr;
 

@@ -1,6 +1,6 @@
 #pragma once
-
 #include <string>
+#include <Windows.h>
 
 class Window {
 public:
@@ -23,7 +23,6 @@ public:
 	virtual inline unsigned int getWindowHeight() const { return windowHeight; };
 	virtual inline bool isMinimized() const { return isWindowMinimized; };
 	virtual inline bool isFocused() const { return isWindowFocused; };
-
 
 protected:
 	unsigned int windowWidth;
