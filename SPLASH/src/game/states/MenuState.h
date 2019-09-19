@@ -1,10 +1,7 @@
 #pragma once
-//#include "Sail.h"
 #include "Sail/states/State.h"
 #include "Sail/graphics/Scene.h"
-//#include "Network/NetworkWrapper.h"
 #include "Network/NetworkStructs.hpp"
-//#include "Sail/api/Input.h"
 #include "Sail/events/Event.h"
 
 class Input;

@@ -1,12 +1,11 @@
 #pragma once
 
-//#include <glm/glm.hpp>
 #include <glm/vec4.hpp>
 
 class RenderableTexture {
 public:
-	RenderableTexture(unsigned int width = 320, unsigned int height = 180);
-	virtual ~RenderableTexture();
+	RenderableTexture(unsigned int width = 320, unsigned int height = 180) {}
+	virtual ~RenderableTexture() {}
 
 	virtual void begin() = 0;
 	virtual void end() = 0;

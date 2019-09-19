@@ -3,7 +3,6 @@
 #include <exception>
 #include <string>
 #include <random>
-//#include <glm/glm.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -21,14 +20,6 @@
 #else
 #define SAIL_NEW new
 #endif
-
-// Inherit this to make a class non-inheritable
-//template<typename T>		(this was not used anywhere, and you can just write "final" after the class name instead)
-//class MakeFinal {
-//private:
-//	~MakeFinal() { };
-//	friend T;
-//};
 
 class Memory {
 
@@ -74,9 +65,6 @@ public:
 
 class Logger {
 public:
-	/*inline static void Log(const std::string& msg);
-	inline static void Warning(const std::string& msg);
-	inline static void Error(const std::string& msg);*/
 	static void Log(const std::string& msg);
 	static void Warning(const std::string& msg);
 	static void Error(const std::string& msg);

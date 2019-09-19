@@ -10,8 +10,5 @@ private:
 	double m_countsPerSecond = 0.0;
 	signed long long m_counterStart = 0;
 	signed long long m_oldFrameTime = 0;
-	
-	/*INT64 m_counterStart = 0;
-	INT64 m_oldframeTime = 0;*/
 };
 

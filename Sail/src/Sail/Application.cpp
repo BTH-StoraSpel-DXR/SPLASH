@@ -26,15 +26,12 @@ Application::Application(int windowWidth, int windowHeight, const char* windowTi
 	windowProps.hInstance = hInstance;
 	windowProps.windowWidth = windowWidth;
 	windowProps.windowHeight = windowHeight;
-	//m_window = std::unique_ptr<Window>(Window::Create(windowProps));
 	m_window = Window::Create(windowProps);
 	m_window->setWindowTitle(windowTitle);
 
 	// Set up api
-	//m_api = std::unique_ptr<GraphicsAPI>(GraphicsAPI::Create());
 	m_api = GraphicsAPI::Create();
 	// Set up imgui handler
-	//m_imguiHandler = std::unique_ptr<ImGuiHandler>(ImGuiHandler::Create());
 	m_imguiHandler = ImGuiHandler::Create();
 
 	// Initalize the window
@@ -45,7 +42,6 @@ Application::Application(int windowWidth, int windowHeight, const char* windowTi
 	}
 
 	// Initialize the graphics API
-	//if (!m_api->init(m_window.get())) {
 	if (!m_api->init(m_window)) {
 		OutputDebugString(L"\nFailed to initialize the graphics API\n");
 		Logger::Error("Failed to initialize the grahics API!");
@@ -59,7 +55,6 @@ Application::Application(int windowWidth, int windowHeight, const char* windowTi
 	//m_input.registerRawDevices(*m_window.getHwnd());
 
 	// Load the missing texture texture
-	//m_resourceManager.loadTexture("missing.tga");
 	m_resourceManager = SAIL_NEW ResourceManager;
 	m_resourceManager->loadTexture("missing.tga");
 
@@ -191,20 +186,14 @@ void Application::dispatchEvent(Event& event) {
 }
 
 GraphicsAPI* const Application::getAPI() {
-	//return m_api.get();
 	return m_api;
 }
 Window* const Application::getWindow() {
-	//return m_window.get();
 	return m_window;
 }
 ImGuiHandler* const Application::getImGuiHandler() {
-	//return m_imguiHandler.get();
 	return m_imguiHandler;
 }
-//ResourceManager& Application::getResourceManager() {
-//	return m_resourceManager;
-//}
 ResourceManager* Application::getResourceManager() {
 	return m_resourceManager;
 }

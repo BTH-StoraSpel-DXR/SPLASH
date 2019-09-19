@@ -1,11 +1,4 @@
 #pragma once
-//#include "api/Mesh.h"
-//#include "api/Input.h"
-
-//#include "api/GraphicsAPI.h"
-//#include "api/Window.h"
-//#include "api/ImGuiHandler.h"
-
 class Window;
 class GraphicsAPI;
 class ImGuiHandler;
@@ -37,31 +30,24 @@ public:
 	virtual void dispatchEvent(Event& event) override;
 
 	template<typename T>
-	//T* const getAPI() { return static_cast<T*>(m_api.get()); }
 	T* const getAPI() { return static_cast<T*>(m_api); }
 	GraphicsAPI* const getAPI();
 
 	template<typename T>
-	//T* const getWindow() { return static_cast<T*>(m_window.get()); }
 	T* const getWindow() { return static_cast<T*>(m_window); }
 	Window* const getWindow();
 
 	static std::string getPlatformName();
 	static Application* getInstance();
 	ImGuiHandler* const getImGuiHandler();
-	//ResourceManager& getResourceManager();
 	ResourceManager* getResourceManager();
 	const UINT getFPS() const;
 
 private:
 	static Application* m_instance;
-	/*std::unique_ptr<Window> m_window;
-	std::unique_ptr<GraphicsAPI> m_api;
-	std::unique_ptr<ImGuiHandler> m_imguiHandler;*/
 	Window* m_window;
 	GraphicsAPI* m_api;
 	ImGuiHandler* m_imguiHandler;
-	//ResourceManager m_resourceManager;
 	ResourceManager* m_resourceManager;
 
 	Timer m_timer;

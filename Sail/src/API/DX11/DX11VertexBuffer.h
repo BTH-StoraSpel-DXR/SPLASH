@@ -1,5 +1,4 @@
 #pragma once
-//#include <d3d11.h>
 #include "shader/DX11InputLayout.h"
 #include "Sail/api/VertexBuffer.h"
 

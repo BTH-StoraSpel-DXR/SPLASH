@@ -1,9 +1,6 @@
 #pragma once
 
-//#include <glm/glm.hpp>
 #include <glm/vec2.hpp>
-//#include <memory>
-//#include <functional>
 #include "Sail/events/Events.h"
 
 class Input : public IEventListener {
@@ -45,6 +42,4 @@ protected:
 
 private:
 	static Input* m_Instance;
-
-
 };

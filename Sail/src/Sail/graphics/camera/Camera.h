@@ -1,7 +1,4 @@
 #pragma once
-
-//#include <d3d11.h>
-//#include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>

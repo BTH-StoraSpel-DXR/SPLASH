@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Sail/api/Renderer.h"
-//#include <glm/glm.hpp>
 
 class DX11ForwardRenderer : public Renderer {
 public:
@@ -11,6 +10,4 @@ public:
 	void present(RenderableTexture* output = nullptr) override;
 
 private:
-	
-
 };
