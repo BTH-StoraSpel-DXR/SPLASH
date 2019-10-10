@@ -84,6 +84,7 @@ bool Intersection::AabbWithPlane(const BoundingBox& aabb, const glm::vec3& norma
 	if (glm::abs(glm::dot(normal, aabb.getPosition()) - distance) <= radius) {
 		return true;
 	}
+
 	return false;
 }
 
@@ -158,33 +159,68 @@ bool Intersection::TriangleWithTriangle(const glm::vec3 U[3], const glm::vec3 V[
 }
 
 bool Intersection::TriangleWithSphere(const glm::vec3 tri[3], const Sphere& sphere) {
-	glm::vec3 toVert = tri[0] - sphere.position;
-	glm::vec3 normal = glm::normalize(glm::cross(tri[1] - tri[0], tri[2] - tri[0]));
-	glm::vec3 toTriPlane = normal * glm::dot(toVert, normal);
+	// Calculations found at http://realtimecollisiondetection.net/blog/?p=103
+	// NOTE: in the comments of the article above, it is mentioned that this test is fast,
+	// but does not necessarily have perfect precision
 
-	// Check if closest point on triangle plane is farther than radius from sphere center
-	if (glm::length(toTriPlane) >= sphere.radius) {
+	const glm::vec3 A = tri[0] - sphere.position;
+	const glm::vec3 B = tri[1] - sphere.position;
+	const glm::vec3 C = tri[2] - sphere.position;
+	const float rr = sphere.radius * sphere.radius;
+	const glm::vec3 V = glm::cross(B - A, C - A);
+	const float d = glm::dot(A, V);
+	const float e = glm::dot(V, V);
+	
+	if (d * d > rr * e) {
 		return false;
 	}
 
-	glm::vec3 p = sphere.position + toTriPlane;
-	glm::vec3 v0 = tri[1] - tri[0];
-	glm::vec3 v1 = tri[2] - tri[0];
-	glm::vec3 v2 = p - tri[0];
+	const float aa = glm::dot(A, A);
+	const float ab = glm::dot(A, B);
+	const float ac = glm::dot(A, C);
+	const float bb = glm::dot(B, B);
+	const float bc = glm::dot(B, C);
+	const float cc = glm::dot(C, C);
 
-	// Determine barycentric coordinates
-	float d00 = glm::dot(v0, v0);
-	float d01 = glm::dot(v0, v1);
-	float d11 = glm::dot(v1, v1);
-	float d20 = glm::dot(v2, v0);
-	float d21 = glm::dot(v2, v1);
-	float denom = d00 * d11 - d01 * d01;
-	float v = (d11 * d20 - d01 * d21) / denom;
-	float w = (d00 * d21 - d01 * d20) / denom;
-	float u = 1.0f - v - w;
+	if (aa > rr && ab > aa && ac > aa) {
+		return false;
+	}
+	if (bb > rr && ab > bb && bc > bb) {
+		return false;
+	}
+	if (cc > rr && ac > cc && bc > cc) {
+		return false;
+	}
 
-	// Check if the point on the triangle plane is within the triangle
-	return ((0.0f < v && v < 1.0f) && (0.0f < w && w < 1.0f) && (0.0f < u && u < 1.0f));
+	const glm::vec3 AB = B - A;
+	const glm::vec3 BC = C - B;
+	const glm::vec3 CA = A - C;
+	 
+	const float d1 = ab - aa;
+	const float d2 = bc - bb;
+	const float d3 = ab - cc;
+	const float e1 = glm::dot(AB, AB);
+	const float e2 = glm::dot(BC, BC);
+	const float e3 = glm::dot(CA, CA);
+	 
+	const glm::vec3 Q1 = A * e1 - d1 * AB;
+	const glm::vec3 Q2 = B * e2 - d2 * BC;
+	const glm::vec3 Q3 = C * e3 - d3 * CA;
+	const glm::vec3 QC = C * e1 - Q1;
+	const glm::vec3 QA = A * e2 - Q2;
+	const glm::vec3 QB = B * e3 - Q3;
+
+	if ((glm::dot(Q1, Q1) > rr * e1 * e1) && (glm::dot(Q1, QC) > 0)) {
+		return false;
+	}
+	if ((glm::dot(Q2, Q2) > rr * e2 * e2) && (glm::dot(Q2, QA) > 0)) {
+		return false;
+	}
+	if ((glm::dot(Q3, Q3) > rr * e3 * e3) && (glm::dot(Q3, QB) > 0)) {
+		return false;
+	}
+
+	return true;
 }
 
 bool Intersection::TriangleWithVerticalCylinder(const glm::vec3 tri[3], const VerticalCylinder& cyl) {
@@ -341,6 +377,158 @@ bool Intersection::LineSegmentWithVerticalCylinder(const glm::vec3& start, const
 	return isColliding;
 }
 
+float Intersection::RayWithAabb(const glm::vec3& rayStart, const glm::vec3& rayVec, const BoundingBox& aabb) {
+	float returnValue = -1.0f;
+	glm::vec3 normalizedRay = glm::normalize(rayVec);
+	bool noHit = false; //Boolean for early exits from the for-loop
+	float tMin = -std::numeric_limits<float>::infinity(); //tMin initialized at negative infinity
+	float tMax = std::numeric_limits<float>::infinity(); //tMax initialized at positive infinity
+	glm::vec3 p = aabb.getPosition() - rayStart; //Vector to center off AABB
+	for (int i = 0; i < 3; i++) {
+		float tempH = aabb.getHalfSize()[i]; //Temporary variable to store the current half axis
+
+		float e = p[i];
+		float f = normalizedRay[i];
+		if (f != 0.0f) { //Ray is not parallel to slab
+			float tempF = 1 / f; //temporary variable to avoid calculating division with the (possibly) very small value f multiple times since it is an expensive calculation
+
+			//Finds the entering and exiting points of the current slab.
+			float t1 = (e + tempH) * tempF;
+			float t2 = (e - tempH) * tempF;
+			if (t1 > t2) { //Swaps values if t1 is bigger than t2
+				float tempT = t2;
+				t2 = t1;
+				t1 = tempT;
+			}
+			if (t1 > tMin) {//Replaces tMin if t1 is bigger
+				tMin = t1;
+			}
+			if (t2 < tMax) {//Replaces tMax if t2 is smaller
+				tMax = t2;
+			}
+			if (tMin > tMax || tMax < 0) { //tMin > tMax - A slab was exited before all slabs had been entered. tMax < 0 - the AABB is "behind" the ray start
+				//Exit test, no hit.
+				i = 3;
+				noHit = true;
+			}
+		}
+		else if (-e - tempH > 0 || -e + tempH < 0) { //Ray is parallel to slab and it does not go through OBB
+			//Exit test, no hit.
+			i = 3;
+			noHit = true;
+		}
+	}
+
+	if (noHit == false) { //The AABB was hit by the ray
+		if (tMin > 0) { //tMin is bigger than 0 so it is the first intersection
+			returnValue = tMin;
+		}
+		else if (tMax > 0) { //tMin is smaller than 0 so try with tMax.
+			returnValue = 0.0f; //Ray started in AABB, instant hit. Distance is 0
+		}
+	}
+	return returnValue;
+}
+
+float Intersection::RayWithTriangle(const glm::vec3& rayStart, const glm::vec3& rayDir, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3) {
+	const glm::vec3 edge1 = v2 - v1;
+	const glm::vec3 edge2 = v3 - v1;
+	const glm::vec3 planeNormal = glm::normalize(glm::cross(edge1, edge2));
+	
+	const float originToPlaneDistance = glm::dot(v1, planeNormal);
+	const float rayToPlaneDistance = RayWithPlane(rayStart, rayDir, planeNormal, originToPlaneDistance);
+	
+	if (rayToPlaneDistance == -1.0f) {
+		return -1.0f;
+	}
+	
+	// Determine barycentric coordinates u, v, w
+	float u, v, w;
+	const glm::vec3 p = rayStart + rayDir * rayToPlaneDistance;
+	Barycentric(p, v1, v2, v3, u, v, w);
+	
+	// Check if point on triangle plane is within triangle
+	if (OnTriangle(u, v, w)) {
+		return rayToPlaneDistance;
+	}
+	return -1.0f;
+}
+
+float Intersection::RayWithPlane(const glm::vec3& rayStart, const glm::vec3& rayDir, const glm::vec3& normal, const float& distance) {
+	const float dirDotNormal = glm::dot(rayDir, normal);
+	
+	bool isParallelWithPlane = std::fabsf(dirDotNormal) < 0.001f;
+	if (isParallelWithPlane) {
+		return -1.0f;
+	}
+
+	const glm::vec3 pointOnPlane = normal * distance;
+	const glm::vec3 startToPlane = pointOnPlane - rayStart;
+	const float shortestDistanceToPlane = glm::dot(startToPlane, normal);
+	const float distanceToPlane = shortestDistanceToPlane / dirDotNormal;
+
+	return distanceToPlane;
+}
+
+float Intersection::RayWithPaddedAabb(const glm::vec3& rayStart, const glm::vec3& rayVec, const BoundingBox& aabb, float padding) {
+	float returnValue = -1.0f;
+	
+	if (padding != 0.0f) {
+		//Add padding
+		sPaddedReserved.setPosition(aabb.getPosition());
+		sPaddedReserved.setHalfSize(aabb.getHalfSize() + glm::vec3(padding));
+
+		returnValue = RayWithAabb(rayStart, rayVec, sPaddedReserved);
+	}
+	else {
+		returnValue = RayWithAabb(rayStart, rayVec, aabb);
+	}
+
+	return returnValue;
+}
+
+float Intersection::RayWithPaddedTriangle(const glm::vec3& rayStart, const glm::vec3& rayDir, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, float padding) {
+	float returnValue = -1.0f;
+	
+	glm::vec3 triangleNormal = glm::normalize(glm::cross(glm::vec3(v1 - v2), glm::vec3(v1 - v3)));
+
+	glm::vec3 middle = (v1 + v2 + v3) / 3.0f;
+
+	if (glm::dot(middle - rayStart, triangleNormal) < 0.0f) {
+		//Only check if triangle is facing ray start
+		if (padding != 0.0f) {
+			//Add padding
+			glm::vec3 newV1 = v1 + (glm::normalize(v1 - middle) * 20.0f + triangleNormal) * padding;
+			glm::vec3 newV2 = v2 + (glm::normalize(v2 - middle) * 20.0f + triangleNormal) * padding;
+			glm::vec3 newV3 = v3 + (glm::normalize(v3 - middle) * 20.0f + triangleNormal) * padding;
+
+			returnValue = RayWithTriangle(rayStart, rayDir, newV1, newV2, newV3);
+		}
+		else {
+			returnValue = RayWithTriangle(rayStart, rayDir, v1, v2, v3);
+		}
+	}
+	
+	return returnValue;
+}
+
+bool Intersection::FrustumWithAabb(const Frustum& frustum, const BoundingBox& aabb) {
+	for (int i = 0; i < 6; i++) {
+		glm::vec4 c(aabb.getPosition(), 1.f);
+
+		glm::vec3 h = aabb.getHalfSize();
+		float e = h.x * fabs(frustum.planes[i].x) + h.y * fabs(frustum.planes[i].y) + h.z * fabs(frustum.planes[i].z);
+		float s = glm::dot(c, frustum.planes[i]);
+
+		if (s - e > 0) {
+			return false; // Outside
+		}
+
+		// Else inside or intersecting
+	}
+	return true;
+}
+
 bool Intersection::TriangleWithTriangleSupport(const glm::vec3 U[3], const glm::vec3 V[3], glm::vec3 outSegment[2]) {
 	// Compute the plane normal for triangle U.
 	glm::vec3 edge1 = U[1] - U[0];
@@ -434,146 +622,24 @@ bool Intersection::TriangleWithTriangleSupport(const glm::vec3 U[3], const glm::
 	return false;
 }
 
-float Intersection::RayWithAabb(const glm::vec3& rayStart, const glm::vec3& rayVec, const BoundingBox& aabb) {
-	float returnValue = -1.0f;
-	glm::vec3 normalizedRay = glm::normalize(rayVec);
-	bool noHit = false; //Boolean for early exits from the for-loop
-	float tMin = -std::numeric_limits<float>::infinity(); //tMin initialized at negative infinity
-	float tMax = std::numeric_limits<float>::infinity(); //tMax initialized at positive infinity
-	glm::vec3 p = aabb.getPosition() - rayStart; //Vector to center off AABB
-	for (int i = 0; i < 3; i++) {
-		float tempH = aabb.getHalfSize()[i]; //Temporary variable to store the current half axis
+void Intersection::Barycentric(const glm::vec3& p, const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, float& u, float& v, float& w) {
+	const glm::vec3 v0 = b - a;
+	const glm::vec3 v1 = c - a;
+	const glm::vec3 v2 = p - a;
 
-		float e = p[i];
-		float f = normalizedRay[i];
-		if (f != 0.0f) { //Ray is not parallel to slab
-			float tempF = 1 / f; //temporary variable to avoid calculating division with the (possibly) very small value f multiple times since it is an expensive calculation
-
-			//Finds the entering and exiting points of the current slab.
-			float t1 = (e + tempH) * tempF;
-			float t2 = (e - tempH) * tempF;
-			if (t1 > t2) { //Swaps values if t1 is bigger than t2
-				float tempT = t2;
-				t2 = t1;
-				t1 = tempT;
-			}
-			if (t1 > tMin) {//Replaces tMin if t1 is bigger
-				tMin = t1;
-			}
-			if (t2 < tMax) {//Replaces tMax if t2 is smaller
-				tMax = t2;
-			}
-			if (tMin > tMax || tMax < 0) { //tMin > tMax - A slab was exited before all slabs had been entered. tMax < 0 - the AABB is "behind" the ray start
-				//Exit test, no hit.
-				i = 3;
-				noHit = true;
-			}
-		}
-		else if (-e - tempH > 0 || -e + tempH < 0) { //Ray is parallel to slab and it does not go through OBB
-			//Exit test, no hit.
-			i = 3;
-			noHit = true;
-		}
-	}
-
-	if (noHit == false) { //The AABB was hit by the ray
-		if (tMin > 0) { //tMin is bigger than 0 so it is the first intersection
-			returnValue = tMin;
-		}
-		else if (tMax > 0) { //tMin is smaller than 0 so try with tMax.
-			returnValue = 0.0f; //Ray started in AABB, instant hit. Distance is 0
-		}
-	}
-	return returnValue;
+	// Determine barycentric coordinates
+	const float d00 = glm::dot(v0, v0);
+	const float d01 = glm::dot(v0, v1);
+	const float d11 = glm::dot(v1, v1);
+	const float d20 = glm::dot(v2, v0);
+	const float d21 = glm::dot(v2, v1);
+	const float denom = d00 * d11 - d01 * d01;
+	const float divDenom = 1.0f / denom;
+	u = (d11 * d20 - d01 * d21) * divDenom;
+	v = (d00 * d21 - d01 * d20) * divDenom;
+	w = 1.0f - u - v;
 }
 
-float Intersection::RayWithTriangle(const glm::vec3& rayStart, const glm::vec3& rayDir, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3) {
-	float returnValue = -1.0f;
-	glm::vec3 normalizedRay = glm::normalize(rayDir); //Normalize ray direction vec just to be sure
-
-	//Calculate triangle edges
-	glm::vec3 edge0 = v2 - v1;
-	glm::vec3 edge1 = v3 - v1;
-
-	//Determines s to use in cramer's rule
-	glm::vec3 cramersS = rayStart - v1;
-
-	glm::vec4 tuvw(-1.0f);
-
-	normalizedRay *= -1.0f;
-
-	float determinantVal = glm::determinant(glm::mat3(normalizedRay, edge0, edge1));
-	if (determinantVal != 0) { //Makes sure no division by 0
-		glm::vec3 detVec(glm::determinant(glm::mat3(cramersS, edge0, edge1)), glm::determinant(glm::mat3(normalizedRay, cramersS, edge1)), glm::determinant(glm::mat3(normalizedRay, edge0, cramersS))); //Vector containing determinant of the three matrixes
-		glm::vec3 tuv = detVec * (1 / determinantVal);
-		tuvw = glm::vec4(tuv.x, tuv.y, tuv.z, 1 - tuv.y - tuv.z);
-	}
-
-	if (tuvw.x >= 0.0f &&
-		tuvw.y >= 0.0f && tuvw.y <= 1.0f &&
-		tuvw.z >= 0.0f && tuvw.z <= 1.0f &&
-		tuvw.w >= 0.0f && tuvw.w <= 1.0f) { //Hit if t is not negative and if u, v, and w are all between 0 and 1)
-		returnValue = tuvw.x;
-	}
-
-	return returnValue;
-}
-
-float Intersection::RayWithPaddedAabb(const glm::vec3& rayStart, const glm::vec3& rayVec, const BoundingBox& aabb, float padding) {
-	float returnValue = -1.0f;
-	
-	if (padding != 0.0f) {
-		//Add padding
-		sPaddedReserved.setPosition(aabb.getPosition());
-		sPaddedReserved.setHalfSize(aabb.getHalfSize() + glm::vec3(padding));
-
-		returnValue = RayWithAabb(rayStart, rayVec, sPaddedReserved);
-	}
-	else {
-		returnValue = RayWithAabb(rayStart, rayVec, aabb);
-	}
-
-	return returnValue;
-}
-
-float Intersection::RayWithPaddedTriangle(const glm::vec3& rayStart, const glm::vec3& rayDir, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, float padding) {
-	float returnValue = -1.0f;
-	
-	glm::vec3 triangleNormal = glm::normalize(glm::cross(glm::vec3(v1 - v2), glm::vec3(v1 - v3)));
-
-	glm::vec3 middle = (v1 + v2 + v3) / 3.0f;
-
-	if (glm::dot(middle - rayStart, triangleNormal) < 0.0f) {
-		//Only check if triangle is facing ray start
-		if (padding != 0.0f) {
-			//Add padding
-			glm::vec3 newV1 = v1 + (glm::normalize(v1 - middle) * 20.0f + triangleNormal) * padding;
-			glm::vec3 newV2 = v2 + (glm::normalize(v2 - middle) * 20.0f + triangleNormal) * padding;
-			glm::vec3 newV3 = v3 + (glm::normalize(v3 - middle) * 20.0f + triangleNormal) * padding;
-
-			returnValue = RayWithTriangle(rayStart, rayDir, newV1, newV2, newV3);
-		}
-		else {
-			returnValue = RayWithTriangle(rayStart, rayDir, v1, v2, v3);
-		}
-	}
-	
-	return returnValue;
-}
-
-bool Intersection::FrustumWithAabb(const Frustum& frustum, const BoundingBox& aabb) {
-	for (int i = 0; i < 6; i++) {
-		glm::vec4 c(aabb.getPosition(), 1.f);
-
-		glm::vec3 h = aabb.getHalfSize();
-		float e = h.x * fabs(frustum.planes[i].x) + h.y * fabs(frustum.planes[i].y) + h.z * fabs(frustum.planes[i].z);
-		float s = glm::dot(c, frustum.planes[i]);
-
-		if (s - e > 0) {
-			return false; // Outside
-		}
-
-		// Else inside or intersecting
-	}
-	return true;
+bool Intersection::OnTriangle(const float u, const float v, const float w) {
+	return ((0.0f < v && v < 1.0f) && (0.0f < w && w < 1.0f) && (0.0f < u && u < 1.0f));
 }
