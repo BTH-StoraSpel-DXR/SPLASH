@@ -230,6 +230,10 @@ const glm::vec3 Transform::getInterpolatedTranslation(float alpha) const {
 	return (alpha * m_data.m_current.m_translation) + ((1.0f - alpha) * m_data.m_previous.m_translation);
 }
 
+const glm::quat Transform::getInterpolatedRotation(float alpha) const {
+	return (alpha * m_data.m_current.m_rotationQuat) + ((1.0f - alpha) * m_data.m_previous.m_rotationQuat);
+}
+
 
 glm::mat4 Transform::getMatrix() {
 	if (m_matNeedsUpdate) {

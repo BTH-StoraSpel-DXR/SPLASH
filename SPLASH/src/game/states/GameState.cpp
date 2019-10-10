@@ -32,6 +32,7 @@
 #include "../SPLASH/src/game/events/NetworkSerializedPackageEvent.h"
 #include "Network/NWrapperSingleton.h"
 
+
 #include <sstream>
 #include <iomanip>
 
@@ -145,8 +146,6 @@ GameState::GameState(StateStack& stack)
 	// Create system which checks projectile collisions
 	m_componentSystems.projectileSystem = ECS::Instance()->createSystem<ProjectileSystem>();
 
-	// Create system for handling and updating sounds
-	m_componentSystems.audioSystem = ECS::Instance()->createSystem<AudioSystem>();
 	//create system for level generation
 	m_componentSystems.levelGeneratorSystem = ECS::Instance()->createSystem<LevelGeneratorSystem>();
 
@@ -165,6 +164,10 @@ GameState::GameState(StateStack& stack)
 	m_componentSystems.networkSenderSystem = ECS::Instance()->createSystem<NetworkSenderSystem>();
 	m_componentSystems.networkReceiverSystem = ECS::Instance()->createSystem<NetworkReceiverSystem>();
 	m_componentSystems.networkReceiverSystem->initWithPlayerID(playerID);
+
+	// Create system for handling and updating sounds
+	m_componentSystems.audioSystem = ECS::Instance()->createSystem<AudioSystem>();
+
 
 	// Textures needs to be loaded before they can be used
 	// TODO: automatically load textures when needed so the following can be removed
@@ -419,15 +422,18 @@ bool GameState::onNetworkSerializedPackageEvent(NetworkSerializedPackageEvent& e
 }
 
 bool GameState::onPlayerCandleDeath(PlayerCandleDeathEvent& event) {
-	m_player->addComponent<SpectatorComponent>();
-
-	m_player->removeComponent<NetworkSenderComponent>();
-	m_player->removeComponent<GunComponent>();
-	m_player->removeAllChildren();
-	// TODO: These should be uncommented once the GameInputSystem has been divided into movement and input
-	//m_player->removeComponent<PhysicsComponent>();
-	//m_player->removeComponent<AudioComponent>();
-	//m_player->removeComponent<BoundingBoxComponent>();
+	if ( !m_isSingleplayer ) {
+		m_player->addComponent<SpectatorComponent>();
+		m_player->getComponent<MovementComponent>()->constantAcceleration = glm::vec3(0.f, 0.f, 0.f);
+		m_player->removeComponent<NetworkSenderComponent>();
+		m_player->removeComponent<GunComponent>();
+		m_player->removeAllChildren();
+		// TODO: Remove all the components that can/should be removed
+	} else {
+		this->requestStackPop();
+		this->requestStackPush(States::EndGame);
+		m_poppedThisFrame = true;
+	}
 
 	return true;
 }
@@ -773,7 +779,6 @@ void GameState::updatePerTickComponentSystems(float dt) {
 	runSystem(dt, m_componentSystems.updateBoundingBoxSystem);
 	runSystem(dt, m_componentSystems.octreeAddRemoverSystem);
 	runSystem(dt, m_componentSystems.lifeTimeSystem);
-	runSystem(dt, m_componentSystems.audioSystem);
 
 	// Wait for all the systems to finish before starting the removal system
 	for (auto& fut : m_runningSystemJobs) {
@@ -804,7 +809,7 @@ void GameState::updatePerFrameComponentSystems(float dt, float alpha) {
 		m_cam.setPosition(glm::vec3(100.f, 100.f, 100.f));
 	}
 	m_componentSystems.animationSystem->updatePerFrame(dt);
-	m_componentSystems.audioSystem->update(dt);
+	m_componentSystems.audioSystem->update(m_cam, dt, alpha);
 }
 
 void GameState::runSystem(float dt, BaseComponentSystem* toRun) {
@@ -1026,9 +1031,18 @@ void GameState::setUpPlayer(Model* boundingBoxModel, Model* projectileModel, Mod
 
 	// Adding audio component and adding all sounds attached to the player entity
 	player->addComponent<AudioComponent>();
-	player->getComponent<AudioComponent>()->defineSound(SoundType::RUN, "../Audio/footsteps_1.wav", 0.94f, false);
-	player->getComponent<AudioComponent>()->defineSound(SoundType::JUMP, "../Audio/jump.wav", 0.0f, true);
 
+	Audio::SoundInfo sound{};
+	sound.fileName = "../Audio/footsteps_1.wav";
+	sound.soundEffectLength = 1.0f;
+	sound.volume = 0.5f;
+	sound.playOnce = false;
+	player->getComponent<AudioComponent>()->defineSound(Audio::SoundType::RUN, sound);
+
+	sound.fileName = "../Audio/jump.wav";
+	sound.soundEffectLength = 0.7f;
+	sound.playOnce = true;
+	player->getComponent<AudioComponent>()->defineSound(Audio::SoundType::JUMP, sound);
 
 	// Create candle for the player
 	auto e = createCandleEntity("PlayerCandle", lightModel, boundingBoxModel, glm::vec3(0.f, 2.f, 0.f));
@@ -1037,7 +1051,7 @@ void GameState::setUpPlayer(Model* boundingBoxModel, Model* projectileModel, Mod
 	player->addChildEntity(e);
 
 	// Set up camera
-	m_cam.setPosition(glm::vec3(1.6f, 1.8f, 10.f));
+	m_cam.setPosition(glm::vec3(1.6f+spawnOffset, 1.8f, 10.f));
 	m_cam.lookAt(glm::vec3(0.f));
 	player->getComponent<TransformComponent>()->setStartTranslation(glm::vec3(30.6f + spawnOffset, 0.9f, 40.f));
 }
@@ -1072,7 +1086,6 @@ void GameState::createTestLevel(Shader* shader, Model* boundingBoxModel) {
 	e->addComponent<TransformComponent>(glm::vec3(0.f, 0.f, 0.f));
 	e->addComponent<BoundingBoxComponent>(boundingBoxModel);
 	e->addComponent<CollidableComponent>();
-
 
 	e = ECS::Instance()->createEntity("Map_Barrier1");
 	e->addComponent<ModelComponent>(barrierModel);
@@ -1202,6 +1215,19 @@ void GameState::createBots(Model* boundingBoxModel, Model* characterModel, Model
 		e->addComponent<SpeedLimitComponent>();
 		e->addComponent<CollisionComponent>();
 		e->addComponent<AiComponent>();
+
+		e->addComponent<AudioComponent>();
+
+		Audio::SoundInfo sound{};
+		sound.fileName = "../Audio/guitar.wav";
+		sound.soundEffectLength = 104.0f;
+		sound.volume = 1.0f;
+		sound.playOnce = false;
+		sound.positionalOffset = { 0.f, 1.2f, 0.f };
+		sound.isPlaying = true; // Start playing the sound immediately
+
+		e->getComponent<AudioComponent>()->defineSound(Audio::SoundType::AMBIENT, sound);
+		
 		e->getComponent<MovementComponent>()->constantAcceleration = glm::vec3(0.0f, -9.8f, 0.0f);
 		e->getComponent<SpeedLimitComponent>()->maxSpeed = m_player->getComponent<SpeedLimitComponent>()->maxSpeed / 2.f;
 		e->addComponent<GunComponent>(projectileModel, boundingBoxModel);

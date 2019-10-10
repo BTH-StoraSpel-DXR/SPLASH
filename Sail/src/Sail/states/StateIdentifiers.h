@@ -14,7 +14,8 @@ namespace States {
 		Pause,
 		EndGame,
 		Score,
-		PBRTest
+		PBRTest,
+		PerformanceTest
 	};
 
 }

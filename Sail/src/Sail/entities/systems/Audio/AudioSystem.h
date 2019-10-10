@@ -1,10 +1,10 @@
-#ifndef AUDIO_SYSTEM_H
-#define AUDIO_SYSTEM_H
+#pragma once
 
 #include "..//BaseComponentSystem.h"
-#include "..//Sail/src/API/Audio/AudioEngine.h"
 
 class AudioComponent;
+class AudioEngine;
+class Camera;
 
 class AudioSystem final : public BaseComponentSystem {
 public:
@@ -13,12 +13,15 @@ public:
 
 	AudioEngine* getAudioEngine();
 
-	void update(float dt) override;
-
+	void initialize();
+	void update(float dt) override {} // Use the below function instead
+	void update(Camera& cam, float dt, float alpha);
 	void stop() override;
 
+	bool hasUpdated = false;
+
 private:
-	AudioEngine m_audioEngine;
+	AudioEngine* m_audioEngine;
+	int m_currStreamIndex = 0;
 };
 
-#endif

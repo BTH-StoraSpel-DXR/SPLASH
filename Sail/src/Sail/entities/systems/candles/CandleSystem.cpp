@@ -93,7 +93,9 @@ void CandleSystem::update(float dt) {
 			}
 
 			// COLOR/INTENSITY
-			float tempHealthRatio = ( candle->getHealth() / MAX_HEALTH );
+			float cHealth = candle->getHealth();
+			cHealth = (cHealth < 0.f) ? 0.f : cHealth;
+			float tempHealthRatio = ( cHealth / MAX_HEALTH );
 			e->getComponent<LightComponent>()->getPointLight().setColor(glm::vec3(tempHealthRatio, tempHealthRatio, tempHealthRatio));
 
 			candle->setWasCarriedLastUpdate(candle->isCarried());
