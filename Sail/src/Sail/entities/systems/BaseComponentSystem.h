@@ -77,12 +77,12 @@ protected:
 template<typename ComponentType>
 inline void BaseComponentSystem::registerComponent(bool required, bool read, bool write) {
 	if ( required ) { 
-		requiredComponentTypes |= ComponentType::BID; 
+		requiredComponentTypes |= ComponentType::getBID(); 
 	}
 	if ( read ) { 
-		readBits |= ComponentType::BID; 
+		readBits |= ComponentType::getBID(); 
 	}
 	if ( write ) { 
-		writeBits |= ComponentType::BID; 
+		writeBits |= ComponentType::getBID(); 
 	}
 }
