@@ -742,10 +742,12 @@ void GameState::createLevel(Shader* shader, Model* boundingBoxModel) {
 	tileModels[TileModel::ROOM_FLOOR] = tileFlat;
 	tileModels[TileModel::ROOM_WALL] = tileEnd;
 	tileModels[TileModel::ROOM_DOOR] = tileDoor;
+	tileModels[TileModel::ROOM_CEILING] = tileFlat;
 
 	tileModels[TileModel::CORRIDOR_FLOOR] = tileFlat;
 	tileModels[TileModel::CORRIDOR_WALL] = tileEnd;
 	tileModels[TileModel::CORRIDOR_DOOR] = tileDoor;
+	tileModels[TileModel::CORRIDOR_CEILING] = tileFlat;
 
 
 
