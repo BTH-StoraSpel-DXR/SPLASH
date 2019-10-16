@@ -526,6 +526,7 @@ void GameState::updatePerTickComponentSystems(float dt) {
 		m_componentSystems.networkSenderSystem->update();
 	}
 	
+	// These need to be run sequentially in this order
 	m_componentSystems.movementSystem->update(dt);
 	m_componentSystems.speedLimitSystem->update();
 	m_componentSystems.collisionSystem->update(dt);

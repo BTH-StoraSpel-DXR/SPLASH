@@ -391,7 +391,6 @@ bool Intersection::PointWithVerticalCylinder(const glm::vec3 p, const VerticalCy
 }
 
 bool Intersection::LineSegmentWithVerticalCylinder(const glm::vec3& start, const glm::vec3& end, const VerticalCylinder& cyl) {
-
 	// Check if either start or end are within the cylinder
 	// This simplifies calculations below, but is unnecessary if the caller has already checked them
 	if (PointWithVerticalCylinder(start, cyl) || PointWithVerticalCylinder(end, cyl)) {
