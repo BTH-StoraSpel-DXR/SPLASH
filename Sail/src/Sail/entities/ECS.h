@@ -58,13 +58,6 @@ public:
 	Entity::SPtr createEntity(const std::string& name = "");
 
 	/*
-		Destroys an entity and removes it from the systems it was stored in
-	*/
-	void queueDestructionOfEntity(Entity* entity);
-	void destroyEntity(const Entity::SPtr entityToRemove);
-	void destroyEntity(int ecsIndex);
-
-	/*
 		Destroys all entities and their components
 		stopAllSystems() should be called before this,
 		to prevent an entity from being destroyed while still in use by a system
@@ -116,29 +109,34 @@ public:
 	unsigned nrOfComponentTypes() const;
 
 	/*
-		Should NOT be called by the game developer
-		This is called internally by Entity
-	*/
-	void addEntityToSystems(Entity* entity);
+		Should NOT be called by the game developer every update
+		This is meant to be called internally by EntityAdderSystem
 
-	/*
-		Should NOT be called by the game developer
-		This is called internally by Entity
-	*/
-	void removeEntityFromSystems(Entity* entity);
-
-	/*
-		Should NOT be called by the game developer
-		This is called internally by EntityAdderSystem
 	*/
 	void addAllQueuedEntities();
 
 private:
 	typedef std::unordered_map<std::type_index, std::unique_ptr<BaseComponentSystem>> SystemMap;
+	friend class EntityRemovalSystem;
+	friend class Entity;
 
 	ECS();
 	~ECS();
 
+	// Internal adding of entities to systems, called by Entity
+	void addEntityToSystems(Entity* entity);
+	
+	// Internal removal of entities to systems, called by Entity
+	void removeEntityFromSystems(Entity* entity);
+
+	// Internal queued destruction of entities, called by Entity
+	void queueDestructionOfEntity(Entity* entity);
+
+	// Internal destruction of entities, called by EntityRemovalSystem
+	void destroyEntity(const Entity::SPtr entityToRemove);
+	void destroyEntity(int ecsIndex);
+
+private:
 	std::vector<Entity::SPtr> m_entities;
 	SystemMap m_systems;
 

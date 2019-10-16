@@ -5,6 +5,7 @@
 #include <bitset>
 
 class Entity;
+class ECS;
 
 /*
 	Created systems must inherit from this class.
@@ -13,7 +14,7 @@ class Entity;
 	Any entity in m_entities WILL have all of the required components, so no checks are needed.
 	However, there can still be optional components if the system wants it, which should be checked before used.
 
-	Example: See PhysicSystem.h and PhysicSystem.cpp
+	Example: See MovementSystem.h and MovementSystem.cpp
 */
 
 class BaseComponentSystem {
@@ -51,10 +52,9 @@ public:
 	virtual void clearEntities();
 	virtual size_t getNumEntities();
 
-	// Do not call this, it is called internally by EntityAdderSystem
-	void addQueuedEntities();
-
 protected:
+	friend class ECS;
+
 	BaseComponentSystem()
 		: requiredComponentTypes(0x0)
 		, readBits(0x0)
@@ -69,6 +69,9 @@ protected:
 	 */
 	template<typename ComponentType>
 	void registerComponent(bool required, bool read, bool write);
+
+	// Called internally by ECS
+	void addQueuedEntities();
 
 protected:
 	std::vector<Entity*> entities;
