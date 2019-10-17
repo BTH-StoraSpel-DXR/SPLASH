@@ -16,9 +16,12 @@ DXRBase::DXRBase(const std::string& shaderFilename, DX12RenderableTexture** inpu
 	/*m_decalTexPaths[0] = "pbr/water/Water_001_COLOR.tga";
 	m_decalTexPaths[1] = "pbr/water/Water_001_NORM.tga";
 	m_decalTexPaths[2] = "pbr/water/Water_001_MAT.tga";*/
-	m_decalTexPaths[0] = "pbr/splash/PuddleAlbedo.tga";
+	/*m_decalTexPaths[0] = "pbr/splash/PuddleAlbedo.tga";
 	m_decalTexPaths[1] = "pbr/splash/PuddleNM.tga";
-	m_decalTexPaths[2] = "pbr/splash/puddleMRAo.tga";
+	m_decalTexPaths[2] = "pbr/splash/puddleMRAo.tga";*/
+	m_decalTexPaths[0] = "pbr/splash2/albedo.tga";
+	m_decalTexPaths[1] = "pbr/splash2/normal.tga";
+	m_decalTexPaths[2] = "pbr/splash2/MRAo.tga";
 
 	m_context = Application::getInstance()->getAPI<DX12API>();
 

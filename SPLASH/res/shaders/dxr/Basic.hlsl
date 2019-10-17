@@ -143,14 +143,36 @@ void rayGen() {
 	} else {
 		lOutput[launchIndex] = payload.color;
 
-		float4 totDecalColour = 0.0f;
+		// float4 totDecalColour = 0.0f;
+		float3 decCol = 0.f;
+		// int count = 0;
 		for (uint i = 0; i < CB_SceneData.nDecals; i++) {
-			totDecalColour += renderDecal(i, vsPosition.xyz, worldPosition, worldNormal, payload.color);		
-			if (!all(totDecalColour == 0.0f)) {
-				lOutput[launchIndex] = totDecalColour;
+			float4 asd = renderDecal(i, vsPosition.xyz, worldPosition, worldNormal, payload.color);
+			// float4 asd = 1.0f;
+			// if (all(asd == 0.0f)) {
+			// 	continue;
+			// }
+			// // decCol = lerp(decCol, asd, 1.0f - asd.a);
+			// decCol += decCol * asd.a + asd.rgb * (1.0f - asd.a);
+			// count++;
+			decCol += asd;
+			if (!all(decCol == 0.0f)) {
+				// decCol.rgb /= i + 1;
+				// lOutput[launchIndex] = lerp(lOutput[launchIndex], decCol, 1.0f - decCol.a);
+				// lOutput[launchIndex].rgb = decCol.rgb / i;
+				lOutput[launchIndex].rgb = decCol;
+				lOutput[launchIndex].a = 1.0f;
 				break;
 			}
+			// totDecalColour += lerp(decCol, lOutput[launchIndex], 1.0f - decCol.a);
+        	// colourToReturn.rgb = lerp(payloadColour.rgb, decalPayload.color.rgb, 1.f - albedoColour.a);
 		}
+		// if (!all(decCol == 0.0f)) {
+		// 	lOutput[launchIndex].rgb = decCol / count;
+		// 	lOutput[launchIndex].a = 1.0f;
+		// }
+		// lOutput[launchIndex] = payload.color;
+		// totDecalColour /= CB_SceneData.nDecals;
 	}
 
 #else

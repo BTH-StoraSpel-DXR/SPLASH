@@ -15,7 +15,7 @@ ProjectileSystem::ProjectileSystem() {
 
 	m_splashMinTime = 0.3f;
 
-	float splashSize = 0.14f;
+	float splashSize = 0.2f;
 	m_projectileSplashSize = (1.f / splashSize) / 2.f;
 }
 
