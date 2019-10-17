@@ -109,9 +109,8 @@ public:
 	unsigned nrOfComponentTypes() const;
 
 	/*
-		Should NOT be called by the game developer every update
+		Should not be called by the game developer EVERY update
 		This is meant to be called internally by EntityAdderSystem
-
 	*/
 	void addAllQueuedEntities();
 
