@@ -137,5 +137,6 @@ namespace Netcode {
 		~MessageDataPlayerDisconnect() {}
 		unsigned char playerID;
 	};
+
 }
 

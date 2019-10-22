@@ -130,6 +130,7 @@ GameState::GameState(StateStack& stack)
 
 	m_player = EntityFactory::CreatePlayer(boundingBoxModel, cubeModel, lightModel, playerID, m_currLightIndex++, spawnLocation).get();
 	m_componentSystems.networkReceiverSystem->initPlayer(m_player);
+	m_componentSystems.networkSenderSystem->initPlayerEntity(m_player);
 
 	m_componentSystems.animationInitSystem->initAnimations();
 

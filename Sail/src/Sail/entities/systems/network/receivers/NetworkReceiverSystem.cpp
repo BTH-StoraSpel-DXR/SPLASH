@@ -139,6 +139,7 @@ void NetworkReceiverSystem::update() {
 					ArchiveHelpers::loadVec3(ar, rotation);	// Read rotation
 					setEntityRotation(id, rotation);
 				}
+				/* Case Animation Data, int, float */
 				break;
 				default:
 					break;
@@ -167,7 +168,8 @@ void NetworkReceiverSystem::update() {
 			/* */
 
 			if (eventType == Netcode::MessageType::PLAYER_JUMPED) {
-				//	playerJumped(netObjectID);
+				ar(netObjectID);
+				playerJumped(netObjectID);
 			}
 			else if (eventType == Netcode::MessageType::WATER_HIT_PLAYER) {
 				ar(netObjectID);
@@ -262,8 +264,19 @@ void NetworkReceiverSystem::createEntity(Netcode::NetworkObjectID id, Netcode::E
 
 		// Adding audio component and adding all sounds attached to the player entity
 		e->addComponent<AudioComponent>();
-		// e->getComponent<AudioComponent>()->defineSound(SoundType::RUN, "../Audio/footsteps_1.wav", 0.94f, false);
-		// e->getComponent<AudioComponent>()->defineSound(SoundType::JUMP, "../Audio/jump.wav", 0.0f, true);
+
+		// RUN Sound
+		Audio::SoundInfo sound{};
+		sound.fileName = "../Audio/footsteps_1.wav";
+		sound.soundEffectLength = 1.0f;
+		sound.volume = 0.5f;
+		sound.playOnce = false;
+		e->getComponent<AudioComponent>()->defineSound(Audio::SoundType::RUN, sound);
+		// JUMP Sound
+		sound.fileName = "../Audio/jump.wav";
+		sound.soundEffectLength = 0.7f;
+		sound.playOnce = true;
+		e->getComponent<AudioComponent>()->defineSound(Audio::SoundType::JUMP, sound);
 
 		//creates light with model and pointlight
 		auto light = ECS::Instance()->createEntity("ReceiverLight");
@@ -331,7 +344,8 @@ void NetworkReceiverSystem::playerJumped(Netcode::NetworkObjectID id) {
 	// How do i trigger a jump from here?
 	for (auto& e : entities) {
 		if (e->getComponent<NetworkReceiverComponent>()->m_id == id) {
-			//	e->getComponent<AudioComponent>()->m_isPlaying[SoundType::JUMP] = true;
+			e->getComponent<AudioComponent>()->m_sounds[Audio::SoundType::JUMP].playOnce = true;
+			e->getComponent<AudioComponent>()->m_sounds[Audio::SoundType::JUMP].isPlaying = true;
 
 			break;
 		}
@@ -384,7 +398,7 @@ void NetworkReceiverSystem::playerDied(Netcode::NetworkObjectID id) {
 }
 
 void NetworkReceiverSystem::playerDisconnect(unsigned char id) {
-	// This is not called on the host, since the host receives the disconnect through NWrapperHost::playerDisconnected()
+	// This is not called on the host, since the host receives the disconnect through NWrapperHost::playerDisconnected()	
 	for (auto& e : entities) {
 		if (e->getComponent<NetworkReceiverComponent>()->m_id >> 18 == id) {
 
@@ -419,6 +433,8 @@ void NetworkReceiverSystem::setCandleHeldState(Netcode::NetworkObjectID id, bool
 		}
 	}
 }
+
+
 void NetworkReceiverSystem::matchEnded() {
 	m_gameStatePtr->requestStackPop();
 	m_gameStatePtr->requestStackPush(States::EndGame);
