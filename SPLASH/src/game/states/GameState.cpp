@@ -123,8 +123,6 @@ GameState::GameState(StateStack& stack)
 	}
 
 	m_player = EntityFactory::CreatePlayer(boundingBoxModel, cubeModel, lightModel, playerID, m_currLightIndex++, spawnLocation).get();
-	m_componentSystems.networkReceiverSystem->initPlayer(m_player);
-	m_componentSystems.networkSenderSystem->initPlayerEntity(m_player);
 
 	m_componentSystems.animationInitSystem->initAnimations();
 
@@ -361,17 +359,16 @@ void GameState::initSystems(const unsigned char playerID) {
 
 	// Create network send and receive systems
 	m_componentSystems.networkSenderSystem = ECS::Instance()->createSystem<NetworkSenderSystem>();
-	m_componentSystems.networkSenderSystem->initWithPlayerID(playerID);
 
 	NWrapperSingleton::getInstance().setNSS(m_componentSystems.networkSenderSystem);
 	// Create Network Reciever System depending on host or client.
 	if (NWrapperSingleton::getInstance().isHost()) {
 		m_componentSystems.networkReceiverSystem = ECS::Instance()->createSystem<NetworkReceiverSystemHost>();
-	}
-	else {
+	} else {
 		m_componentSystems.networkReceiverSystem = ECS::Instance()->createSystem<NetworkReceiverSystemClient>();
 	}
 	m_componentSystems.networkReceiverSystem->init(playerID, this, m_componentSystems.networkSenderSystem);
+	m_componentSystems.networkSenderSystem->init(playerID, m_componentSystems.networkReceiverSystem);
 
 	// Create system for handling and updating sounds
 	m_componentSystems.audioSystem = ECS::Instance()->createSystem<AudioSystem>();
@@ -455,14 +452,14 @@ bool GameState::onEvent(Event& event) {
 
 	return true;
 }
-
+	
 bool GameState::onResize(WindowResizeEvent& event) {
 	m_cam.resize(event.getWidth(), event.getHeight());
 	return true;
 }
 
 bool GameState::onNetworkSerializedPackageEvent(NetworkSerializedPackageEvent& event) {
-	m_componentSystems.networkReceiverSystem->pushDataToBuffer(event.getSerializedData());
+	m_componentSystems.networkReceiverSystem->handleIncomingData(event.getSerializedData());
 	return true;
 }
 
@@ -496,7 +493,7 @@ bool GameState::onPlayerCandleDeath(PlayerCandleDeathEvent& event) {
 }
 
 bool GameState::onPlayerDisconnect(NetworkDisconnectEvent& event) {
-	// Here we will recieve when a player disconnected.
+	// Here we will receive when a player disconnected.
 	// In the case of the host, deal with it based on who dc'd.
 	// In the case of the client, deal with it based on who dc'd.
 
@@ -511,7 +508,7 @@ bool GameState::onPlayerDisconnect(NetworkDisconnectEvent& event) {
 				{
 					NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
 						Netcode::MessageType::PLAYER_DISCONNECT,
-						SAIL_NEW Netcode::MessageDataPlayerDisconnect{
+						SAIL_NEW Netcode::MessagePlayerDisconnect{
 							event.getPlayerID()
 						}
 					);

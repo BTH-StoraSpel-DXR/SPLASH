@@ -3,59 +3,59 @@
 #include "../BaseComponentSystem.h"
 #include "Sail/../../libraries/cereal/archives/portable_binary.hpp"
 #include "Sail/netcode/NetworkedStructs.h"
-// "Sail/../../libraries/cereal/archives/portable_binary.hpp"
+
+#include "Sail/netcode/ArchiveTypes.h"
+#include "Sail/netcode/NetcodeTypes.h"
+
+
 
 class Entity;
 class MessageType;
+class NetworkReceiverSystem;
 struct NetworkSenderEvent;
 
 class NetworkSenderSystem : public BaseComponentSystem {
 public:
 	NetworkSenderSystem();
 	~NetworkSenderSystem();
-	void update();
 
-	const void queueEvent(NetworkSenderEvent* event);
+	void update();
+	virtual void stop() override;
+
+	void init(Netcode::PlayerID playerID, NetworkReceiverSystem* receiverSystem);
 	
-	virtual void stop();
+	void queueEvent(NetworkSenderEvent* event);
+	void pushDataToBuffer(std::string data);
+	
+	// TODO: Is this used?
+	const std::vector<Entity*>& getEntities() const;
 
 	void addEntityToListONLYFORNETWORKRECIEVER(Entity* e);
-	void initWithPlayerID(unsigned char playerID);
-	void initPlayerEntity(Entity* pPlayerEntity);
-
-	void pushDataToBuffer(std::string data);
-
-	const std::vector<Entity*>& getEntities() const;
+private:
+	void writeMessageToArchive(Netcode::MessageType& messageType, Entity* e, Netcode::OutArchive* ar);
+	void writeEventToArchive(NetworkSenderEvent* event, Netcode::OutArchive* ar);
+	
 
 
 private:
-	unsigned char m_playerID;
-	Entity* m_playerEntity = nullptr;
+	Netcode::PlayerID m_playerID;
+	std::queue<NetworkSenderEvent*> m_eventQueue;
+	std::atomic<size_t> m_nrOfEventsToSendToSelf = 0; // atomic is probably not needed
 
-	void handleEvent(Netcode::MessageType& messageType, Entity* e, cereal::PortableBinaryOutputArchive* ar);
-	void handleEvent(NetworkSenderEvent* event, cereal::PortableBinaryOutputArchive* ar);
-	std::queue<NetworkSenderEvent*> eventQueue;
+	NetworkReceiverSystem* m_receiverSystem = nullptr;
 
-
-
-	// The host will copy incoming packages to this queue and then send them all out in update()
-	// This will automatically forward all packets client send to the host to all clients who are connected to host.
-
-
-
-	// How a packet (a serialized data string) will travel.
-	// NSS = NetworkSenderSystem
-	// NRS = NetworkReceiverSystem
-
-
-	//             ,->Host(NRS) 
-	//            /            ,-> Client1(NRS) (will ignore eventually)
-	// Client1(NSS)-->Host(NSS)--> Client2(NRS)
-	//                         `-> Client3(NRS)
-
-
+	/*
+	 * The host will copy incoming packages to this queue and then send them all out in update()
+	 * This will automatically forward all packets client send to the host to all clients who are connected to host.
+	 *
+	 * How a packet (a serialized data string) will travel.
+	 * NSS = NetworkSenderSystem
+	 * NRS = NetworkReceiverSystem
+	 *             ,->Host(NRS)
+	 *            /            ,-> Client1(NRS) (will ignore eventually)
+	 * Client1(NSS)-->Host(NSS)--> Client2(NRS)
+	 *                         `-> Client3(NRS)
+	 **/
 	std::queue<std::string> m_HOSTONLY_dataToForward;
 	std::mutex m_forwardBufferLock;
-
-	//void archiveData(Netcode::MessageType* type, Entity* e, cereal::PortableBinaryOutputArchive* ar);
 };

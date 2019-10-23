@@ -86,7 +86,7 @@ bool NWrapperSingleton::playerJoined(Player& player) {
 	return false;
 }
 
-bool NWrapperSingleton::playerLeft(unsigned char& id) {
+bool NWrapperSingleton::playerLeft(Netcode::PlayerID& id) {
 	// Linear search to get target 'player' struct, then erase that from the list
 	Player* toBeRemoved = nullptr;
 	int pos = 0;
@@ -105,7 +105,7 @@ Player& NWrapperSingleton::getMyPlayer() {
 	return m_me;
 }
 
-Player* NWrapperSingleton::getPlayer(unsigned char& id) {
+Player* NWrapperSingleton::getPlayer(Netcode::PlayerID& id) {
 	Player* foundPlayer = nullptr;
 	for (Player& player : m_players) {
 		if (player.id == id) {
@@ -127,7 +127,7 @@ void NWrapperSingleton::setPlayerName(const char* name) {
 	m_me.name = name;
 }
 
-void NWrapperSingleton::setPlayerID(const unsigned char ID) {
+void NWrapperSingleton::setPlayerID(const Netcode::PlayerID ID) {
 	m_me.id = ID;
 }
 
@@ -135,7 +135,7 @@ std::string& NWrapperSingleton::getMyPlayerName() {
 	return m_me.name;
 }
 
-unsigned char NWrapperSingleton::getMyPlayerID() {
+Netcode::PlayerID NWrapperSingleton::getMyPlayerID() {
 	return m_me.id;
 }
 
@@ -143,13 +143,17 @@ void NWrapperSingleton::setNSS(NetworkSenderSystem* NSS_) {
 	NSS = NSS_;
 }
 
-void NWrapperSingleton::queueGameStateNetworkSenderEvent(Netcode::MessageType type, Netcode::MessageData* data) {
+void NWrapperSingleton::queueGameStateNetworkSenderEvent(Netcode::MessageType type, Netcode::MessageData* data, bool alsoSendToSelf) {
 	// Cleaning is handled by the NSS later on.
 	NetworkSenderEvent* e = SAIL_NEW NetworkSenderEvent;
 	e->type = type;
 	e->data = data;
+	e->alsoSendToSelf = alsoSendToSelf;
 
 	NSS->queueEvent(e);
+
+	// TODO: forward event to receiverSystem as serialized data
+
 }
 
 void NWrapperSingleton::initialize(bool asHost) {

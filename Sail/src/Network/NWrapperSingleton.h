@@ -8,9 +8,15 @@ class NetworkSenderSystem;
 struct NetworkSenderEvent {
 	Netcode::MessageType type;
 	Netcode::MessageData* data = nullptr;  
+
+	// All events will by default be handled by NetworkReceiverSystem for
+	// both the people receiving the event and the person sending it.
+	bool alsoSendToSelf = false; // TODO: set to true once #U421 is done
+
 	virtual ~NetworkSenderEvent() {
 		if (data) {
 			delete data;
+			data = nullptr;
 		}
 	}
 };
@@ -33,19 +39,19 @@ public:
 
 	void resetPlayerList();
 	bool playerJoined(Player& player);
-	bool playerLeft(unsigned char& id);
+	bool playerLeft(Netcode::PlayerID& id);
 
 	Player& getMyPlayer();
-	Player* getPlayer(unsigned char& id);
+	Player* getPlayer(Netcode::PlayerID& id);
 	const std::list<Player>& getPlayers() const;
 	void setPlayerName(const char* name);
-	void setPlayerID(const unsigned char ID);
+	void setPlayerID(const Netcode::PlayerID ID);
 	std::string& getMyPlayerName();
-	unsigned char getMyPlayerID();
+	Netcode::PlayerID getMyPlayerID();
 
 	// Specifically for One-Time-Events during the gamestate
 	void setNSS(NetworkSenderSystem* NSS);
-	void queueGameStateNetworkSenderEvent(Netcode::MessageType type, Netcode::MessageData* messageData);
+	void queueGameStateNetworkSenderEvent(Netcode::MessageType type, Netcode::MessageData* messageData, bool alsoSendToSelf = false); // TODO: change default to true once #U421 is done
 private:
 	// Specifically for One-Time-Events during the gamestate
 	NetworkSenderSystem* NSS = nullptr;

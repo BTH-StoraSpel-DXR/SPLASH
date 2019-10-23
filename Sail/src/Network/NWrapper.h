@@ -3,7 +3,11 @@
 #include "Network/NetworkStructs.hpp"
 #include "../../SPLASH/src/game/states/LobbyState.h"	// Needed for 'Message'
 #include "Sail.h"
+#include "Sail/netcode/NetcodeTypes.h"
+
 #include <string>
+
+
 
 #define MAX_NAME_LENGTH 100
 
@@ -12,10 +16,10 @@ class Network;
 
 // Move elsewhere?
 struct Player {
-	unsigned char id;
+	Netcode::PlayerID id;
 	std::string name;
 
-	Player(unsigned char setID = 255, std::string setName = "Hans")
+	Player(Netcode::PlayerID setID = 255, std::string setName = "Hans")
 		: name(setName), id(setID)
 	{
 		name.reserve(MAX_NAME_LENGTH);

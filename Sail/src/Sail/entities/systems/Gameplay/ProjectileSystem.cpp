@@ -57,7 +57,7 @@ void ProjectileSystem::update(float dt) {
 					//Inform the host about the hit.( in case you are host this will broadcast to everyone else)
 					NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
 						Netcode::MessageType::WATER_HIT_PLAYER,
-						SAIL_NEW Netcode::MessageDataWaterHitPlayer{
+						SAIL_NEW Netcode::MessageWaterHitPlayer{
 							collision.entity->getParent()->getComponent<NetworkReceiverComponent>()->m_id
 						}
 					);

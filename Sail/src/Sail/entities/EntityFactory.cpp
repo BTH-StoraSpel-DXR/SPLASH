@@ -51,10 +51,10 @@ Entity::SPtr EntityFactory::CreatePlayer(Model* boundingBoxModel, Model* project
 		playerID
 	);
 	player->getComponent<NetworkSenderComponent>()->addDataType(Netcode::MessageType::ANIMATION);
-	Netcode::NetworkObjectID netComponentID = player->getComponent<NetworkSenderComponent>()->m_id;
+	Netcode::ComponentID netComponentID = player->getComponent<NetworkSenderComponent>()->m_id;
 	player->addComponent<NetworkReceiverComponent>(netComponentID, Netcode::EntityType::PLAYER_ENTITY);
 	
-	player->addComponent<LocalOwnerComponent>(player->getComponent<NetworkSenderComponent>()->m_id);
+	player->addComponent<LocalOwnerComponent>(netComponentID);
 
 	// Add physics components and setting initial variables
 	player->addComponent<MovementComponent>()->constantAcceleration = glm::vec3(0.0f, -9.8f, 0.0f);

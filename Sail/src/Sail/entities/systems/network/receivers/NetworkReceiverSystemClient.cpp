@@ -9,7 +9,6 @@ NetworkReceiverSystemClient::~NetworkReceiverSystemClient() {
 
 }
 
-void NetworkReceiverSystemClient::pushDataToBuffer(std::string data) {
-	std::scoped_lock lock(m_bufferLock);
-	m_incomingDataBuffer.push(data);
+void NetworkReceiverSystemClient::handleIncomingData(std::string data) {
+	pushDataToBuffer(data);
 }

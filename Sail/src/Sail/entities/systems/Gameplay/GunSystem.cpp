@@ -39,7 +39,7 @@ void GunSystem::update(float dt) {
 					
 					NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
 						Netcode::MessageType::SPAWN_PROJECTILE,
-						SAIL_NEW Netcode::MessageDataProjectile{
+						SAIL_NEW Netcode::MessageSpawnProjectile{
 							gun->position,
 							gun->direction * gun->projectileSpeed
 						}

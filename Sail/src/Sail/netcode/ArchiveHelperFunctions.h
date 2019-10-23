@@ -1,7 +1,9 @@
 #pragma once
 
 #include "glm/vec3.hpp"
+#include "ArchiveTypes.h"
 #include "Sail/../../libraries/cereal/types/vector.hpp"
+
 
 /*
   Helper functions to serialize various data structs/classes that aren't in STL
