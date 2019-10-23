@@ -249,6 +249,45 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 	//	(*ar)(a->animationTime);						// Animation Time
 	}
 	break;
+	case Netcode::MessageType::SHOOT_START:
+	{
+		std::cout << "SENDING SHOOT START\n";
+		
+		// Only do this once
+		e->getComponent<NetworkSenderComponent>()->removeDataType(Netcode::MessageType::SHOOT_START);
+
+		// Send data to others
+		GunComponent* g = e->getComponent<GunComponent>();
+		ArchiveHelpers::archiveVec3(*ar, g->position);
+		ArchiveHelpers::archiveVec3(*ar, g->direction * g->projectileSpeed); // Velocity
+
+		// Transition into loop
+		e->getComponent<NetworkSenderComponent>()->addDataType(Netcode::MessageType::SHOOT_LOOP);
+	}
+	break;
+	case Netcode::MessageType::SHOOT_LOOP:
+	{
+		std::cout << "SENDING SHOOT LOOP\n";
+		// Send data to others
+		GunComponent* g = e->getComponent<GunComponent>();
+		ArchiveHelpers::archiveVec3(*ar, g->position);
+		ArchiveHelpers::archiveVec3(*ar, g->direction * g->projectileSpeed); // Velocity
+	}
+	break;
+	case Netcode::MessageType::SHOOT_END:
+	{
+		std::cout << "SENDING SHOOT END\n";
+		// Only do this once
+		e->getComponent<NetworkSenderComponent>()->removeDataType(Netcode::MessageType::SHOOT_END);
+		// Stop looping
+		e->getComponent<NetworkSenderComponent>()->removeDataType(Netcode::MessageType::SHOOT_LOOP);
+
+		// Send data to others
+		GunComponent* g = e->getComponent<GunComponent>();
+		ArchiveHelpers::archiveVec3(*ar, g->position);
+		ArchiveHelpers::archiveVec3(*ar, g->direction * g->projectileSpeed); // Velocity
+	}
+	break;
 	default:
 		break;
 	}

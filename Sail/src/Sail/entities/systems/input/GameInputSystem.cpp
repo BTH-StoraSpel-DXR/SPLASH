@@ -199,6 +199,9 @@ void GameInputSystem::processMouseInput(const float& dt) {
 			glm::vec3 gunPosition = m_cam->getCameraPosition() + (m_cam->getCameraDirection() + camRight - m_cam->getCameraUp());
 			e->getComponent<GunComponent>()->setFiring(gunPosition, m_cam->getCameraDirection());
 		}
+		else {
+			e->getComponent<GunComponent>()->firing = false;
+		}
 
 		auto trans = e->getComponent<TransformComponent>();
 		auto rots = trans->getRotations();
