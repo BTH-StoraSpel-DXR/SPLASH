@@ -279,17 +279,16 @@ void NetworkSenderSystem::handleEvent(NetworkSenderEvent* event, cereal::Portabl
 	case Netcode::MessageType::WATER_HIT_PLAYER:
 	{
 		Netcode::MessageDataWaterHitPlayer* data = static_cast<Netcode::MessageDataWaterHitPlayer*>(event->data);
-		unsigned __int32 NetObjectID = data->playerWhoWasHitID;
 		
-		(*ar)(NetObjectID);
+		(*ar)(data->playerWhoWasHitID); // Send
 	}
 	break;
 	case Netcode::MessageType::PLAYER_DIED:
 	{
 		Netcode::MessageDataPlayerDied* data = static_cast<Netcode::MessageDataPlayerDied*>(event->data);
-		unsigned __int32 NetObjectID = data->playerWhoDied;
 
-		(*ar)(NetObjectID); // Send
+		(*ar)(data->playerWhoDied); // Send
+		(*ar)(data->playerWhoFired);
 	}
 	break;
 	case Netcode::MessageType::PLAYER_DISCONNECT:

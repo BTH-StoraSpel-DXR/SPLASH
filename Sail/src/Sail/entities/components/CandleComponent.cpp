@@ -9,12 +9,18 @@ CandleComponent::~CandleComponent() {
 
 }
 
-void CandleComponent::hitWithWater(float damage) {
+void CandleComponent::hitWithWater(float damage, unsigned char shooterID) {
 	if (getInvincibleTimer() <= 0.f) {
-		setInvincibleTimer(4);
-		decrementHealth(damage);
-		m_damageTakenLastHit = damage;
-		m_wasHitByWater = true;
+		if (m_health > 0.0f) {
+			setInvincibleTimer(0.4f);
+			decrementHealth(damage);
+			m_damageTakenLastHit = damage;
+			m_wasHitByWater = true;
+
+			if (m_health <= 0.0f) {
+				setWasHitByNetID(shooterID);
+			}
+		}
 	}
 }
 
@@ -120,12 +126,12 @@ void CandleComponent::decrementHealth(const float health) {
 	m_health -= health;
 }
 
-void CandleComponent::setWasHitByNetID(unsigned __int32 netIdOfPlayerWhoHitThisCandle) {
-	wasHitByNetID = netIdOfPlayerWhoHitThisCandle;
+void CandleComponent::setWasHitByNetID(unsigned char netIdOfPlayerWhoHitThisCandle) {
+	wasHitByPlayerID = netIdOfPlayerWhoHitThisCandle;
 }
 
-unsigned __int32 CandleComponent::getWasHitByNetID() {
-	return wasHitByNetID;
+unsigned char CandleComponent::getWasHitByNetID() {
+	return wasHitByPlayerID;
 }
 
 bool CandleComponent::isCarried() const {

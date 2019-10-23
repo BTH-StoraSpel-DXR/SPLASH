@@ -108,8 +108,8 @@ namespace Netcode {
 
 	class MessageDataWaterHitPlayer : public MessageData {
 	public:
-		MessageDataWaterHitPlayer(Netcode::NetworkObjectID id)
-			: playerWhoWasHitID(id)
+		MessageDataWaterHitPlayer(Netcode::NetworkObjectID idWasHit)
+			: playerWhoWasHitID(idWasHit)
 		{}
 		~MessageDataWaterHitPlayer() {}
 
@@ -118,9 +118,12 @@ namespace Netcode {
 
 	class MessageDataPlayerDied : public MessageData {
 	public:
-		MessageDataPlayerDied(Netcode::NetworkObjectID id) : playerWhoDied(id){}
+		// Player ID of shooter is stored in its candle.
+		MessageDataPlayerDied(Netcode::NetworkObjectID networkIdOfKilled, unsigned char playerIdOfShooter) 
+			: playerWhoDied(networkIdOfKilled), playerWhoFired(playerIdOfShooter){}
 				~MessageDataPlayerDied() {}
 				Netcode::NetworkObjectID playerWhoDied;
+				unsigned char playerWhoFired;
 		};
 
 	class MessageDataCandleHeldState : public MessageData {

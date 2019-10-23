@@ -40,9 +40,9 @@ private:
 	void setEntityRotation(Netcode::NetworkObjectID id, const glm::vec3& rotation);
 	void setEntityAnimation(Netcode::NetworkObjectID id, int animationStack, float animationTime);
 	void playerJumped(Netcode::NetworkObjectID id);
-	void waterHitPlayer(Netcode::NetworkObjectID id);
 	void projectileSpawned(glm::vec3& pos, glm::vec3 vel);
-	void playerDied(Netcode::NetworkObjectID id);
+	void waterHitPlayer(Netcode::NetworkObjectID id, unsigned char SenderId);
+	void playerDied(Netcode::NetworkObjectID id, unsigned char shooterID);
 	void playerDisconnect(unsigned char id);
 	void setCandleHeldState(Netcode::NetworkObjectID id, bool b, const glm::vec3& pos = glm::vec3(0, 0, 0));
 	void matchEnded();

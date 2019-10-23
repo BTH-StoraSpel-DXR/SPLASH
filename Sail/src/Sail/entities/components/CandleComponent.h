@@ -9,7 +9,7 @@ public:
 	CandleComponent();
 	virtual ~CandleComponent();
 
-	void hitWithWater(float damage);
+	void hitWithWater(float damage, unsigned char shooterID);
 	void resetHitByWater();
 	bool wasHitByWater() const;
 	bool getIsAlive() const;
@@ -38,8 +38,8 @@ public:
 	float getHealth() const;
 	void setHealth(const float health);
 	void decrementHealth(const float health);
-	void setWasHitByNetID(unsigned __int32 netIdOfPlayerWhoHitThisCandle);
-	unsigned __int32 getWasHitByNetID();
+	void setWasHitByNetID(unsigned char netIdOfPlayerWhoHitThisCandle);
+	unsigned char getWasHitByNetID();
 
 	bool hitByLocalPlayer = false;
 
@@ -53,7 +53,7 @@ private:
 	bool m_activate = false;
 	bool m_carried = true;
 	bool m_wasCarriedLastUpdate = true;
-	unsigned __int32 wasHitByNetID = 0;
+	unsigned char wasHitByPlayerID = 0;
 
 	float m_invincibleTimer = -2.f;
 	// TODO: Replace using game settings when that is implemented
