@@ -5,6 +5,7 @@
 #include "Sail/api/Mesh.h"
 #include "Sail/api/VertexBuffer.h"
 #include <queue>
+#include "Sail/entities/Entity.h"
 
 class AnimationComponent : public Component<AnimationComponent> {
 public:
@@ -22,7 +23,10 @@ public:
 		transformSize(0),
 		computeUpdate(true),
 		animationW(0.0f), //TODO: REMOVE
-		m_stack(animationStack)
+		m_stack(animationStack),
+		rightHandEntity(nullptr),
+		leftHandEntity(nullptr)
+
 	{
 		transformSize = m_stack->getAnimation(0)->getAnimationTransformSize(unsigned int(0));
 		transforms = SAIL_NEW glm::mat4[transformSize];
@@ -57,9 +61,17 @@ public:
 	unsigned int transformSize;
 	bool hasUpdated;
 	float animationW;	
-	glm::mat4 rightHand;
-	glm::mat4 leftHand;
 	
+	// -0.55, 1.03, 0.11
+	glm::mat4 rightHandPosition;
+	// 0.57, 1.03, 0.11
+	glm::mat4 leftHandPosition;
+
+	glm::vec3 lPos;
+	glm::vec3 rPos;
+	
+	Entity* rightHandEntity;
+	Entity* leftHandEntity;
 
 
 	class Transition {

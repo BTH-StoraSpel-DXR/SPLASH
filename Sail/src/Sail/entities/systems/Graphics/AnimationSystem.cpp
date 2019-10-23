@@ -3,6 +3,7 @@
 #include "Sail/entities/Entity.h"
 #include "Sail/entities/components/AnimationComponent.h"
 #include "Sail/entities/components/ModelComponent.h"
+#include "Sail/entities/components/TransformComponent.h"
 #include "Sail/graphics/geometry/Model.h"
 #include "sail/api/VertexBuffer.h"
 #include "API/DX12/DX12API.h"
@@ -21,6 +22,7 @@ AnimationSystem::AnimationSystem()
 	// TODO: System owner should check if this is correct
 	registerComponent<AnimationComponent>(true, true, true);
 	registerComponent<ModelComponent>(true, true, true);
+	registerComponent<TransformComponent>(false, true, true);
 
 	m_updateShader = &Application::getInstance()->getResourceManager().getShaderSet<AnimationUpdateComputeShader>();
 	m_dispatcher = std::unique_ptr<ComputeShaderDispatcher>(ComputeShaderDispatcher::Create());
@@ -152,6 +154,36 @@ void AnimationSystem::updateTransforms(const float dt) {
 			animationC->currentTransition->transpiredTime += dt * animationC->animationSpeed;
 		}
 		animationC->hasUpdated = true;
+
+		if (animationC->leftHandEntity) {
+
+			glm::mat4 res = animationC->transforms[10] * animationC->leftHandPosition;
+			
+			glm::vec3 pos, scale;
+			glm::quat rot;
+			
+			glm::decompose(res, scale, rot, pos, glm::vec3(), glm::vec4());
+			
+			animationC->leftHandEntity->getComponent<TransformComponent>()->setRotations(glm::eulerAngles(rot));
+			animationC->leftHandEntity->getComponent<TransformComponent>()->setTranslation(pos);
+
+		}
+
+		if (animationC->rightHandEntity) {
+		
+			glm::mat4 res = animationC->transforms[22] * animationC->rightHandPosition;
+		
+			glm::vec3 pos, scale;
+			glm::quat rot;
+		
+			glm::decompose(res, scale, rot, pos, glm::vec3(), glm::vec4());
+		
+			animationC->rightHandEntity->getComponent<TransformComponent>()->setRotations(glm::eulerAngles(rot));
+			animationC->rightHandEntity->getComponent<TransformComponent>()->setTranslation(pos);
+		
+		}
+
+
 	}
 }
 

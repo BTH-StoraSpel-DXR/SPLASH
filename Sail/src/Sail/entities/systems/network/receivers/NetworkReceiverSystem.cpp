@@ -250,7 +250,7 @@ void NetworkReceiverSystem::createEntity(Netcode::NetworkObjectID id, Netcode::E
 	int test = e->getComponent<NetworkReceiverComponent>()->m_id;
 	e->addComponent<OnlineOwnerComponent>(id);
 
-	std::string modelName = "Doc.fbx";
+	std::string modelName = "DocTorch.fbx";
 	auto* shader = &Application::getInstance()->getResourceManager().getShaderSet<GBufferOutShader>();
 	Model* characterModel = &Application::getInstance()->getResourceManager().getModelCopy(modelName, shader);
 	characterModel->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/Character/CharacterMRAO.tga");
@@ -301,7 +301,7 @@ void NetworkReceiverSystem::createEntity(Netcode::NetworkObjectID id, Netcode::E
 		auto light = ECS::Instance()->createEntity("ReceiverLight");
 		light->addComponent<CandleComponent>();
 		light->addComponent<ModelComponent>(lightModel);
-		light->addComponent<TransformComponent>(glm::vec3(0.f, 2.f, 0.f));
+		light->addComponent<TransformComponent>();
 		light->addComponent<BoundingBoxComponent>(boundingBoxModel);
 		light->addComponent<CollidableComponent>();
 		light->addComponent<OnlineOwnerComponent>(id);
@@ -314,6 +314,18 @@ void NetworkReceiverSystem::createEntity(Netcode::NetworkObjectID id, Netcode::E
 		light->addComponent<LightComponent>(pl);
 
 		e->addChildEntity(light);
+		ac->leftHandEntity = light.get();
+		
+		// PUT THINGS IN HAND
+		ac->leftHandPosition = glm::identity<glm::mat4>();
+		ac->leftHandPosition = glm::translate(ac->leftHandPosition, glm::vec3(0.57f, 1.03f, 0.05f));
+		ac->leftHandPosition = ac->leftHandPosition * glm::toMat4(glm::quat(glm::vec3(3.14f * 0.5f, -3.14f * 0.17f, 0.0f)));
+
+
+
+
+
+
 	}
 	break;
 	default:

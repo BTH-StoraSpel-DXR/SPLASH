@@ -30,7 +30,6 @@ static void FBXtoGLM(glm::mat4& newMat, const FbxAMatrix& mat) {
 	newMat[3][1] = (float)mat[3][1];
 	newMat[3][2] = (float)mat[3][2];
 	newMat[3][3] = (float)mat[3][3];
-	//newMat = glm::transpose(newMat);
 }
 static void FBXtoGLM(glm::vec3& newVec, const FbxVector4& vec) {
 	newVec.x = (float)vec[0];
@@ -43,8 +42,6 @@ FBXLoader::FBXLoader() {
 	
 }
 FBXLoader::~FBXLoader() {
-	//if (m_scene)
-	//	m_scene->Destroy();
 
 
 	
@@ -557,7 +554,7 @@ void FBXLoader::getAnimations(FbxNode* node, AnimationStack* stack, const std::s
 				stack->checkWeights();
 
 
-				FbxTime::EMode fps = FbxTime::eFrames24;
+				FbxTime::EMode fps = FbxTime::eFrames30;
 
 				Animation* defaultAnimation = SAIL_NEW Animation("Default");
 				for (unsigned int frameIndex = 0; frameIndex < 3; frameIndex++) {
@@ -594,10 +591,17 @@ void FBXLoader::getAnimations(FbxNode* node, AnimationStack* stack, const std::s
 					float firstFrameTime = 0.0f;
 
 					//TODO: find way to import FPS from file.
+					bool firstFrame = true;
+					unsigned int offset = 0;
 					for (FbxLongLong frameIndex = start.GetFrameCount(fps); frameIndex <= end.GetFrameCount(fps); frameIndex++) {
 						Animation::Frame* frame = SAIL_NEW Animation::Frame(stack->boneCount());
 						FbxTime currTime;
 						currTime.SetFrame(frameIndex, fps);
+						if (firstFrame) {
+							offset = frameIndex;
+							firstFrame = false;
+						}
+
 						if (firstFrameTime == 0.0f) {
 							firstFrameTime = float(currTime.GetSecondDouble());
 						}
@@ -613,7 +617,7 @@ void FBXLoader::getAnimations(FbxNode* node, AnimationStack* stack, const std::s
 							frame->setTransform(limbIndexes[clusterIndex],  matrix * stack->getBone(limbIndexes[clusterIndex]).globalBindposeInverse);
 						}
 						float time = float(currTime.GetSecondDouble()) - firstFrameTime;
-						animation->addFrame(frameIndex, time, frame);
+						animation->addFrame(frameIndex - offset, time, frame);
 					}
 					
 					stack->addAnimation(animationName, animation);
@@ -701,7 +705,6 @@ void FBXLoader::fetchSkeletonRecursive(FbxNode* inNode, const std::string& filen
 
 }
 int FBXLoader::getBoneIndex(unsigned int uniqueID, const std::string& name) {
-	//auto& ref = m_sceneData[name].bones;
 	AnimationStack* stack = m_sceneData[name].stack;
 	unsigned int size = stack->boneCount();
 	for (unsigned int i = 0; i < size; i++) {

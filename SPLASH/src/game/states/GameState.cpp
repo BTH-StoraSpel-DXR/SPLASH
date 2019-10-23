@@ -1040,7 +1040,7 @@ void GameState::populateScene(Model* characterModel, Model* lightModel, Model* b
 		float spawnOffsetZ = 13.f + float(i) * 1.3f;
 		auto e = ECS::Instance()->createEntity("Performance Test Entity " + std::to_string(i));
 
-		std::string name = "DocGunRun4.fbx";
+		std::string name = "DocTorch.fbx";
 		Model* characterModel = &m_app->getResourceManager().getModelCopy(name, shader);
 		characterModel->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/Character/CharacterMRAO.tga");
 		characterModel->getMesh(0)->getMaterial()->setAlbedoTexture("pbr/Character/CharacterTex.tga");
