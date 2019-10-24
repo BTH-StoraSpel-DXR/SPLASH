@@ -39,7 +39,10 @@ void GunSystem::update(float dt) {
 				if (gun->projectileSpawnTimer <= 0.f) {
 					gun->projectileSpawnTimer = gun->m_projectileSpawnCooldown;
 
-					// TODO: Move into receiversystem
+					// Stays here, not in receiver since this is neither per-frame or per-event.
+					// it is an event with a duration, something which needs its own definition and space
+					// if we decided to implement more of the same type. Until then it should be here.
+					// ( Same logic for the sounds being played later on in this update function ) 
 					EntityFactory::CreateProjectile(gun->position, gun->direction * gun->projectileSpeed, true);
 
 					// If this is the first shot in this "burst" of projectiles...
@@ -48,7 +51,14 @@ void GunSystem::update(float dt) {
 						e->getComponent<NetworkSenderComponent>()->addDataType(
 							Netcode::MessageType::SHOOT_START
 						);
+
+						// Audio
+						gun->state = GunState::STARTING;
 					}
+					else {
+						gun->state = GunState::LOOPING;
+					}
+
 					gun->firingContinuously = true;
 					m_gameDataTracker->logWeaponFired();
 				}
@@ -68,6 +78,8 @@ void GunSystem::update(float dt) {
 					e->getComponent<NetworkSenderComponent>()->addDataType(
 						Netcode::MessageType::SHOOT_END
 					);
+					gun->state = GunState::ENDING;
+
 					gun->firingContinuously = false;
 				}
 			}
@@ -84,9 +96,31 @@ void GunSystem::update(float dt) {
 				e->getComponent<NetworkSenderComponent>()->addDataType(
 					Netcode::MessageType::SHOOT_END
 				);
+				gun->state = GunState::ENDING;
 			}
 
 			gun->firingContinuously = false;
+		}
+
+		// Play sounds depending on which state the gun is in.
+		if (gun->state == GunState::STARTING) {
+			e->getComponent<AudioComponent>()->m_sounds[Audio::SoundType::SHOOT_START].isPlaying = true;
+			e->getComponent<AudioComponent>()->m_sounds[Audio::SoundType::SHOOT_START].playOnce = true;
+		}
+		else if (gun->state == GunState::LOOPING) {
+			e->getComponent<AudioComponent>()->m_sounds[Audio::SoundType::SHOOT_START].isPlaying = false;
+			e->getComponent<AudioComponent>()->m_sounds[Audio::SoundType::SHOOT_LOOP].isPlaying = true;
+			e->getComponent<AudioComponent>()->m_sounds[Audio::SoundType::SHOOT_LOOP].playOnce = true;
+		}
+		else if (gun->state == GunState::ENDING) {
+			e->getComponent<AudioComponent>()->m_sounds[Audio::SoundType::SHOOT_LOOP].isPlaying = false;
+			e->getComponent<AudioComponent>()->m_sounds[Audio::SoundType::SHOOT_END].isPlaying = true;
+			e->getComponent<AudioComponent>()->m_sounds[Audio::SoundType::SHOOT_END].playOnce = true;
+			
+			gun->state = GunState::STANDBY;
+		}
+		else {	/* gun->state == GunState::STANDBY */
+
 		}
 
 		gun->gunOverloadTimer -= dt;

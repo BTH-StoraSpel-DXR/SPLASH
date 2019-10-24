@@ -102,6 +102,8 @@ void NetworkSenderSystem::update() {
 		}
 	}
 
+
+
 	// -+-+-+-+-+-+-+-+ Per-instance events via eventQueue -+-+-+-+-+-+-+-+ 
 	sendToOthers(m_eventQueue.size());
 	sendToSelf(m_nrOfEventsToSendToSelf.load());
@@ -251,8 +253,6 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 	break;
 	case Netcode::MessageType::SHOOT_START:
 	{
-		std::cout << "SENDING SHOOT START\n";
-		
 		// Only do this once
 		e->getComponent<NetworkSenderComponent>()->removeDataType(Netcode::MessageType::SHOOT_START);
 
@@ -267,7 +267,6 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 	break;
 	case Netcode::MessageType::SHOOT_LOOP:
 	{
-		std::cout << "SENDING SHOOT LOOP\n";
 		// Send data to others
 		GunComponent* g = e->getComponent<GunComponent>();
 		ArchiveHelpers::archiveVec3(*ar, g->position);
@@ -276,7 +275,6 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 	break;
 	case Netcode::MessageType::SHOOT_END:
 	{
-		std::cout << "SENDING SHOOT END\n";
 		// Only do this once
 		e->getComponent<NetworkSenderComponent>()->removeDataType(Netcode::MessageType::SHOOT_END);
 		// Stop looping
