@@ -415,8 +415,6 @@ void NetworkReceiverSystem::playerDied(Netcode::ComponentID networkIdOfKilled, N
 			e->getComponent<MovementComponent>()->velocity = glm::vec3(0.f);
 			e->removeComponent<GunComponent>();
 
-			e->getComponent<NetworkSenderComponent>()->removeAllMessageTypes();
-
 			auto transform = e->getComponent<TransformComponent>();
 			auto pos = glm::vec3(transform->getCurrentTransformState().m_translation);
 			pos.y = 20.f;
@@ -492,7 +490,7 @@ void NetworkReceiverSystem::setCandleHeldState(Netcode::ComponentID id, bool isH
 
 void NetworkReceiverSystem::shootStart(glm::vec3& gunPos, glm::vec3& gunVel, Netcode::ComponentID id) {
 	// Spawn projectile
-	projectileSpawned(gunPos, gunVel);
+	projectileSpawned(gunPos, gunVel, id);
 
 	// Find out who sent it and make them play the sound (locally)
 	for (auto& e : entities) {
@@ -506,7 +504,7 @@ void NetworkReceiverSystem::shootStart(glm::vec3& gunPos, glm::vec3& gunVel, Net
 
 void NetworkReceiverSystem::shootLoop(glm::vec3& gunPos, glm::vec3& gunVel, Netcode::ComponentID id) {
 	// Spawn projectile
-	projectileSpawned(gunPos, gunVel);
+	projectileSpawned(gunPos, gunVel, id);
 
 	// Find out who sent it and make them play the sound (locally)
 	for (auto& e : entities) {
@@ -525,7 +523,7 @@ void NetworkReceiverSystem::shootLoop(glm::vec3& gunPos, glm::vec3& gunVel, Netc
 
 void NetworkReceiverSystem::shootEnd(glm::vec3& gunPos, glm::vec3& gunVel, Netcode::ComponentID id) {
 	// Spawn projectile
-	projectileSpawned(gunPos, gunVel);
+	projectileSpawned(gunPos, gunVel, id);
 
 	// Find out who sent it and make them play the sound (locally)
 	for (auto& e : entities) {
