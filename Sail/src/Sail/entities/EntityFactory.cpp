@@ -137,7 +137,7 @@ void EntityFactory::CreateGenericPlayer(Entity::SPtr playerEntity, size_t lightI
 	// Adding audio component and adding all sounds attached to the playerEntity entity
 	playerEntity->addComponent<AudioComponent>();
 
-	Audio::Factory::defineSoundsPlayer(player.get());
+	Audio::Factory::defineSoundsPlayer(playerEntity.get());
 
 #pragma endregion
 
