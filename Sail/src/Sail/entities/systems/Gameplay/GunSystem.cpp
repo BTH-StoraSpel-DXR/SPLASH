@@ -50,7 +50,7 @@ void GunSystem::update(float dt) {
 				}
 			}
 		}
-		// Gun is not firing
+		// Gun is not firing.
 		else {
 
 			// Reduce the overload value
