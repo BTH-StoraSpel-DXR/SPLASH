@@ -415,6 +415,8 @@ void NetworkReceiverSystem::playerDied(Netcode::ComponentID networkIdOfKilled, N
 			e->getComponent<MovementComponent>()->velocity = glm::vec3(0.f);
 			e->removeComponent<GunComponent>();
 
+			e->getComponent<NetworkSenderComponent>()->removeAllMessageTypes();
+
 			auto transform = e->getComponent<TransformComponent>();
 			auto pos = glm::vec3(transform->getCurrentTransformState().m_translation);
 			pos.y = 20.f;
