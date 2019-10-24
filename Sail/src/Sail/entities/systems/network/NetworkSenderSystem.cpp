@@ -247,7 +247,7 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 
 		// SHOULD BE:
 	//	AnimationComponent* a = e->getComponent<AnimationComponent>();
-	//	(*ar)(a->getAnimationStack());					// Animation Stack
+	//	(*ar)(a->getAnimationStack());					// Animation Stack.
 	//	(*ar)(a->animationTime);						// Animation Time
 	}
 	break;
