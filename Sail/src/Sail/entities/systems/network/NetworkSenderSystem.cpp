@@ -259,8 +259,8 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 
 		// Send data to others
 		GunComponent* g = e->getComponent<GunComponent>();
-		ArchiveHelpers::archiveVec3(ar, g->position);
-		ArchiveHelpers::archiveVec3(ar, g->direction * g->projectileSpeed); // Velocity
+		ArchiveHelpers::archiveVec3(*ar, g->position);
+		ArchiveHelpers::archiveVec3(*ar, g->direction * g->projectileSpeed); // Velocity
 
 		// Transition into loop
 		e->getComponent<NetworkSenderComponent>()->addDataType(Netcode::MessageType::SHOOT_LOOP);
@@ -270,8 +270,8 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 	{
 		// Send data to others
 		GunComponent* g = e->getComponent<GunComponent>();
-		ArchiveHelpers::archiveVec3(ar, g->position);
-		ArchiveHelpers::archiveVec3(ar, g->direction * g->projectileSpeed); // Velocity
+		ArchiveHelpers::archiveVec3(*ar, g->position);
+		ArchiveHelpers::archiveVec3(*ar, g->direction * g->projectileSpeed); // Velocity
 	}
 	break;
 	case Netcode::MessageType::SHOOT_END:
@@ -283,8 +283,8 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 
 		// Send data to others
 		GunComponent* g = e->getComponent<GunComponent>();
-		ArchiveHelpers::archiveVec3(ar, g->position);
-		ArchiveHelpers::archiveVec3(ar, g->direction * g->projectileSpeed); // Velocity
+		ArchiveHelpers::archiveVec3(*ar, g->position);
+		ArchiveHelpers::archiveVec3(*ar, g->direction * g->projectileSpeed); // Velocity
 	}
 	break;
 	default:
