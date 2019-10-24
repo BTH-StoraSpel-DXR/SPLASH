@@ -223,9 +223,9 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 
 		// When the remote entity has been created we want to update translation and rotation of that entity
 		auto networkComp = e->getComponent<NetworkSenderComponent>();
-		networkComp->removeMessageType(Netcode::MessageType::CREATE_NETWORKED_ENTITY);
-		networkComp->addMessageType(Netcode::MessageType::MODIFY_TRANSFORM);
-		networkComp->addMessageType(Netcode::MessageType::ROTATION_TRANSFORM);
+		networkComp->removeDataType(Netcode::MessageType::CREATE_NETWORKED_ENTITY);
+		networkComp->addDataType(Netcode::MessageType::MODIFY_TRANSFORM);
+		networkComp->addDataType(Netcode::MessageType::ROTATION_TRANSFORM);
 	}
 	break;
 	case Netcode::MessageType::MODIFY_TRANSFORM:
