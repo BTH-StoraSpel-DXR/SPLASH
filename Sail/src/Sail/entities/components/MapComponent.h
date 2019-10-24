@@ -4,14 +4,14 @@
 #include <vector>
 #include <queue>
 
-struct rect {
+struct Rect {
 	int posx;
 	int posy;
 	int sizex;
 	int sizey;
 	int doors = 0;
 };
-struct clutter {
+struct Clutter {
 	float posx;
 	float posy;
 	float height;
@@ -87,22 +87,22 @@ public:
 	int roomMaxSize = 36;//maximum area of a room
 	int roomSplitStop = 25;//percentage to stop a room from being split into smaller ones
 	int doorModifier = 15;//percentage to spawn a door
-	int clutterModifier = 101;//percentage to add clutter
+	int clutterModifier = 85;//percentage to add clutter
 	int seed = 5;//seed for generation
 #endif
 	int totalArea = xsize * ysize;
 	int numberOfRooms = 1;
-	float tileSize = 7.f;
+	const static int tileSize = 7;
 	float tileHeight = 0.8f;
 	int tileOffset = 0;
 	std::vector<glm::vec3> spawnPoints;
-	std::queue<rect> chunks;
-	std::queue<rect> blocks;
-	std::queue<rect> hallways;
-	std::queue<rect> rooms;
-	std::queue<rect> matched;
-	std::queue<clutter>largeClutter;
-	std::queue<clutter>mediumClutter;
-	std::queue<clutter>smallClutter;
+	std::queue<Rect> chunks;
+	std::queue<Rect> blocks;
+	std::queue<Rect> hallways;
+	std::queue<Rect> rooms;
+	std::queue<Rect> matched;
+	std::queue<Clutter>largeClutter;
+	std::queue<Clutter>mediumClutter;
+	std::queue<Clutter>smallClutter;
 private:
 };

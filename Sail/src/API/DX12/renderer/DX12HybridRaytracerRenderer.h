@@ -14,6 +14,7 @@ public:
 	virtual void submit(Mesh* mesh, const glm::mat4& modelMatrix, RenderFlag flags) override;
 	virtual void submitNonMesh(RenderCommandType type, Material* material, const glm::mat4& modelMatrix, RenderFlag flags) override;
 	virtual void submitDecal(const glm::vec3& pos, const glm::mat3& rot, const glm::vec3& halfSize) override;
+	virtual void submitWaterPoint(const glm::vec3& pos) override;
 	virtual void setLightSetup(LightSetup* lightSetup) override;
 	virtual void end() override;
 	virtual void present(PostProcessPipeline* postProcessPipeline = nullptr, RenderableTexture* output = nullptr) override;

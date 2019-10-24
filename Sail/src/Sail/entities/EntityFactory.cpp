@@ -22,9 +22,9 @@ Entity::SPtr EntityFactory::CreateCandle(const std::string& name, Model* lightMo
 	e->addComponent<CollidableComponent>();
 	e->addComponent<CullingComponent>();
 	PointLight pl;
-	pl.setColor(glm::vec3(1.0f, 1.0f, 1.0f));
+	pl.setColor(glm::vec3(1.0f, 0.7f, 0.4f));
 	pl.setPosition(glm::vec3(lightPos.x, lightPos.y + .37f, lightPos.z));
-	pl.setAttenuation(.0f, 0.1f, 0.02f);
+	pl.setAttenuation(0.f, 0.f, 0.2f);
 	pl.setIndex(lightIndex);
 	e->addComponent<LightComponent>(pl);
 

@@ -4,8 +4,8 @@
 
 class Scene;
 class Model;
-struct rect;
-struct clutter;
+struct Rect;
+struct Clutter;
 
 enum TileModel {
 	ROOM_FLOOR,
@@ -53,7 +53,7 @@ private:
 	void splitChunk();
 	void splitBlock();
 	void matchRoom();
-	int checkBorder(rect rekt);
+	int checkBorder(Rect rekt);
 	bool splitDirection(bool ns);
 	void addSpawnPoints();
 	void addDoors();

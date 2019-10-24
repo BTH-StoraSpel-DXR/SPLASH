@@ -7,6 +7,7 @@
 #include "Sail/entities/components/LocalOwnerComponent.h"
 #include "Network/NWrapperSingleton.h"
 #include "Sail/Application.h"
+#include "API/DX12/renderer/DX12RaytracingRenderer.h"
 
 ProjectileSystem::ProjectileSystem() {
 	// TODO: System owner should check if this is correct
@@ -16,8 +17,6 @@ ProjectileSystem::ProjectileSystem() {
 	registerComponent<CandleComponent>(false, true, true);
 	registerComponent<NetworkReceiverComponent>(false, true, false);
 	registerComponent<LocalOwnerComponent>(false, true, false);
-
-	m_splashMinTime = 0.3f;
 
 	float splashSize = 0.14f;
 	m_projectileSplashSize = (1.f / splashSize) / 2.f;
@@ -34,17 +33,14 @@ void ProjectileSystem::update(float dt) {
 		auto projComp = e->getComponent<ProjectileComponent>();
 		for (auto& collision : projectileCollisions) {
 			// Check if a decal should be created
-			if (projComp->timeSinceLastDecal > m_splashMinTime &&
-				glm::length(e->getComponent<MovementComponent>()->oldVelocity) > 0.7f) {
+			if (glm::length(e->getComponent<MovementComponent>()->oldVelocity) > 0.7f) {
 				// TODO: Replace with some "layer-id" check rather than doing a string check
-				if (collision.entity->getName().substr(0U, 4U) == "Map_") {
+				if (collision.entity->getName().substr(0U, 4U) == "Map_" || collision.entity->getName().substr(0U, 7U) == "Clutter") {
+					// Calculate rotation matrix used when placing a decal at the intersection
+					//glm::mat4 rotMat = glm::rotate(glm::identity<glm::mat4>(), Utils::fastrand() * 3.14f, glm::vec3(0.0f, 0.0f, 1.0f));
 
-					glm::mat4 rotMat = glm::rotate(glm::identity<glm::mat4>(), Utils::fastrand() * 3.14f, glm::vec3(0.0f, 0.0f, 1.0f));
-
-					Application::getInstance()->getRenderWrapper()->getCurrentRenderer()->submitDecal(
-						collision.intersectionPosition,
-						rotMat,
-						glm::vec3(m_projectileSplashSize));
+					// Place water point at intersection position
+					Application::getInstance()->getRenderWrapper()->getCurrentRenderer()->submitWaterPoint(collision.intersectionPosition);
 
 					projComp->timeSinceLastDecal = 0.f;
 				}

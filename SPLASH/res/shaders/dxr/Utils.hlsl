@@ -84,8 +84,7 @@ namespace Utils {
         return tangent * (r * cos(phi).x) + bitangent * (r * sin(phi)) + hitNorm.xyz * sqrt(1 - randVal.x);
     }
 
-    float3x3 rotateMatrix(float angle, float3 axis)
-    {
+    float3x3 rotateMatrix(float angle, float3 axis) {
         float c, s;
         sincos(angle, s, c);
 
@@ -95,11 +94,29 @@ namespace Utils {
         float z = axis.z;
 
         return float3x3(
-        t * x * x + c, t * x * y - s * z, t * x * z + s * y,
-        t * x * y + s * z, t * y * y + c, t * y * z - s * x,
-        t * x * z - s * y, t * y * z + s * x, t * z * z + c
-    );
-    } // rotate
+            t * x * x + c, t * x * y - s * z, t * x * z + s * y,
+            t * x * y + s * z, t * y * y + c, t * y * z - s * x,
+            t * x * z - s * y, t * y * z + s * x, t * z * z + c
+        );
+    }
 
+    int to1D(int3 ind, int xMax, int yMax) {
+        return ind.x + xMax * (ind.y + yMax * ind.z);
+    }
+
+    int3 to3D(int ind, int xMax, int yMax) {
+        int3 ind3d;
+        ind3d.z = ind / (xMax * yMax);
+        ind -= (ind3d.z * xMax * yMax);
+        ind3d.y = ind / xMax;
+        ind3d.x = ind % xMax;
+        return ind3d;
+    }
+
+    uint unpackQuarterFloat(uint input, uint index) {
+        uint output = (input >> ((3-index) * 8)) & 255;
+        // output = max(1, output);
+        return output;
+    }
 
 }

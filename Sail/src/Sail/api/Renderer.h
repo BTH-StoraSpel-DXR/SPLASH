@@ -59,7 +59,8 @@ public:
 	virtual void begin(Camera* camera);
 	virtual void submit(Model* model, const glm::mat4& modelMatrix, RenderFlag flags);
 	virtual void submitNonMesh(RenderCommandType type, Material* material, const glm::mat4& modelMatrix, RenderFlag flags) {};
-	virtual void submitDecal(const glm::vec3& pos, const glm::mat3& rot, const glm::vec3& halfSize) {};
+	virtual void submitDecal(const glm::vec3& pos, const glm::mat3& rot, const glm::vec3& halfSize) { };
+	virtual void submitWaterPoint(const glm::vec3& pos) { };
 
 	virtual void submit(Mesh* mesh, const glm::mat4& modelMatrix, RenderFlag flags);
 	virtual void setLightSetup(LightSetup* lightSetup);

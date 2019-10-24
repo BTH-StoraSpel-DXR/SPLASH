@@ -149,7 +149,9 @@ ID3D12StateObject* DXRUtils::PSOBuilder::build(ID3D12Device5* device) {
 
 		hr = device->GetDeviceRemovedReason();
 		_com_error err(hr);
-		std::cout << err2.ErrorMessage() << std::endl;
+		OutputDebugString(err.ErrorMessage());
+		OutputDebugString(L"\n");
+		std::cout << err.ErrorMessage() << std::endl;
 	}
 	ThrowIfFailed(hr);
 

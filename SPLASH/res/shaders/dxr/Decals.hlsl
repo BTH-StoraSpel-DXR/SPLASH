@@ -16,7 +16,7 @@ float4 renderDecal(uint index, float3 vsPosition, float3 wPos, float3 wNorm, flo
     }
     
     // Calculated per pixel to eliminate texture stretching
-    float3x3 rotMat = currDecal.rot; //{ { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } };
+    float3x3 rotMat = (float3x3)currDecal.rot; //{ { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } };
     if (abs(wNorm.z) != 1.f) {
         float3 b = float3(0.f, 0.f, 1.f * sign(wNorm.z));
         float3 v = cross(b, wNorm);
@@ -68,12 +68,12 @@ float4 renderDecal(uint index, float3 vsPosition, float3 wPos, float3 wNorm, flo
         // float4 albedoColour = decal_texAlbedo.SampleGrad(ss, decalUV, uvDX, uvDY, 0);
         float4 albedoColour = decal_texAlbedo.SampleLevel(ss, decalUV, 0);
         // float3 decalNormalTS = decal_texNormal.SampleGrad(ss, decalUV, uvDX, uvDY, 0);
-        float3 decalNormalTS = decal_texNormal.SampleLevel(ss, decalUV, 0);
+        float3 decalNormalTS = decal_texNormal.SampleLevel(ss, decalUV, 0).rgb;
         decalNormalTS = decalNormalTS * 2.0f - 1.0f;
         decalNormalTS.z *= -1.0f;
         float3 decalNormalWS = mul(decalNormalTS, rot);
         // float3 mra = decal_texMetalnessRoughnessAO.SampleGrad(ss, decalUV, uvDX, uvDY, 0);
-        float3 mra = decal_texMetalnessRoughnessAO.SampleLevel(ss, decalUV, 0);
+        float3 mra = decal_texMetalnessRoughnessAO.SampleLevel(ss, decalUV, 0).rgb;
         float metalness = mra.r;
         float roughness = mra.g;
         float ao = mra.b;
@@ -94,7 +94,7 @@ float4 renderDecal(uint index, float3 vsPosition, float3 wPos, float3 wNorm, flo
 		// wNorm = mul(normalize(wNorm * 2.f - 1.f), tbn);
 
         float3 norm = lerp(wNorm, decalNormalWS, albedoColour.w);
-        shade(wPos, wNorm, payloadColour, metalness, roughness, ao, decalPayload);
+        shade(wPos, wNorm, payloadColour.rgb, metalness, roughness, ao, decalPayload);
         //colourToReturn = lerp(float4(albedo, 1.0f), decalPayload.color, albedoColour.w);
         colourToReturn = decalPayload.color;
         // colourToReturn = 1.0f;

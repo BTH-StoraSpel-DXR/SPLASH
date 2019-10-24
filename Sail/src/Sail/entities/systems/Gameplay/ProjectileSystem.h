@@ -10,7 +10,5 @@ public:
 
 private:
 	// TODO: Replace with game settings
-	float m_splashMinTime;
-
 	float m_projectileSplashSize;
 };
