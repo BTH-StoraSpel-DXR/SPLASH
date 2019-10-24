@@ -28,7 +28,7 @@ protected:
 	NetworkSenderSystem* m_netSendSysPtr;
 	GameDataTracker* m_gameDataTracker;
 
-	// FIFO container of serialized data-strings to decode
+	// FIFO container of serialized data-strings to decode.
 	std::queue<std::string> m_incomingDataBuffer;
 	std::mutex m_bufferLock;
 
