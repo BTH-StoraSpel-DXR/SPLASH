@@ -43,8 +43,16 @@ void GameDataTracker::logDistanceWalked(glm::vec3 vector) {
 	m_loggedData.distanceWalked += distanceOfVector;
 }
 
+void GameDataTracker::logPlayerDeath(const std::string& killer, const std::string& killed, const std::string& deathType) {
+	m_playerDeaths.emplace_back(killer + " " + deathType + " " + killed);
+}
+
 const statistics& GameDataTracker::getStatistics() {
 	return m_loggedData;
+}
+
+const std::vector<std::string>& GameDataTracker::getPlayerDeaths() {
+	return m_playerDeaths;
 }
 
 void GameDataTracker::renderImgui() {

@@ -99,44 +99,56 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 
 			// Player puts down candle
 			if ( Input::WasKeyJustPressed(KeyBinds::putDownCandle) ) {
+
 				putDownCandle(e);
 			}
 
 			if ( Input::WasKeyJustPressed(KeyBinds::lightCandle) ) {
+
 				for ( auto child : e->getChildEntities() ) {
+
 					if ( child->hasComponent<CandleComponent>() ) {
+
 						child->getComponent<CandleComponent>()->activate();
 					}
 				}
 			}
 
 			if (collision->onGround) {
+
 				m_isPlayingRunningSound = true;
 
 				if (m_onGroundTimer > m_onGroundThreshold) {
+
 					m_onGroundTimer = m_onGroundThreshold;
 				} else {
+
 					m_onGroundTimer += dt;
 				}
 			}
 
 			else if (!collision->onGround) {
+
 				if (m_onGroundTimer < 0.0f) {
+
 					m_onGroundTimer = 0.0f;
 					m_isPlayingRunningSound = false;
 				} else {
+
 					m_onGroundTimer -= dt;
 				}
 			}
 
 			if ( playerMovement.upMovement == 1.0f ) {
+
 				if (!m_wasSpacePressed && collision->onGround) {
+
 					movement->velocity.y = 5.0f;
 					// AUDIO TESTING - JUMPING
 					m_onGroundTimer = -1.0f; // To stop walking sound immediately when jumping
 					e->getComponent<AudioComponent>()->m_sounds[Audio::SoundType::JUMP].isPlaying = true;
 					e->getComponent<AudioComponent>()->m_sounds[Audio::SoundType::JUMP].playOnce = true;
-					//	// Add networkcomponent for jump 
+					// Add networkcomponent for jump 
 					NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
 						Netcode::MessageType::PLAYER_JUMPED,
 						SAIL_NEW Netcode::MessagePlayerJumped{e->getComponent<NetworkSenderComponent>()->m_id},
@@ -158,19 +170,23 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 
 			// Prevent division by zero
 			if ( playerMovement.forwardMovement != 0.0f || playerMovement.rightMovement != 0.0f ) {
+
 				// Calculate total movement
 				float acceleration = 70.0f - ( glm::length(movement->velocity) / speedLimit->maxSpeed ) * 20.0f;
 				if ( !collision->onGround ) {
+
 					acceleration = acceleration * 0.5f;
 					// AUDIO TESTING (turn OFF looping running sound)
 					if (!m_isPlayingRunningSound) {
-						audioComp->m_sounds[Audio::SoundType::RUN].isPlaying = false;
+						audioComp->m_sounds[Audio::SoundType::RUN_METAL].isPlaying = false;
 					}
 				}
 				// AUDIO TESTING (playing a looping running sound)
-				else if ( m_runSoundTimer > 0.3f ) {
-					audioComp->m_sounds[Audio::SoundType::RUN].isPlaying = true;
+				else if ( m_runSoundTimer > m_onGroundThreshold) {
+
+					audioComp->m_sounds[Audio::SoundType::RUN_METAL].isPlaying = true;
 				} else {
+
 					m_runSoundTimer += dt;
 				}
 
@@ -178,8 +194,9 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 					glm::normalize(right * playerMovement.rightMovement + forward * playerMovement.forwardMovement)
 					* acceleration;
 			} else {
+
 				// AUDIO TESTING (turn OFF looping running sound)
-				audioComp->m_sounds[Audio::SoundType::RUN].isPlaying = false;
+				audioComp->m_sounds[Audio::SoundType::RUN_METAL].isPlaying = false;
 				m_runSoundTimer = 0.0f;
 			}
 		}

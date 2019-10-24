@@ -43,3 +43,5 @@
 #include "Sail/utils/SailImGui/LightDebugWindow.h"
 #include "Sail/utils/SailImGui/PlayerInfoWindow.h"
 #include "Sail/utils/SailImGui/WasDroppedWindow.h"
+#include "Sail/utils/SailImGui/KillFeedWindow.h"
+

@@ -27,6 +27,8 @@ class State : public IEventListener {
 		virtual bool render(float dt, float alpha) = 0;
 		// Renders imgui
 		virtual bool renderImgui(float dt);
+		// Renders imgui used for debugging
+		virtual bool renderImguiDebug(float dt);
 		// Sends events to the state
 		virtual bool onEvent(Event& event) { return true; }
 		// Called at the end of the frame to reset the state before it changes

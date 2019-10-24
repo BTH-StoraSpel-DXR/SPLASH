@@ -75,7 +75,7 @@ class StateStack {
 		// Maps functions to initialize a state by its id
 		std::map<States::ID, std::function<State::Ptr()>> m_factories;
 
-		bool m_renderImgui;
+		bool m_renderImguiDebug;
 
 
 public:
