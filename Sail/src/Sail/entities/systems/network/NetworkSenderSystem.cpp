@@ -21,7 +21,7 @@ NetworkSenderSystem::NetworkSenderSystem() : BaseComponentSystem() {
 }
 
 NetworkSenderSystem::~NetworkSenderSystem() {
-	while (m_eventQueue.size() > 0) {
+	while (!m_eventQueue.empty()) {
 		NetworkSenderEvent* pEvent = m_eventQueue.front();
 		m_eventQueue.pop();
 		delete pEvent;
@@ -37,35 +37,36 @@ void NetworkSenderSystem::init(Netcode::PlayerID playerID, NetworkReceiverSystem
   The construction of messages needs to match how the NetworkReceiverSystem parses them so
   any changes made here needs to be made there as well!
 
-  Logical structure of the package that will be sent by this function:
-  ---------------------------------------------------
-	PlayerID        senderID
-	size_t          nrOfEntities
-	    ComponentID     entity[0].id
-	    EntityType      entity[0].type
-	    size_t          nrOfMessages
-	        MessageType     entity[0].messageType
-	        MessageData     entity[0].data
-	        ...
-	    ComponentID     entity[1].id
-	    EntityType      entity[1].type
-	    size_t          nrOfMessages
-	        MessageType     entity[0].messageType
-	        MessageData     entity[0].data
-	        ...
-	    ComponentID     entity[2].id
-	    EntityType      entity[2].type
-	    size_t          nrOfMessages
-	        MessageType     entity[0].messageType
-	        MessageData     entity[0].data
-	        ...
-	    ...
-	size_t          nrOfEvents
-	    MessageType     eventType[0]
-	    EventData       eventData[0]
-	    ...
-	...
-  ---------------------------------------------------
+
+	Logical structure of the package that will be sent by this function:
+	--------------------------------------------------
+	| PlayerID        senderID                       |
+	| size_t          nrOfEntities                   |
+	|     ComponentID     entity[0].id               |
+	|     EntityType      entity[0].type             |
+	|     size_t          nrOfMessages               |
+	|         MessageType     entity[0].messageType  |
+	|         MessageData     entity[0].data         |
+	|         ...                                    |
+	|     ComponentID     entity[1].id               |
+	|     EntityType      entity[1].type             |
+	|     size_t          nrOfMessages               |
+	|         MessageType     entity[0].messageType	 |
+	|         MessageData     entity[0].data         |
+	|         ...                                    |
+	|     ComponentID     entity[2].id               |
+	|     EntityType      entity[2].type             |
+	|     size_t          nrOfMessages               |
+	|         MessageType     entity[0].messageType  |
+	|         MessageData     entity[0].data         |
+	|         ...                                    |
+	|     ...                                        |
+	| size_t          nrOfEvents                     |
+	|     MessageType     eventType[0]               |
+	|     EventData       eventData[0]               |
+	|     ...                                        |
+	| ...                                            |
+	--------------------------------------------------
 
 */
 void NetworkSenderSystem::update() {
@@ -98,7 +99,7 @@ void NetworkSenderSystem::update() {
 		for (auto& messageType : nsc->m_dataTypes) {
 			sendToOthers(messageType);          // Current MessageType
 
-			writeMessageToArchive(messageType, e, &sendToOthers); // Add to archive depending on the message
+			writeMessageToArchive(messageType, e, sendToOthers); // Add to archive depending on the message
 		}
 	}
 
@@ -110,9 +111,9 @@ void NetworkSenderSystem::update() {
 
 	while (!m_eventQueue.empty()) {
 		NetworkSenderEvent* pE = m_eventQueue.front();
-		writeEventToArchive(pE, &sendToOthers);
+		writeEventToArchive(pE, sendToOthers);
 		if (pE->alsoSendToSelf) {
-			writeEventToArchive(pE, &sendToSelf);
+			writeEventToArchive(pE, sendToSelf);
 		}
 
 		m_eventQueue.pop();
@@ -172,7 +173,7 @@ const std::vector<Entity*>& NetworkSenderSystem::getEntities() const {
 	return entities;
 }
 
-// TODO: Test this to see if it's actually needed or not/l
+// TODO: Test this to see if it's actually needed or not
 void NetworkSenderSystem::stop() {
 	// Loop through networked entities and serialize their data.
 	std::ostringstream osToOthers(std::ios::binary);
@@ -189,7 +190,7 @@ void NetworkSenderSystem::stop() {
 		if ((pE->type == Netcode::MessageType::MATCH_ENDED || pE->type == Netcode::MessageType::SEND_ALL_BACK_TO_LOBBY) && ended == false) {
 			ended = true;
 			sendToOthers(size_t{1}); // Write nrOfEvents
-			writeEventToArchive(pE, &sendToOthers);
+			writeEventToArchive(pE, sendToOthers);
 		}
 		m_eventQueue.pop();
 		delete pE;
@@ -211,14 +212,14 @@ void NetworkSenderSystem::addEntityToListONLYFORNETWORKRECIEVER(Entity* e) {
 	entities.push_back(e);
 }
 
-void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageType, Entity* e, Netcode::OutArchive* ar) {
+void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageType, Entity* e, Netcode::OutArchive& ar) {
 	// Package it depending on the type
 	switch (messageType) {
 		// Send necessary info to create the networked entity 
 	case Netcode::MessageType::CREATE_NETWORKED_ENTITY:
 	{
 		TransformComponent* t = e->getComponent<TransformComponent>();
-		ArchiveHelpers::archiveVec3(*ar, t->getTranslation()); // Send translation
+		ArchiveHelpers::archiveVec3(ar, t->getTranslation()); // Send translation
 
 		// When the remote entity has been created we want to update translation and rotation of that entity
 		auto networkComp = e->getComponent<NetworkSenderComponent>();
@@ -230,20 +231,20 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 	case Netcode::MessageType::MODIFY_TRANSFORM:
 	{
 		TransformComponent* t = e->getComponent<TransformComponent>();
-		ArchiveHelpers::archiveVec3(*ar, t->getTranslation()); // Send translation
+		ArchiveHelpers::archiveVec3(ar, t->getTranslation()); // Send translation
 	}
 	break;
 	case Netcode::MessageType::ROTATION_TRANSFORM:
 	{
 		TransformComponent* t = e->getComponent<TransformComponent>();
-		ArchiveHelpers::archiveVec3(*ar, t->getRotations());	// Send rotation
+		ArchiveHelpers::archiveVec3(ar, t->getRotations());	// Send rotation
 	}
 	break;
 	case Netcode::MessageType::ANIMATION:
 	{
 		// CURRENTLY IS:
-		(*ar)(0);		// AnimationStack
-		(*ar)(0.0f);	// AnimationTime
+		ar(0);		// AnimationStack
+		ar(0.0f);	// AnimationTime
 
 		// SHOULD BE:
 	//	AnimationComponent* a = e->getComponent<AnimationComponent>();
@@ -291,45 +292,46 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 	}
 }
 
-void NetworkSenderSystem::writeEventToArchive(NetworkSenderEvent* event, Netcode::OutArchive* ar) {
-	(*ar)(event->type); // Send the event-type
+void NetworkSenderSystem::writeEventToArchive(NetworkSenderEvent* event, Netcode::OutArchive& ar) {
+	ar(event->type); // Send the event-type
 
 	switch (event->type) {
 	case Netcode::MessageType::SPAWN_PROJECTILE:
 	{
 		Netcode::MessageSpawnProjectile* data = static_cast<Netcode::MessageSpawnProjectile*>(event->data);
 
-		ArchiveHelpers::archiveVec3(*ar, data->translation);
-		ArchiveHelpers::archiveVec3(*ar, data->velocity);
+		ArchiveHelpers::archiveVec3(ar, data->translation);
+		ArchiveHelpers::archiveVec3(ar, data->velocity);
+		ar(data->ownerPlayerComponentID);
 	}
 	break;
 	case Netcode::MessageType::PLAYER_JUMPED:
 	{
 		Netcode::MessagePlayerJumped* data = static_cast<Netcode::MessagePlayerJumped*>(event->data);
 
-		(*ar)(data->playerWhoJumped);
+		ar(data->playerWhoJumped);
 	}
 	break;
 	case Netcode::MessageType::WATER_HIT_PLAYER:
 	{
 		Netcode::MessageWaterHitPlayer* data = static_cast<Netcode::MessageWaterHitPlayer*>(event->data);
 
-		(*ar)(data->playerWhoWasHitID);
+		ar(data->playerWhoWasHitID);
 	}
 	break;
 	case Netcode::MessageType::PLAYER_DIED:
 	{
 		Netcode::MessagePlayerDied* data = static_cast<Netcode::MessagePlayerDied*>(event->data);
 
-		(*ar)(data->playerWhoDied); // Send
-		(*ar)(data->playerWhoFired);
+		ar(data->playerWhoDied); // Send
+		ar(data->playerWhoFired);
 	}
 	break;
 	case Netcode::MessageType::PLAYER_DISCONNECT:
 	{
 		Netcode::MessagePlayerDisconnect* data = static_cast<Netcode::MessagePlayerDisconnect*>(event->data);
 
-		(*ar)(data->playerID); // Send
+		ar(data->playerID); // Send
 	}
 	break;
 	case Netcode::MessageType::MATCH_ENDED:
@@ -346,9 +348,9 @@ void NetworkSenderSystem::writeEventToArchive(NetworkSenderEvent* event, Netcode
 	{
 		Netcode::MessageCandleHeldState* data = static_cast<Netcode::MessageCandleHeldState*>(event->data);
 
-		(*ar)(data->candleOwnerID);
-		(*ar)(data->isHeld);
-		ArchiveHelpers::archiveVec3(*ar, data->candlePos);
+		ar(data->candleOwnerID);
+		ar(data->isHeld);
+		ArchiveHelpers::archiveVec3(ar, data->candlePos);
 	}
 	break;
 

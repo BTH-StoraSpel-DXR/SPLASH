@@ -146,15 +146,13 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 					movement->velocity.y = 5.0f;
 					// AUDIO TESTING - JUMPING
 					m_onGroundTimer = -1.0f; // To stop walking sound immediately when jumping
-					e->getComponent<AudioComponent>()->m_sounds[Audio::SoundType::JUMP].isPlaying = true;
-					e->getComponent<AudioComponent>()->m_sounds[Audio::SoundType::JUMP].playOnce = true;
-					// Add networkcomponent for jump 
+					m_gameDataTracker->logJump();
+
+					// Send event to play the sound for the jump (will be sent to ourself too)
 					NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
 						Netcode::MessageType::PLAYER_JUMPED,
-						SAIL_NEW Netcode::MessagePlayerJumped{e->getComponent<NetworkSenderComponent>()->m_id},
-						false // Don't delay the jump for ourselves, handle the logic here
+						SAIL_NEW Netcode::MessagePlayerJumped{ e->getComponent<NetworkSenderComponent>()->m_id }
 					);
-					m_gameDataTracker->logJump();
 				}
 				m_wasSpacePressed = true;
 			} else {

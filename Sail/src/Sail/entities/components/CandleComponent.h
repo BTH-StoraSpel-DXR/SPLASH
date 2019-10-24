@@ -1,7 +1,11 @@
 #pragma once
 #include "Component.h"
 
+#include "Sail/netcode/NetcodeTypes.h"
+
 class Entity;
+
+// TODO: Remove as many functions as possible
 
 // This component will eventually contain the health etc of the candles
 class CandleComponent : public Component<CandleComponent> {
@@ -9,7 +13,7 @@ public:
 	CandleComponent();
 	virtual ~CandleComponent();
 
-	void hitWithWater(float damage, unsigned char shooterID);
+	void hitWithWater(float damage, Netcode::PlayerID shooterID);
 	void resetHitByWater();
 	bool wasHitByWater() const;
 	bool getIsAlive() const;
@@ -29,8 +33,8 @@ public:
 	void setIsLit(const bool isLit);
 	int getNumRespawns() const;
 	void incrementRespawns();
-	void setOwner(int playerEntityID);
-	int getOwner() const;
+	void setOwner(Netcode::PlayerID playerEntityID);
+	Netcode::PlayerID getOwner() const;
 	int getDamageTakenLastHit() const;
 	float getInvincibleTimer() const;
 	void decrementInvincibleTimer(const float dt);
@@ -38,7 +42,7 @@ public:
 	float getHealth() const;
 	void setHealth(const float health);
 	void decrementHealth(const float health);
-	void setWasHitByNetID(unsigned char netIdOfPlayerWhoHitThisCandle);
+	void setWasHitByNetID(Netcode::PlayerID netIdOfPlayerWhoHitThisCandle);
 	unsigned char getWasHitByNetID();
 
 	bool hitByLocalPlayer = false;
@@ -53,7 +57,7 @@ private:
 	bool m_activate = false;
 	bool m_carried = true;
 	bool m_wasCarriedLastUpdate = true;
-	unsigned char wasHitByPlayerID = 0;
+	Netcode::PlayerID wasHitByPlayerID = 0;
 
 	float m_invincibleTimer = -2.f;
 	// TODO: Replace using game settings when that is implemented
@@ -65,5 +69,5 @@ private:
 	bool m_isLit = true;
 	int m_respawns = 0;
 
-	int m_playerEntityID = -1;
+	Netcode::PlayerID m_playerEntityID;
 };
