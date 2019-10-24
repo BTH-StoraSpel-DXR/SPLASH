@@ -9,7 +9,7 @@ CandleComponent::~CandleComponent() {
 
 }
 
-void CandleComponent::hitWithWater(float damage, unsigned char shooterID) {
+void CandleComponent::hitWithWater(float damage, Netcode::PlayerID shooterID) {
 	if (getInvincibleTimer() <= 0.f) {
 		if (m_health > 0.0f) {
 			setInvincibleTimer(0.4f);
@@ -90,11 +90,11 @@ void CandleComponent::incrementRespawns() {
 	m_respawns++;
 }
 
-void CandleComponent::setOwner(int playerEntityID) {
+void CandleComponent::setOwner(Netcode::PlayerID playerEntityID) {
 	m_playerEntityID = playerEntityID;
 }
 
-int CandleComponent::getOwner() const {
+Netcode::PlayerID CandleComponent::getOwner() const {
 	return m_playerEntityID;
 }
 
@@ -126,7 +126,7 @@ void CandleComponent::decrementHealth(const float health) {
 	m_health -= health;
 }
 
-void CandleComponent::setWasHitByNetID(unsigned char netIdOfPlayerWhoHitThisCandle) {
+void CandleComponent::setWasHitByNetID(Netcode::PlayerID netIdOfPlayerWhoHitThisCandle) {
 	wasHitByPlayerID = netIdOfPlayerWhoHitThisCandle;
 }
 

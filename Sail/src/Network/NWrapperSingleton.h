@@ -51,7 +51,7 @@ public:
 
 	// Specifically for One-Time-Events during the gamestate
 	void setNSS(NetworkSenderSystem* NSS);
-	void queueGameStateNetworkSenderEvent(Netcode::MessageType type, Netcode::MessageData* messageData, bool alsoSendToSelf = false); // TODO: change default to true once #U421 is done
+	void queueGameStateNetworkSenderEvent(Netcode::MessageType type, Netcode::MessageData* messageData, bool alsoSendToSelf = true); // Messages sent to self will be dealt with in NetworkReceiverSystem
 private:
 	// Specifically for One-Time-Events during the gamestate
 	NetworkSenderSystem* NSS = nullptr;

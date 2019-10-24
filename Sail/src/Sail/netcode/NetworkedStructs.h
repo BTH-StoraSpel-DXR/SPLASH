@@ -119,13 +119,14 @@ namespace Netcode {
 
 	class MessageSpawnProjectile : public MessageData {
 	public:
-		MessageSpawnProjectile(glm::vec3 translation_, glm::vec3 velocity_)
-			: translation(translation_), velocity(velocity_)
+		MessageSpawnProjectile(glm::vec3 translation_, glm::vec3 velocity_, Netcode::ComponentID ownerComponentID)
+			: translation(translation_), velocity(velocity_), ownerPlayerComponentID(ownerComponentID)
 		{}
 		virtual ~MessageSpawnProjectile() {}
 
 		glm::vec3 translation;
 		glm::vec3 velocity;
+		Netcode::ComponentID ownerPlayerComponentID;
 	};
 
 	class MessageWaterHitPlayer : public MessageData {
@@ -156,7 +157,7 @@ namespace Netcode {
 
 	class MessageCandleHeldState : public MessageData {
 	public:
-		MessageCandleHeldState(Netcode::ComponentID id, bool b, glm::vec3 pos) : candleOwnerID(id), isHeld(b), candlePos(pos) {}
+		MessageCandleHeldState(Netcode::ComponentID id, bool held, glm::vec3 pos) : candleOwnerID(id), isHeld(held), candlePos(pos) {}
 		~MessageCandleHeldState() {}
 		Netcode::ComponentID candleOwnerID;
 		bool isHeld;

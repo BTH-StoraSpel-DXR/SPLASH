@@ -57,13 +57,6 @@ void ProjectileSystem::update(float dt) {
 							collision.entity->getParent()->getComponent<NetworkReceiverComponent>()->m_id
 						}
 					);
-
-					if (NWrapperSingleton::getInstance().isHost()) {
-						auto e = collision.entity->getComponent<CandleComponent>();
-						e->hitWithWater(10.0f, e->getWasHitByNetID());
-					}
-
-					//Check in NetworkReceiverSystem what happens next
 				}
 			}
 		}

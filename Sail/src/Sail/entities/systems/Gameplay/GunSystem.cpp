@@ -6,6 +6,7 @@
 #include "Sail/entities/ECS.h"
 
 #include "Sail/entities/components/GunComponent.h"
+#include "Sail/entities/components/NetworkSenderComponent.h"
 #include "Sail/utils/GameDataTracker.h"
 #include "../Sail/src/Network/NWrapperSingleton.h"
 #include "Sail/netcode/NetworkedStructs.h"
@@ -17,6 +18,7 @@
 GunSystem::GunSystem() : BaseComponentSystem() {
 	// TODO: System owner should check if this is correct
 	registerComponent<GunComponent>(true, true, true);
+	registerComponent<NetworkSenderComponent>(false, true, true);
 	m_gameDataTracker = &GameDataTracker::getInstance();
 }
 

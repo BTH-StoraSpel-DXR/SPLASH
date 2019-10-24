@@ -13,19 +13,8 @@ enum GunState {
 
 class GunComponent : public Component<GunComponent> {
 public:
-	GunComponent(Model* projectileModel, Model* wireframeModel) : 
-	m_projectileModel(projectileModel)
-	,m_wireframeModel(wireframeModel)
-	{ };
-	~GunComponent() { };
-
-	Model* getProjectileModel() const {
-		return m_projectileModel;
-	}
-
-	Model* getWireframeModel() const {
-		return m_wireframeModel;
-	}
+	GunComponent() {};
+	~GunComponent() {};
 
 	void setFiring(glm::vec3 pos, glm::vec3 dir);
 
@@ -50,7 +39,5 @@ public:
 	GunState state = GunState::STANDBY;
 
 private:
-	Model* m_projectileModel;
-	Model* m_wireframeModel;
 	float m_projectileSpawnLimit = .3f;
 };
