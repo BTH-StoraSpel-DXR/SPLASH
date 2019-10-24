@@ -667,7 +667,7 @@ void Network::listen(const Connection* conn)
 			printf("Client Disconnected\n");
 #else
 		case SOCKET_ERROR:
-#endif // DEBUG_NETWORK
+#endif // DEBUG_NETWORK.
 			connectionIsClosed = true;
 			nEvent.eventType = NETWORK_EVENT_TYPE::CONNECTION_CLOSED;
 			addNetworkEvent(nEvent, 0);
