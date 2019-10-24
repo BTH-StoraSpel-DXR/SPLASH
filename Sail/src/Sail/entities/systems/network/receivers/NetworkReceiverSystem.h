@@ -45,6 +45,10 @@ private:
 	void setCandleHeldState(Netcode::ComponentID id, bool b, const glm::vec3& pos = glm::vec3(0, 0, 0));
 	//void processData(Netcode::MessageType dataType, Netcode::EntityType* entityType, cereal::PortableBinaryInputArchive* ar);
 
+	void shootStart(glm::vec3& gunPos, glm::vec3& gunVel, Netcode::ComponentID id);
+	void shootLoop(glm::vec3& gunPos, glm::vec3& gunVel, Netcode::ComponentID id);
+	void shootEnd(glm::vec3& gunPos, glm::vec3& gunVel, Netcode::ComponentID id);
+
 	void matchEnded();
 	void backToLobby();
 

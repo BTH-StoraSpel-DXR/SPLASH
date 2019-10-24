@@ -37,7 +37,7 @@ public:
 	float gunOverloadThreshold = .5f;
 
 	bool firing = false;
-	bool m_wasFiringLastFrame = false;
+	bool firingContinuously = false;
 
 private:
 	Model* m_projectileModel;

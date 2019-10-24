@@ -4,6 +4,8 @@
 #include <string>
 #include <stack>
 
+class Entity;
+
 namespace Audio {
 	enum SoundType{
 		AMBIENT,
@@ -39,6 +41,10 @@ namespace Audio {
 		bool isPositionalAudio;
 		bool isLooping;
 	};
+
+	namespace Factory {
+		void defineSoundsPlayer(Entity* pEntity);
+	}
 }
 
 class AudioComponent : public Component<AudioComponent>

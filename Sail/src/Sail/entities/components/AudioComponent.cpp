@@ -1,6 +1,60 @@
 #include "pch.h"
 
 #include "AudioComponent.h"
+#include "Sail.h"
+
+
+void Audio::Factory::defineSoundsPlayer(Entity* player) {
+	Audio::SoundInfo sound{};
+	sound.fileName = "../Audio/footsteps_1.wav";
+	sound.soundEffectLength = 1.0f;
+	sound.volume = 0.5f;
+	sound.playOnce = false;
+	sound.positionalOffset = { 0.0f, -1.6f, 0.0f };
+	player->getComponent<AudioComponent>()->defineSound(Audio::SoundType::RUN, sound);
+
+	sound.fileName = "../Audio/jump.wav";
+	sound.soundEffectLength = 0.7f;
+	sound.playOnce = true;
+	sound.positionalOffset = { 0.0f, 0.0f, 0.0f };
+	player->getComponent<AudioComponent>()->defineSound(Audio::SoundType::JUMP, sound);
+
+	sound.fileName = "../Audio/watergun_start.wav";
+	sound.soundEffectLength = 0.578f;
+	sound.volume = 1.0f;
+	sound.playOnce = true;
+	sound.positionalOffset = { 0.5f, -0.5f, 0.0f };
+	player->getComponent<AudioComponent>()->defineSound(Audio::SoundType::SHOOT_START, sound);
+
+	sound.fileName = "../Audio/watergun_loop.wav";
+	sound.soundEffectLength = 1.4f;
+	sound.playOnce = false;
+	sound.volume = 1.0f;
+	sound.positionalOffset = { 0.5f, -0.5f, 0.0f };
+	player->getComponent<AudioComponent>()->defineSound(Audio::SoundType::SHOOT_LOOP, sound);
+
+	sound.fileName = "../Audio/watergun_end.wav";
+	sound.soundEffectLength = 0.722f;
+	sound.playOnce = true;
+	sound.volume = 1.0f;
+	sound.positionalOffset = { 0.5f, -0.5f, 0.0f };
+	player->getComponent<AudioComponent>()->defineSound(Audio::SoundType::SHOOT_END, sound);
+
+	sound.fileName = "../Audio/water_drip_1.wav";
+	sound.playOnce = true;
+	sound.positionalOffset = { 0.0f, 0.0f, 0.0f };
+	player->getComponent<AudioComponent>()->defineSound(Audio::SoundType::WATER_IMPACT_LEVEL, sound);
+
+	sound.fileName = "../Audio/water_impact_enemy.wav";
+	sound.playOnce = true;
+	sound.positionalOffset = { 0.0f, 0.0f, 0.0f };
+	player->getComponent<AudioComponent>()->defineSound(Audio::SoundType::WATER_IMPACT_ENEMY, sound);
+
+	sound.fileName = "../Audio/water_impact_my_candle.wav";
+	sound.playOnce = true;
+	sound.positionalOffset = { 0.0f, 0.0f, 0.0f };
+	player->getComponent<AudioComponent>()->defineSound(Audio::SoundType::WATER_IMPACT_MY_CANDLE, sound);
+}
 
 AudioComponent::AudioComponent() {}
 
