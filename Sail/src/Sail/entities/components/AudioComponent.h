@@ -7,7 +7,7 @@
 class Entity;
 
 namespace Audio {
-	enum SoundType{
+	enum SoundType {
 		RUN_METAL,
 		RUN_TILE,
 		RUN_WATER_METAL,
