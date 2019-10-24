@@ -14,6 +14,7 @@
 
 // Creation of mid-air bullets from here.
 #include "Sail/entities/systems/Gameplay/GunSystem.h"
+#include "Sail/utils/GameDataTracker.h"
 
 
 // The host will now automatically forward all incoming messages to other players so
@@ -36,6 +37,8 @@ void NetworkReceiverSystem::init(Netcode::PlayerID playerID, GameState* gameStat
 	m_playerID = playerID;
 	m_gameStatePtr = gameStatePtr;
 	m_netSendSysPtr = netSendSysPtr;
+
+	m_gameDataTracker = &GameDataTracker::getInstance();
 }
 
 void NetworkReceiverSystem::pushDataToBuffer(std::string data) {
@@ -304,23 +307,6 @@ void NetworkReceiverSystem::createEntity(Netcode::ComponentID id, Netcode::Entit
 		// Adding audio component and adding all sounds attached to the player entity
 		e->addComponent<AudioComponent>();
 
-		// RUN Sound
-		Audio::SoundInfo sound{};
-		sound.fileName = "../Audio/footsteps_1.wav";
-		sound.soundEffectLength = 1.0f;
-		sound.volume = 0.5f;
-		sound.playOnce = false;
-		e->getComponent<AudioComponent>()->defineSound(Audio::SoundType::RUN, sound);
-		// JUMP Sound
-		sound.fileName = "../Audio/jump.wav";
-		sound.soundEffectLength = 0.7f;
-		sound.playOnce = true;
-		e->getComponent<AudioComponent>()->defineSound(Audio::SoundType::JUMP, sound);
-		// SHOOT sound
-		sound.fileName = "../Audio/testSoundShoot.wav";
-		sound.soundEffectLength = 1.0f;
-		sound.playOnce = true;
-
 		//creates light with model and pointlight
 		auto light = ECS::Instance()->createEntity("ReceiverLight");
 		light->addComponent<CandleComponent>();
@@ -444,7 +430,10 @@ void NetworkReceiverSystem::playerDied(Netcode::ComponentID networkIdOfKilled, N
 		Netcode::PlayerID idOfDeadPlayer = Netcode::getComponentOwner(networkIdOfKilled);
 		std::string deadPlayer = NWrapperSingleton::getInstance().getPlayer(idOfDeadPlayer)->name;
 		std::string ShooterPlayer = NWrapperSingleton::getInstance().getPlayer(playerIdOfShooter)->name;
-		Logger::Log(ShooterPlayer + " sprayed down " + deadPlayer);
+		std::string deathType = "sprayed down";
+		Logger::Log(ShooterPlayer + " " + deathType + " " + deadPlayer);
+
+		m_gameDataTracker->logPlayerDeath(ShooterPlayer, deadPlayer, deathType);
 
 		//This should remove the candle entity from game
 		e->removeDeleteAllChildren();
