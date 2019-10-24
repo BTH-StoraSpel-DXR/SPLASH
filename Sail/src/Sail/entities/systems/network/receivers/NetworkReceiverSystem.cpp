@@ -14,6 +14,7 @@
 
 // Creation of mid-air bullets from here.
 #include "Sail/entities/systems/Gameplay/GunSystem.h"
+#include "Sail/utils/GameDataTracker.h"
 
 
 // The host will now automatically forward all incoming messages to other players so
@@ -36,6 +37,8 @@ void NetworkReceiverSystem::init(Netcode::PlayerID playerID, GameState* gameStat
 	m_playerID = playerID;
 	m_gameStatePtr = gameStatePtr;
 	m_netSendSysPtr = netSendSysPtr;
+
+	m_gameDataTracker = &GameDataTracker::getInstance();
 }
 
 void NetworkReceiverSystem::pushDataToBuffer(std::string data) {
@@ -327,9 +330,6 @@ void NetworkReceiverSystem::createEntity(Netcode::ComponentID id, Netcode::Entit
 		// Adding audio component and adding all sounds attached to the player entity
 		e->addComponent<AudioComponent>();
 
-		// RUN Sound
-		Audio::Factory::defineSoundsPlayer(e.get());
-
 		//creates light with model and pointlight
 		auto light = ECS::Instance()->createEntity("ReceiverLight");
 		light->addComponent<CandleComponent>();
@@ -453,7 +453,10 @@ void NetworkReceiverSystem::playerDied(Netcode::ComponentID networkIdOfKilled, N
 		Netcode::PlayerID idOfDeadPlayer = Netcode::getComponentOwner(networkIdOfKilled);
 		std::string deadPlayer = NWrapperSingleton::getInstance().getPlayer(idOfDeadPlayer)->name;
 		std::string ShooterPlayer = NWrapperSingleton::getInstance().getPlayer(playerIdOfShooter)->name;
-		Logger::Log(ShooterPlayer + " sprayed down " + deadPlayer);
+		std::string deathType = "sprayed down";
+		Logger::Log(ShooterPlayer + " " + deathType + " " + deadPlayer);
+
+		m_gameDataTracker->logPlayerDeath(ShooterPlayer, deadPlayer, deathType);
 
 		//This should remove the candle entity from game
 		e->removeDeleteAllChildren();

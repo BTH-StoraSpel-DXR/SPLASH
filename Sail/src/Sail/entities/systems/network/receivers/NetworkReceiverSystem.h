@@ -5,6 +5,7 @@
 
 class GameState;
 class NetworkSenderSystem;
+class GameDataTracker;
 
 class NetworkReceiverSystem : public BaseComponentSystem {
 public:
@@ -25,6 +26,7 @@ protected:
 
 	GameState* m_gameStatePtr;
 	NetworkSenderSystem* m_netSendSysPtr;
+	GameDataTracker* m_gameDataTracker;
 
 	// FIFO container of serialized data-strings to decode
 	std::queue<std::string> m_incomingDataBuffer;
