@@ -32,6 +32,11 @@ namespace DXRShaderCommon {
 #define MAX_NUM_METABALLS 200
 #define MAX_DECALS 100
 
+#define WATER_GRID_X 296 / 4
+#define WATER_GRID_Y 37
+#define WATER_GRID_Z 296
+#define WATER_ARR_SIZE (WATER_GRID_X * WATER_GRID_Y * WATER_GRID_Z)
+
 static const uint MESH_NO_FLAGS				 			= 	0;
 static const uint MESH_USE_INDICES 						= 	1 << 0;
 static const uint MESH_HAS_ALBEDO_TEX 					= 	1 << 1;
@@ -80,6 +85,11 @@ struct SceneCBuffer {
 	float farZ;
 	float padding2;
     PointLightInput pointLights[NUM_POINT_LIGHTS];
+
+	// Water voxel data
+	float3 mapSize;
+	float padding3;
+	float3 mapStart;
 };
 
 // Properties set once per BLAS/Mesh

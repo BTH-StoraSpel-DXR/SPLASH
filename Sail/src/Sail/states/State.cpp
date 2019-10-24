@@ -22,6 +22,10 @@ bool State::renderImgui(float dt) {
 	return false;
 }
 
+bool State::renderImguiDebug(float dt) {
+	return false;
+}
+
 void State::requestStackPush(States::ID stateID) {
 	m_stack->pushState(stateID);
 }

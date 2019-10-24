@@ -71,6 +71,28 @@ glm::vec2 Utils::getRotations(const glm::vec3& dir) {
 	return glm::vec2(pitch, yaw);
 }
 
+int Utils::to1D(const glm::i32vec3& ind, int xMax, int yMax) {
+	return ind.x + xMax * (ind.y + yMax * ind.z);
+}
+
+glm::i32vec3 Utils::to3D(int ind, int xMax, int yMax) {
+	glm::i32vec3 ind3d;
+	ind3d.z = ind / (xMax * yMax);
+	ind -= (ind3d.z * xMax * yMax);
+	ind3d.y = ind / xMax;
+	ind3d.x = ind % xMax;
+	return ind3d;
+}
+
+uint32_t Utils::packQuarterFloat(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
+	uint32_t out = (a << 24) | (b << 16) | (c << 8) | d;
+	return out;
+}
+
+uint32_t Utils::unpackQuarterFloat(uint32_t in, unsigned int index) {
+	uint32_t out = (in >> ((3-index) * 8)) & 255;
+	return out;
+}
 
 glm::vec4 Utils::getRandomColor() {
 	return glm::vec4(Utils::rnd(), Utils::rnd(), Utils::rnd(), 1);

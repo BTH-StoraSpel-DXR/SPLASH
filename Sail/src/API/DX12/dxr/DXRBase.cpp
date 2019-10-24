@@ -7,12 +7,13 @@
 #include "API/DX12/resources/DX12Texture.h"
 #include "Sail/graphics/light/LightSetup.h"
 #include "../renderer/DX12GBufferRenderer.h"
+#include "Sail/entities/components/MapComponent.h"
 
 DXRBase::DXRBase(const std::string& shaderFilename, DX12RenderableTexture** inputs)
-: m_shaderFilename(shaderFilename)
-, m_gbufferInputTextures(inputs)
-, m_brdfLUTPath("pbr/brdfLUT.tga")
-{
+	: m_shaderFilename(shaderFilename)
+	, m_gbufferInputTextures(inputs)
+	, m_brdfLUTPath("pbr/brdfLUT.tga")
+	, m_waterChanged(false) {
 	/*m_decalTexPaths[0] = "pbr/water/Water_001_COLOR.tga";
 	m_decalTexPaths[1] = "pbr/water/Water_001_NORM.tga";
 	m_decalTexPaths[2] = "pbr/water/Water_001_MAT.tga";*/
@@ -49,6 +50,16 @@ DXRBase::DXRBase(const std::string& shaderFilename, DX12RenderableTexture** inpu
 	m_aabb_desc_resource->Unmap(0, nullptr);
 
 	m_decalsToRender = 0;
+
+	// Init water "decals"
+	unsigned int numElements = WATER_ARR_SIZE;
+	unsigned int waterDataSize = sizeof(unsigned int) * numElements;
+	unsigned int* initData = new unsigned int[WATER_ARR_SIZE];
+	memset(initData, UINT_MAX, waterDataSize);
+	memset(m_waterDataCPU, UINT_MAX, waterDataSize);
+	m_waterStructuredBuffer = std::make_unique<ShaderComponent::DX12StructuredBuffer>(initData, numElements, sizeof(unsigned int));
+	delete initData;
+
 }
 
 DXRBase::~DXRBase() {
@@ -185,7 +196,7 @@ void DXRBase::updateAccelerationStructures(const std::vector<Renderer::RenderCom
 
 }
 
-void DXRBase::updateSceneData(Camera& cam, LightSetup& lights, const std::vector<Metaball>& metaballs) {
+void DXRBase::updateSceneData(Camera& cam, LightSetup& lights, const std::vector<Metaball>& metaballs, const glm::vec3& mapSize, const glm::vec3& mapStart) {
 	m_metaballsToRender = (metaballs.size() < MAX_NUM_METABALLS) ? (UINT)metaballs.size() : (UINT)MAX_NUM_METABALLS;
 	updateMetaballpositions(metaballs);
 
@@ -199,6 +210,8 @@ void DXRBase::updateSceneData(Camera& cam, LightSetup& lights, const std::vector
 	newData.projectionToWorld = glm::inverse(cam.getViewProjection());
 	newData.nMetaballs = m_metaballsToRender;
 	newData.nDecals = m_decalsToRender;
+	newData.mapSize = mapSize;
+	newData.mapStart = mapStart;
 
 	auto& plData = lights.getPointLightsData();
 	memcpy(newData.pointLights, plData.pLights, sizeof(plData));
@@ -211,6 +224,55 @@ void DXRBase::updateDecalData(DXRShaderCommon::DecalData* decals, size_t size) {
 	m_decalsToRender = size;
 
 	m_decalCB->updateData(&newData, sizeof(newData));
+}
+
+void DXRBase::addWaterAtWorldPosition(const glm::vec3& position) {
+	static auto mapSize = glm::vec3(MapComponent::xsize, 1.0f, MapComponent::ysize) * (float)MapComponent::tileSize;
+	static auto mapStart = -glm::vec3(MapComponent::tileSize / 2.0f);
+	static const glm::vec3 arrSize(WATER_GRID_X - 1, WATER_GRID_Y - 1, WATER_GRID_Z - 1);
+
+	glm::vec3 floatInd = ((position - mapStart) / mapSize) * arrSize;
+	int index = glm::floor((int)glm::floor(floatInd.x * 4.f) % 4);
+	glm::i32vec3 ind = floor(floatInd);
+	int i = Utils::to1D(ind, arrSize.x, arrSize.y);
+	
+	uint8_t up0 = Utils::unpackQuarterFloat(m_waterDataCPU[i], 0);
+	uint8_t up1 = Utils::unpackQuarterFloat(m_waterDataCPU[i], 1);
+	uint8_t up2 = Utils::unpackQuarterFloat(m_waterDataCPU[i], 2);
+	uint8_t up3 = Utils::unpackQuarterFloat(m_waterDataCPU[i], 3);
+
+	switch (index) {
+	case 0:
+		m_waterDeltas[i] = Utils::packQuarterFloat(0, up1, up2, up3);
+		break;
+	case 1:
+		m_waterDeltas[i] = Utils::packQuarterFloat(up0, 0, up2, up3);
+		break;
+	case 2:
+		m_waterDeltas[i] = Utils::packQuarterFloat(up0, up1, 0, up3);
+		break;
+	case 3:
+		m_waterDeltas[i] = Utils::packQuarterFloat(up0, up1, up2, 0);
+		break;
+	}
+
+	m_waterDataCPU[i] = m_waterDeltas[i];
+
+	m_waterChanged = true;
+}
+
+void DXRBase::updateWaterData() {
+	for (auto& pair : m_waterDeltas) {
+		unsigned int offset = sizeof(float) * pair.first;
+		unsigned int& data = pair.second;
+		m_waterStructuredBuffer->updateData(&data, 1, 0, offset);
+	}
+
+	// Reset every other frame because of double buffering
+	if (!m_waterChanged) {
+		m_waterDeltas.clear();
+	}
+	m_waterChanged = false;
 }
 
 void DXRBase::updateMetaballpositions(const std::vector<Metaball>& metaballs) {
@@ -290,6 +352,8 @@ void DXRBase::dispatch(DX12RenderableTexture* outputTexture, ID3D12GraphicsComma
 	cmdList->SetComputeRootShaderResourceView(m_dxrGlobalRootSignature->getIndex("AccelerationStructure"), m_DXR_TopBuffer[frameIndex].result->GetGPUVirtualAddress());
 	// Set scene constant buffer
 	cmdList->SetComputeRootConstantBufferView(m_dxrGlobalRootSignature->getIndex("SceneCBuffer"), m_sceneCB->getBuffer()->GetGPUVirtualAddress());
+	// Set water "decal" data
+	cmdList->SetComputeRootShaderResourceView(m_dxrGlobalRootSignature->getIndex("WaterData"), m_waterStructuredBuffer->getBuffer()->GetGPUVirtualAddress());
 
 	// Dispatch
 	cmdList->SetPipelineState1(m_rtPipelineState.Get());
@@ -656,21 +720,21 @@ void DXRBase::updateDescriptorHeap(ID3D12GraphicsCommandList4* cmdList) {
 					// Increase pointer regardless of if the texture existed or not to keep to order in the SBT
 					cpuHandle.ptr += m_heapIncr;
 					gpuHandle.ptr += m_heapIncr;
-				}
+			}
 
-      // Update per mesh data
-      // Such as flags telling the shader to use indices, textures or not
-      unsigned int meshDataSize = sizeof(DXRShaderCommon::MeshData);
-      DXRShaderCommon::MeshData meshData;
-      meshData.flags = (mesh->getNumIndices() == 0) ? DXRShaderCommon::MESH_NO_FLAGS : DXRShaderCommon::MESH_USE_INDICES;
-      meshData.flags |= (materialSettings.hasAlbedoTexture) ? DXRShaderCommon::MESH_HAS_ALBEDO_TEX : meshData.flags;
-      meshData.flags |= (materialSettings.hasNormalTexture) ? DXRShaderCommon::MESH_HAS_NORMAL_TEX : meshData.flags;
-      meshData.flags |= (materialSettings.hasMetalnessRoughnessAOTexture) ? DXRShaderCommon::MESH_HAS_METALNESS_ROUGHNESS_AO_TEX : meshData.flags;
-      meshData.color = materialSettings.modelColor;
-      meshData.metalnessRoughnessAoScales.r = materialSettings.metalnessScale;
-      meshData.metalnessRoughnessAoScales.g = materialSettings.roughnessScale;
-      meshData.metalnessRoughnessAoScales.b = materialSettings.aoScale;
-      m_meshCB->updateData(&meshData, meshDataSize, blasIndex * meshDataSize);
+			// Update per mesh data
+			// Such as flags telling the shader to use indices, textures or not
+			unsigned int meshDataSize = sizeof(DXRShaderCommon::MeshData);
+			DXRShaderCommon::MeshData meshData;
+			meshData.flags = (mesh->getNumIndices() == 0) ? DXRShaderCommon::MESH_NO_FLAGS : DXRShaderCommon::MESH_USE_INDICES;
+			meshData.flags |= (materialSettings.hasAlbedoTexture) ? DXRShaderCommon::MESH_HAS_ALBEDO_TEX : meshData.flags;
+			meshData.flags |= (materialSettings.hasNormalTexture) ? DXRShaderCommon::MESH_HAS_NORMAL_TEX : meshData.flags;
+			meshData.flags |= (materialSettings.hasMetalnessRoughnessAOTexture) ? DXRShaderCommon::MESH_HAS_METALNESS_ROUGHNESS_AO_TEX : meshData.flags;
+			meshData.color = materialSettings.modelColor;
+			meshData.metalnessRoughnessAoScales.r = materialSettings.metalnessScale;
+			meshData.metalnessRoughnessAoScales.g = materialSettings.roughnessScale;
+			meshData.metalnessRoughnessAoScales.b = materialSettings.aoScale;
+			m_meshCB->updateData(&meshData, meshDataSize, blasIndex * meshDataSize);
 
 			m_rtMeshHandles.emplace_back(handles);
 		} else {
@@ -733,7 +797,6 @@ void DXRBase::updateShaderTables() {
 		DXRUtils::ShaderTableBuilder tableBuilder(2U, m_rtPipelineState.Get());
 		tableBuilder.addShader(m_missName);
 		tableBuilder.addShader(m_shadowMissName);
-		//tableBuilder.addDescriptor(m_skyboxGPUDescHandle.ptr);
 		m_missShaderTable[frameIndex] = tableBuilder.build(m_context->getDevice());
 	}
 
@@ -829,6 +892,7 @@ void DXRBase::createDXRGlobalRootSignature() {
 	m_dxrGlobalRootSignature = std::make_unique<DX12Utils::RootSignature>("dxrGlobal");
 	m_dxrGlobalRootSignature->addSRV("AccelerationStructure", 0);
 	m_dxrGlobalRootSignature->addCBV("SceneCBuffer", 0);
+	m_dxrGlobalRootSignature->addSRV("WaterData", 6, 0);
 
 	m_dxrGlobalRootSignature->build(m_context->getDevice());
 }

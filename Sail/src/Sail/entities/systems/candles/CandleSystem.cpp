@@ -40,7 +40,7 @@ void CandleSystem::setPlayerEntityID(int entityID, Entity* entityPtr) {
 void CandleSystem::lightCandle(const std::string& name) {
 	for (auto e : entities) {
 		if (e->getName() == name) {
-			e->getComponent<LightComponent>()->getPointLight().setColor(glm::vec3(1.0f, 1.0f, 1.0f));
+			e->getComponent<LightComponent>()->getPointLight().setColor(glm::vec3(1.0f, 0.7f, 0.4f));
 			break;
 		}
 	}
@@ -103,7 +103,7 @@ void CandleSystem::update(float dt) {
 			float cHealth = candle->getHealth();
 			cHealth = (cHealth < 0.f) ? 0.f : cHealth;
 			float tempHealthRatio = (cHealth / MAX_HEALTH);
-			e->getComponent<LightComponent>()->getPointLight().setColor(glm::vec3(tempHealthRatio, tempHealthRatio, tempHealthRatio));
+			e->getComponent<LightComponent>()->getPointLight().setColor(glm::vec3(tempHealthRatio, tempHealthRatio * 0.7f, tempHealthRatio * 0.4f));
 
 			candle->setWasCarriedLastUpdate(candle->isCarried());
 			glm::vec3 flamePos = glm::vec3(e->getComponent<TransformComponent>()->getMatrix()[3]) + glm::vec3(0, 0.5f, 0);

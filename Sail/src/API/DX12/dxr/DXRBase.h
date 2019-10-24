@@ -5,6 +5,7 @@
 #include "../DX12Utils.h"
 #include "Sail/api/Renderer.h"
 #include "../shader/DX12ConstantBuffer.h"
+#include "../shader/DX12StructuredBuffer.h"
 #include "API/DX12/resources/DX12RenderableTexture.h"
 
 // Include defines shared with dxr shaders
@@ -30,8 +31,10 @@ public:
 	void setGBufferInputs(DX12RenderableTexture** inputs);
 
 	void updateAccelerationStructures(const std::vector<Renderer::RenderCommand>& sceneGeometry, ID3D12GraphicsCommandList4* cmdList);
-	void updateSceneData(Camera& cam, LightSetup& lights, const std::vector<Metaball>& metaballs);
+	void updateSceneData(Camera& cam, LightSetup& lights, const std::vector<Metaball>& metaballs, const glm::vec3& mapSize, const glm::vec3& mapStart);
 	void updateDecalData(DXRShaderCommon::DecalData* decals, size_t size);
+	void addWaterAtWorldPosition(const glm::vec3& position);
+	void updateWaterData();
 	void dispatch(DX12RenderableTexture* outputTexture, ID3D12GraphicsCommandList4* cmdList);
 
 	void reloadShaders();
@@ -153,5 +156,11 @@ private:
 	// Metaball Stuff
 	D3D12_RAYTRACING_AABB m_aabb_desc = { -0.2f, -0.2f, -0.2f, 0.2f, 0.2f, 0.2f };
 	ID3D12Resource1* m_aabb_desc_resource; // m_aabb_desc uploaded to GPU
+
+	// Water voxel grid stuff
+	std::unique_ptr<ShaderComponent::DX12StructuredBuffer> m_waterStructuredBuffer;
+	std::unordered_map<unsigned int, unsigned int> m_waterDeltas; // Changed water voxels over the last 2 frames
+	unsigned int m_waterDataCPU[WATER_ARR_SIZE];
+	bool m_waterChanged;
 
 };

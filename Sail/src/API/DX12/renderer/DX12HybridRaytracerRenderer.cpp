@@ -37,6 +37,10 @@ void DX12HybridRaytracerRenderer::submitDecal(const glm::vec3& pos, const glm::m
 	m_rendererRaytrace->submitDecal(pos, rot, halfSize);
 }
 
+void DX12HybridRaytracerRenderer::submitWaterPoint(const glm::vec3& pos) {
+	m_rendererRaytrace->submitWaterPoint(pos);
+}
+
 void DX12HybridRaytracerRenderer::setLightSetup(LightSetup* lightSetup) {
 	m_rendererGbuffer->setLightSetup(lightSetup);
 	m_rendererRaytrace->setLightSetup(lightSetup);

@@ -17,9 +17,12 @@ RWTexture2D<float4> lOutput : register(u0);
 ConstantBuffer<SceneCBuffer> CB_SceneData : register(b0, space0);
 ConstantBuffer<MeshCBuffer> CB_MeshData : register(b1, space0);
 ConstantBuffer<DecalCBuffer> CB_DecalData : register(b2, space0);
+
 StructuredBuffer<Vertex> vertices : register(t1, space0);
 StructuredBuffer<uint> indices : register(t1, space1);
 StructuredBuffer<float3> metaballs : register(t1, space2);
+
+StructuredBuffer<uint> waterData : register(t6, space0);
 
 // Texture2DArray<float4> textures : register(t2, space0);
 Texture2D<float4> sys_texAlbedo : register(t2);
@@ -94,7 +97,7 @@ void rayGen() {
 	payload.closestTvalue = 0;
 	payload.color = float4(0,0,0,0);
 	if (worldNormal.x == -1 && worldNormal.y == -1) {
-		//Bounding boxes dont need shadeing
+		// Bounding boxes dont need shading
 		lOutput[launchIndex] = float4(albedoColor, 1.0f);
 		return;
 	} else {
@@ -215,13 +218,13 @@ void closestHitTriangle(inout RayPayload payload, in BuiltInTriangleIntersection
 
 	float2 texCoords = Utils::barrypolation(barycentrics, vertex1.texCoords, vertex2.texCoords, vertex3.texCoords);
 	float3 normalInLocalSpace = Utils::barrypolation(barycentrics, vertex1.normal, vertex2.normal, vertex3.normal);
-	float3 normalInWorldSpace = normalize(mul(ObjectToWorld3x4(), normalInLocalSpace));
+	float3 normalInWorldSpace = normalize(mul(ObjectToWorld3x4(), float4(normalInLocalSpace, 0.f)));
 
 	float3 tangentInLocalSpace = Utils::barrypolation(barycentrics, vertex1.tangent, vertex2.tangent, vertex3.tangent);
-	float3 tangentInWorldSpace = normalize(mul(ObjectToWorld3x4(), tangentInLocalSpace));
+	float3 tangentInWorldSpace = normalize(mul(ObjectToWorld3x4(), float4(tangentInLocalSpace, 0.f)));
 
 	float3 bitangentInLocalSpace = Utils::barrypolation(barycentrics, vertex1.bitangent, vertex2.bitangent, vertex3.bitangent);
-	float3 bitangentInWorldSpace = normalize(mul(ObjectToWorld3x4(), bitangentInLocalSpace));
+	float3 bitangentInWorldSpace = normalize(mul(ObjectToWorld3x4(), float4(bitangentInLocalSpace, 0.f)));
 
 	// Create TBN matrix to go from tangent space to world space
 	float3x3 tbn = float3x3(
@@ -234,7 +237,6 @@ void closestHitTriangle(inout RayPayload payload, in BuiltInTriangleIntersection
         normalSample.y = 1.0f - normalSample.y;
         normalInWorldSpace = mul(normalize(normalSample * 2.f - 1.f), tbn);
 	}
-
 
 	float3 albedoColor = getAlbedo(CB_MeshData.data[instanceID], texCoords);
 	float3 metalnessRoughnessAO = getMetalnessRoughnessAO(CB_MeshData.data[instanceID], texCoords);
@@ -254,7 +256,7 @@ void closestHitProcedural(inout RayPayload payload, in ProceduralPrimitiveAttrib
 	payload.recursionDepth++;
 	payload.closestTvalue = RayTCurrent();
 
-	float3 normalInWorldSpace = normalize(mul(ObjectToWorld3x4(), attribs.normal.xyz));
+	float3 normalInWorldSpace = normalize(mul(ObjectToWorld3x4(), float4(attribs.normal.xyz, 0.f)));
 	float refractIndex = 0.3; // 1.333f;
 	RayPayload reflect_payload = payload;
 	RayPayload refract_payload = payload;
@@ -274,13 +276,13 @@ void closestHitProcedural(inout RayPayload payload, in ProceduralPrimitiveAttrib
 	reflect_color.r *= 0.5;
 	reflect_color.g *= 0.5;
 	reflect_color.b += 0.1;
-	saturate(reflect_color);
+	// saturate(reflect_color);
 
 	float4 refract_color = refract_payload.color;
 	refract_color.r *= 0.9;
 	refract_color.g *= 0.9;
 	refract_color.b += 0.05;
-	saturate(refract_color);
+	// saturate(refract_color);
 
 	float3 hitToCam = CB_SceneData.cameraPosition - Utils::HitWorldPosition();
 	float refconst = 1 - abs(dot(normalize(hitToCam), normalInWorldSpace));
