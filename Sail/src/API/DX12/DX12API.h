@@ -108,7 +108,8 @@ public:
 	IDXGISwapChain4* const getSwapChain() const;
 	const D3D12_VIEWPORT* getViewport() const;
 	const D3D12_RECT* getScissorRect() const;
-	CommandQueue* getComputeQueue() const;
+	CommandQueue* getMainComputeQueue() const;
+	CommandQueue* getAsyncComputeQueue() const;
 	CommandQueue* getDirectQueue() const;
 
 #ifdef _DEBUG
@@ -117,7 +118,7 @@ public:
 #endif
 
 	void initCommand(Command& cmd, D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT);
-	void executeCommandLists(std::initializer_list<ID3D12CommandList*> cmdLists, D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT) const;
+	void executeCommandLists(std::initializer_list<ID3D12CommandList*> cmdLists, D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT, bool secondary = false) const;
 	void executeCommandLists(ID3D12CommandList* const* cmdLists, const int nLists) const;
 	void renderToBackBuffer(ID3D12GraphicsCommandList4* cmdList) const;
 	void prepareToRender(ID3D12GraphicsCommandList4* cmdList) const;
@@ -162,9 +163,11 @@ private:
 
 	// Queues
 	std::unique_ptr<CommandQueue> m_directCommandQueue;
-	std::unique_ptr<CommandQueue> m_computeCommandQueue;
+	std::unique_ptr<CommandQueue> m_mainComputeCommandQueue;
+	std::unique_ptr<CommandQueue> m_asyncComputeCommandQueue;
 	UINT64 m_directQueueFenceValues[2];
-	UINT64 m_computeQueueFenceValues[2];
+	UINT64 m_mainComputeQueueFenceValues[2];
+	UINT64 m_asyncComputeQueueFenceValues[2];
 
 	std::unique_ptr<DescriptorHeap> m_cbvSrvUavDescriptorHeapGraphics;
 	std::unique_ptr<DescriptorHeap> m_cbvSrvUavDescriptorHeapCompute;

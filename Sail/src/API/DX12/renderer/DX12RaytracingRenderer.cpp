@@ -11,13 +11,19 @@
 
 DX12RaytracingRenderer::DX12RaytracingRenderer(DX12RenderableTexture** inputs)
 	: m_dxr("Basic", inputs)
+	, m_asFenceValues()
+	, m_dispatchFenceValues()
 {
 	Application* app = Application::getInstance();
 	m_context = app->getAPI<DX12API>();
 	m_context->initCommand(m_commandDirect, D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_commandDirect.list->SetName(L"Raytracing Renderer main command list");
-	m_context->initCommand(m_commandCompute, D3D12_COMMAND_LIST_TYPE_COMPUTE);
-	m_commandCompute.list->SetName(L"Raytracing Renderer main command list");
+	m_commandDirect.list->SetName(L"Raytracing Renderer main DIRECT command list");
+	m_context->initCommand(m_commandComputeAS, D3D12_COMMAND_LIST_TYPE_COMPUTE);
+	m_commandComputeAS.list->SetName(L"Raytracing Renderer COMPUTE AS command list");
+	m_context->initCommand(m_commandComputeDispatch, D3D12_COMMAND_LIST_TYPE_COMPUTE);
+	m_commandComputeDispatch.list->SetName(L"Raytracing Renderer COMPUTE DISPATCH command list");
+
+	m_eventHandle = CreateEvent(0, false, false, 0);
 
 	auto windowWidth = app->getWindow()->getWindowWidth();
 	auto windowHeight = app->getWindow()->getWindowHeight();
@@ -33,31 +39,36 @@ DX12RaytracingRenderer::~DX12RaytracingRenderer() {
 
 void DX12RaytracingRenderer::present(PostProcessPipeline* postProcessPipeline, RenderableTexture* output) {
 	auto frameIndex = m_context->getSwapIndex();
+	auto lastFrameIndex = 1 - frameIndex;
 
 	// There is one allocator per swap buffer
-	auto& allocatorCompute = m_commandCompute.allocators[m_context->getFrameIndex()];
+	auto& allocatorComputeAS = m_commandComputeAS.allocators[m_context->getFrameIndex()];
+	auto& cmdListComputeAS = m_commandComputeAS.list;
+	auto& allocatorComputeDispatch = m_commandComputeDispatch.allocators[m_context->getFrameIndex()];
+	auto& cmdListComputeDispatch = m_commandComputeDispatch.list;
 	auto& allocatorDirect = m_commandDirect.allocators[m_context->getFrameIndex()];
-	auto& cmdListCompute = m_commandCompute.list;
 	auto& cmdListDirect = m_commandDirect.list;
 
 	// Reset allocators and lists for this frame
-	allocatorCompute->Reset();
+	allocatorComputeAS->Reset();
+	cmdListComputeAS->Reset(allocatorComputeAS.Get(), nullptr);
+	allocatorComputeDispatch->Reset();
+	cmdListComputeDispatch->Reset(allocatorComputeDispatch.Get(), nullptr);
 	allocatorDirect->Reset();
-	cmdListCompute->Reset(allocatorCompute.Get(), nullptr);
 	cmdListDirect->Reset(allocatorDirect.Get(), nullptr);
 
 	// Wait for the G-Buffer pass to finish execution on the direct queue
 	auto fenceVal = m_context->getDirectQueue()->signal();
-	m_context->getComputeQueue()->wait(fenceVal);
+	m_context->getMainComputeQueue()->wait(fenceVal);
+	m_context->getAsyncComputeQueue()->wait(fenceVal);
 
 	// Clear output texture
 	//m_outputTexture.get()->clear({ 0.01f, 0.01f, 0.01f, 1.0f }, cmdListDirect.Get());
 
 	std::sort(m_metaballpositions.begin(), m_metaballpositions.end(),
-		[](const DXRBase::Metaball& a, const DXRBase::Metaball& b) -> const bool
-		{
-			return a.distToCamera < b.distToCamera;
-		});
+		[](const DXRBase::Metaball& a, const DXRBase::Metaball& b) -> const bool {
+		return a.distToCamera < b.distToCamera;
+	});
 
 	for (size_t i = 0; i < MAX_NUM_METABALLS && i < m_metaballpositions.size(); i++) {
 		commandQueue.emplace_back();
@@ -100,31 +111,47 @@ void DX12RaytracingRenderer::present(PostProcessPipeline* postProcessPipeline, R
 	}
 	m_dxr.updateDecalData(m_decals, m_currNumDecals > MAX_DECALS - 1 ? MAX_DECALS : m_currNumDecals);
 	m_dxr.updateWaterData();
-	m_dxr.updateAccelerationStructures(commandQueue, cmdListCompute.Get());
-	m_dxr.dispatch(m_outputTexture.get(), cmdListCompute.Get());
+
+	m_context->getAsyncComputeQueue()->waitOnCPU(m_dispatchFenceValues[lastFrameIndex], m_eventHandle);
+	//Logger::Log("ASYNC queue before updateAS waited for " + std::to_string(m_dispatchFenceValues[lastFrameIndex]));
+	m_dxr.updateAccelerationStructures(commandQueue, cmdListComputeAS.Get());
 	// AS has now been updated this frame, reset flag
 	for (auto& renderCommand : commandQueue) {
 		renderCommand.hasUpdatedSinceLastRender[frameIndex] = false;
 	}
+	// Start executing AS update on async queue
+	cmdListComputeAS->Close();
+	m_context->executeCommandLists({ cmdListComputeAS.Get() }, D3D12_COMMAND_LIST_TYPE_COMPUTE, true);
+	m_asFenceValues[frameIndex] = m_context->getAsyncComputeQueue()->signal();
+	// Logger::Log("ASYNC queue after updateAS signaled " + std::to_string(m_asFenceValues[frameIndex]));
+
+	static bool firstFrame = true;
+	if (!firstFrame) {
+		m_context->getMainComputeQueue()->wait(m_asFenceValues[lastFrameIndex]);
+		// Logger::Log("Main queue before dispatch waited for " + std::to_string(m_asFenceValues[lastFrameIndex]));
+		m_dxr.dispatch(m_outputTexture.get(), cmdListComputeDispatch.Get());
+	}
+	firstFrame = false;
 
 	// TODO: move this to a graphics queue when current cmdList is executed on the compute queue
 
 	RenderableTexture* renderOutput = m_outputTexture.get();
 	if (postProcessPipeline) {
 		// Run post processing
-		RenderableTexture* ppOutput = postProcessPipeline->run(m_outputTexture.get(), cmdListCompute.Get());
+		RenderableTexture* ppOutput = postProcessPipeline->run(m_outputTexture.get(), cmdListComputeDispatch.Get());
 		if (ppOutput) {
 			renderOutput = ppOutput;
 		}
 	}
 	DX12RenderableTexture* dxRenderOutput = static_cast<DX12RenderableTexture*>(renderOutput);
-	dxRenderOutput->transitionStateTo(cmdListCompute.Get(), D3D12_RESOURCE_STATE_COMMON);
+	dxRenderOutput->transitionStateTo(cmdListComputeDispatch.Get(), D3D12_RESOURCE_STATE_COMMON);
 
 	// Execute compute command list
-	cmdListCompute->Close();
-	m_context->executeCommandLists({ cmdListCompute.Get() }, D3D12_COMMAND_LIST_TYPE_COMPUTE);
+	cmdListComputeDispatch->Close();
+	m_context->executeCommandLists({ cmdListComputeDispatch.Get() }, D3D12_COMMAND_LIST_TYPE_COMPUTE);
 	// Place a signal to syncronize copying the raytracing output to the backbuffer when it is available
-	fenceVal = m_context->getComputeQueue()->signal();
+	m_dispatchFenceValues[frameIndex] = m_context->getMainComputeQueue()->signal();
+	// Logger::Log("Main queue after dispatch signaled " + std::to_string(m_dispatchFenceValues[frameIndex]));
 
 	// Copy post processing output to back buffer
 	dxRenderOutput->transitionStateTo(cmdListDirect.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE);
@@ -135,7 +162,7 @@ void DX12RaytracingRenderer::present(PostProcessPipeline* postProcessPipeline, R
 	DX12Utils::SetResourceTransitionBarrier(cmdListDirect.Get(), renderTarget, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
 
 	// Wait for compute to finish
-	m_context->getDirectQueue()->wait(fenceVal);
+	m_context->getDirectQueue()->wait(m_dispatchFenceValues[frameIndex]);
 	// Execute direct command list
 	cmdListDirect->Close();
 	m_context->executeCommandLists({ cmdListDirect.Get() }, D3D12_COMMAND_LIST_TYPE_DIRECT);

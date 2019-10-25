@@ -20,7 +20,8 @@ DX12API::DX12API()
 	, m_tearingSupport(true)
 	, m_windowedMode(true)
 	, m_directQueueFenceValues()
-	, m_computeQueueFenceValues()
+	, m_mainComputeQueueFenceValues()
+	, m_asyncComputeQueueFenceValues()
 {
 	m_renderTargets.resize(NUM_SWAP_BUFFERS);
 }
@@ -149,7 +150,8 @@ void DX12API::createDevice() {
 void DX12API::createCmdInterfacesAndSwapChain(Win32Window* window) {
 	// 3. Create command queue/allocator/list
 	m_directCommandQueue = std::make_unique<CommandQueue>(this, D3D12_COMMAND_LIST_TYPE_DIRECT, L"Main direct command queue");
-	m_computeCommandQueue = std::make_unique<CommandQueue>(this, D3D12_COMMAND_LIST_TYPE_COMPUTE, L"Main compute command queue");
+	m_mainComputeCommandQueue = std::make_unique<CommandQueue>(this, D3D12_COMMAND_LIST_TYPE_COMPUTE, L"Main compute command queue");
+	m_asyncComputeCommandQueue = std::make_unique<CommandQueue>(this, D3D12_COMMAND_LIST_TYPE_COMPUTE, L"Async compute command queue");
 
 	// 5. Create swap chain
 	DXGI_SWAP_CHAIN_DESC1 scDesc = {};
@@ -417,7 +419,8 @@ void DX12API::nextFrame() {
 
 	// Schedule a signal to notify when the current frame has finished presenting
 	m_directQueueFenceValues[m_swapIndex] = m_directCommandQueue->signal();
-	m_computeQueueFenceValues[m_swapIndex] = m_computeCommandQueue->signal();
+	m_mainComputeQueueFenceValues[m_swapIndex] = m_mainComputeCommandQueue->signal();
+	m_asyncComputeQueueFenceValues[m_swapIndex] = m_asyncComputeCommandQueue->signal();
 
 	m_backBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 	m_swapIndex = 1 - m_swapIndex; // Toggle between 0 and 1
@@ -426,7 +429,8 @@ void DX12API::nextFrame() {
 	// Wait until the next frame is ready
 	if (!firstFrame) {
 		m_directCommandQueue->waitOnCPU(m_directQueueFenceValues[m_swapIndex], m_eventHandle);
-		m_computeCommandQueue->waitOnCPU(m_computeQueueFenceValues[m_swapIndex], m_eventHandle);
+		m_mainComputeCommandQueue->waitOnCPU(m_mainComputeQueueFenceValues[m_swapIndex], m_eventHandle);
+		m_asyncComputeCommandQueue->waitOnCPU(m_asyncComputeQueueFenceValues[m_swapIndex], m_eventHandle);
 	}
 	firstFrame = false;
 
@@ -664,8 +668,12 @@ const D3D12_RECT* DX12API::getScissorRect() const {
 	return &m_scissorRect;
 }
 
-DX12API::CommandQueue* DX12API::getComputeQueue() const {
-	return m_computeCommandQueue.get();
+DX12API::CommandQueue* DX12API::getMainComputeQueue() const {
+	return m_mainComputeCommandQueue.get();
+}
+
+DX12API::CommandQueue* DX12API::getAsyncComputeQueue() const {
+	return m_asyncComputeCommandQueue.get();
 }
 
 DX12API::CommandQueue* DX12API::getDirectQueue() const {
@@ -698,12 +706,16 @@ void DX12API::initCommand(Command& cmd, D3D12_COMMAND_LIST_TYPE type) {
 	cmd.list->Close();
 }
 
-void DX12API::executeCommandLists(std::initializer_list<ID3D12CommandList*> cmdLists, D3D12_COMMAND_LIST_TYPE type) const {
+void DX12API::executeCommandLists(std::initializer_list<ID3D12CommandList*> cmdLists, D3D12_COMMAND_LIST_TYPE type, bool secondary) const {
 	// Command lists needs to be closed before sent to this method
 	if (type == D3D12_COMMAND_LIST_TYPE_DIRECT) {
 		m_directCommandQueue->get()->ExecuteCommandLists((UINT)cmdLists.size(), cmdLists.begin());
 	} else if (type == D3D12_COMMAND_LIST_TYPE_COMPUTE) {
-		m_computeCommandQueue->get()->ExecuteCommandLists((UINT)cmdLists.size(), cmdLists.begin());
+		if (!secondary) {
+			m_mainComputeCommandQueue->get()->ExecuteCommandLists((UINT)cmdLists.size(), cmdLists.begin());
+		} else {
+			m_asyncComputeCommandQueue->get()->ExecuteCommandLists((UINT)cmdLists.size(), cmdLists.begin());
+		}
 	} else {
 		Logger::Error("Cannot execute CommandLists of type " + std::to_string(type));
 	}
@@ -818,11 +830,11 @@ void DX12API::waitForGPU() {
 
 	// Schedule signals
 	m_directQueueFenceValues[m_swapIndex] = m_directCommandQueue->signal();
-	m_computeQueueFenceValues[m_swapIndex] = m_computeCommandQueue->signal();
+	m_mainComputeQueueFenceValues[m_swapIndex] = m_mainComputeCommandQueue->signal();
 
 	// Wait until command queues are done
 	m_directCommandQueue->waitOnCPU(m_directQueueFenceValues[m_swapIndex], m_eventHandle);
-	m_computeCommandQueue->waitOnCPU(m_computeQueueFenceValues[m_swapIndex], m_eventHandle);
+	m_mainComputeCommandQueue->waitOnCPU(m_mainComputeQueueFenceValues[m_swapIndex], m_eventHandle);
 	
 }
 

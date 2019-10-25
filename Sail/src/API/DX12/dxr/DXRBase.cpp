@@ -310,7 +310,9 @@ void DXRBase::dispatch(DX12RenderableTexture* outputTexture, ID3D12GraphicsComma
 
 	assert(m_gbufferInputTextures); // Input textures not set!
 	
+	// Get frame index from last frame - since dispatch is always one frame delayed
 	unsigned int frameIndex = m_context->getSwapIndex();
+	unsigned int lastFrameIndex = 1 - frameIndex;
 
 	// Copy output texture srv to beginning of heap
 	outputTexture->transitionStateTo(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
@@ -333,22 +335,22 @@ void DXRBase::dispatch(DX12RenderableTexture* outputTexture, ID3D12GraphicsComma
 	raytraceDesc.Depth = 1;
 
 	//set shader tables
-	raytraceDesc.RayGenerationShaderRecord.StartAddress = m_rayGenShaderTable[frameIndex].Resource->GetGPUVirtualAddress();
-	raytraceDesc.RayGenerationShaderRecord.SizeInBytes = m_rayGenShaderTable[frameIndex].SizeInBytes;
+	raytraceDesc.RayGenerationShaderRecord.StartAddress = m_rayGenShaderTable[lastFrameIndex].Resource->GetGPUVirtualAddress();
+	raytraceDesc.RayGenerationShaderRecord.SizeInBytes = m_rayGenShaderTable[lastFrameIndex].SizeInBytes;
 
-	raytraceDesc.MissShaderTable.StartAddress = m_missShaderTable[frameIndex].Resource->GetGPUVirtualAddress();
-	raytraceDesc.MissShaderTable.StrideInBytes = m_missShaderTable[frameIndex].StrideInBytes;
-	raytraceDesc.MissShaderTable.SizeInBytes = m_missShaderTable[frameIndex].SizeInBytes;
+	raytraceDesc.MissShaderTable.StartAddress = m_missShaderTable[lastFrameIndex].Resource->GetGPUVirtualAddress();
+	raytraceDesc.MissShaderTable.StrideInBytes = m_missShaderTable[lastFrameIndex].StrideInBytes;
+	raytraceDesc.MissShaderTable.SizeInBytes = m_missShaderTable[lastFrameIndex].SizeInBytes;
 
-	raytraceDesc.HitGroupTable.StartAddress = m_hitGroupShaderTable[frameIndex].Resource->GetGPUVirtualAddress();
-	raytraceDesc.HitGroupTable.StrideInBytes = m_hitGroupShaderTable[frameIndex].StrideInBytes;
-	raytraceDesc.HitGroupTable.SizeInBytes = m_hitGroupShaderTable[frameIndex].SizeInBytes;
+	raytraceDesc.HitGroupTable.StartAddress = m_hitGroupShaderTable[lastFrameIndex].Resource->GetGPUVirtualAddress();
+	raytraceDesc.HitGroupTable.StrideInBytes = m_hitGroupShaderTable[lastFrameIndex].StrideInBytes;
+	raytraceDesc.HitGroupTable.SizeInBytes = m_hitGroupShaderTable[lastFrameIndex].SizeInBytes;
 
 	// Bind the global root signature
 	cmdList->SetComputeRootSignature(*m_dxrGlobalRootSignature->get());
 
 	// Set acceleration structure
-	cmdList->SetComputeRootShaderResourceView(m_dxrGlobalRootSignature->getIndex("AccelerationStructure"), m_DXR_TopBuffer[frameIndex].result->GetGPUVirtualAddress());
+	cmdList->SetComputeRootShaderResourceView(m_dxrGlobalRootSignature->getIndex("AccelerationStructure"), m_DXR_TopBuffer[lastFrameIndex].result->GetGPUVirtualAddress());
 	// Set scene constant buffer
 	cmdList->SetComputeRootConstantBufferView(m_dxrGlobalRootSignature->getIndex("SceneCBuffer"), m_sceneCB->getBuffer()->GetGPUVirtualAddress());
 	// Set water "decal" data

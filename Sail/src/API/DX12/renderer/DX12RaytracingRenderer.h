@@ -29,7 +29,12 @@ private:
 	DX12API* m_context;
 	DXRBase m_dxr;
 	DX12API::Command m_commandDirect;
-	DX12API::Command m_commandCompute;
+	DX12API::Command m_commandComputeAS;
+	DX12API::Command m_commandComputeDispatch;
+	HANDLE m_eventHandle;
+	UINT64 m_asFenceValues[2];
+	UINT64 m_dispatchFenceValues[2];
+
 	std::unique_ptr<DX12RenderableTexture> m_outputTexture;
 
 	// Metaballs

@@ -62,7 +62,7 @@ void DX12GBufferRenderer::present(PostProcessPipeline* postProcessPipeline, Rend
 		m_computeCommand.list->Close();
 		m_context->executeCommandLists({ m_computeCommand.list.Get() }, D3D12_COMMAND_LIST_TYPE_COMPUTE);
 		// Force direct queue to wait until the compute queue has finished animations
-		m_context->getDirectQueue()->wait(m_context->getComputeQueue()->signal());
+		m_context->getDirectQueue()->wait(m_context->getMainComputeQueue()->signal());
 	}
 
 
