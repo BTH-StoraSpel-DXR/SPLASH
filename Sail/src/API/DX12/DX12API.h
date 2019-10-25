@@ -58,6 +58,7 @@ public:
 		void waitOnCPU(UINT64 fenceValue, HANDLE eventHandle) const;
 		ID3D12CommandQueue* get() const;
 		UINT64 getCurrentFenceValue() const;
+		void reset();
 	private:
 		wComPtr<ID3D12CommandQueue> m_commandQueue;
 		static UINT64 sFenceValue;
