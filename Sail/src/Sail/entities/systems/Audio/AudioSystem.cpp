@@ -3,6 +3,7 @@
 #include "AudioSystem.h"
 
 #include "..//Sail/src/API/Audio/AudioEngine.h"
+#include "../Sail/src/Sail/entities/systems/Audio/AudioData.h"
 #include "..//Sail/src/Sail/Application.h"
 #include "..//Sail/src/Sail/entities/components/AudioComponent.h"
 #include "..//Sail/src/Sail/entities/components/TransformComponent.h"
@@ -81,7 +82,7 @@ void AudioSystem::update(Camera& cam, float dt, float alpha) {
 			for (int i = 0; i < Audio::SoundType::COUNT; i++) {
 				soundGeneral = &audioC->m_sounds[i];
 
-				soundPoolSize = audioC->m_soundsUnique[i].size();
+				soundPoolSize = audioData.m_soundsUnique[i].size();
 				if (soundPoolSize > 0) {
 
 					if (soundGeneral->isPlaying) {
@@ -102,7 +103,7 @@ void AudioSystem::update(Camera& cam, float dt, float alpha) {
 							}
 
 							// To make the code easier to read
-							soundUnique = &audioC->m_soundsUnique[i].at(randomSoundIndex);
+							soundUnique = &audioData.m_soundsUnique[i].at(randomSoundIndex);
 
 							soundGeneral->soundID = m_audioEngine->initializeSound(soundUnique->fileName, soundUnique->volume);
 							soundGeneral->hasStartedPlaying = true;
@@ -225,7 +226,6 @@ void AudioSystem::update(Camera& cam, float dt, float alpha) {
 		}
 	}
 }
-
 
 void AudioSystem::stop() {
 	m_audioEngine->stopAllStreams();

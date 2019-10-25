@@ -11,6 +11,10 @@ InGameMenuState::InGameMenuState(StateStack& stack) : State(stack) {
 InGameMenuState::~InGameMenuState(){}
 
 bool InGameMenuState::processInput(float dt) {
+#ifndef DEVELOPMENT
+	// Show mouse
+	Input::HideCursor(false);
+#endif
 	if (m_inGameMenuWindow.popGameState()) {
 		// Reset the network
 		NWrapperSingleton::getInstance().resetNetwork();

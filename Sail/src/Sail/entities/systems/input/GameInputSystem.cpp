@@ -205,9 +205,11 @@ void GameInputSystem::processMouseInput(const float& dt) {
 	// Toggle cursor capture on right click
 	for (auto e : entities) {
 
+#ifdef DEVELOPMENT
 		if (Input::WasMouseButtonJustPressed(KeyBinds::disableCursor)) {
 			Input::HideCursor(!Input::IsCursorHidden());
 		}
+#endif
 
 		if (!e->hasComponent<SpectatorComponent>() && Input::IsMouseButtonPressed(KeyBinds::shoot)) {
 			glm::vec3 camRight = glm::cross(m_cam->getCameraUp(), m_cam->getCameraDirection());

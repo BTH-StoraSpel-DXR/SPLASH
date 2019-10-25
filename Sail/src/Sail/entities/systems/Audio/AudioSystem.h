@@ -1,6 +1,7 @@
 #pragma once
 
 #include "..//BaseComponentSystem.h"
+#include "AudioData.h"
 
 class AudioComponent;
 class AudioEngine;
