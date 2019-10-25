@@ -59,7 +59,9 @@ public:
 	~AllAudioData() {};
 	void init();
 
+	// This data is copied over to each audio component
 	Audio::SoundInfo_General m_sounds[Audio::SoundType::COUNT];
+	// This data is NOT copied over to each audio component
 	std::vector<Audio::SoundInfo_Unique> m_soundsUnique[Audio::SoundType::COUNT];
 };
 
