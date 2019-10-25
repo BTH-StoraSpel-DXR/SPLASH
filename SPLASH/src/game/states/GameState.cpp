@@ -167,7 +167,7 @@ bool GameState::processInput(float dt) {
 
 #ifndef DEVELOPMENT
 	// Capture mouse
-	Input::HideCursor(true);
+	//Input::HideCursor(true);	Outcommented since it shreks multiple clients on the same computer
 #endif
 
 	// Pause game
