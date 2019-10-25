@@ -46,6 +46,10 @@ private:
 	void playerDisconnect(Netcode::PlayerID playerID);
 	void setCandleHeldState(Netcode::ComponentID id, bool isHeld, const glm::vec3& pos = glm::vec3(0, 0, 0));
 
+	void shootStart(glm::vec3& gunPos, glm::vec3& gunVel, Netcode::ComponentID id);
+	void shootLoop(glm::vec3& gunPos, glm::vec3& gunVel, Netcode::ComponentID id);
+	void shootEnd(glm::vec3& gunPos, glm::vec3& gunVel, Netcode::ComponentID id);
+
 	void matchEnded();
 	void backToLobby();
 

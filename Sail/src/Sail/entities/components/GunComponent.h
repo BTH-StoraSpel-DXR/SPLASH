@@ -4,6 +4,13 @@
 
 class Model;
 
+enum GunState {
+	STARTING,
+	LOOPING,
+	ENDING,
+	STANDBY
+};
+
 class GunComponent : public Component<GunComponent> {
 public:
 	GunComponent() {};
@@ -26,6 +33,10 @@ public:
 	float gunOverloadThreshold = .5f;
 
 	bool firing = false;
+
+	// Used to manage sound in gunsystem.
+	bool firingContinuously = false;
+	GunState state = GunState::STANDBY;
 
 private:
 	float m_projectileSpawnLimit = .3f;

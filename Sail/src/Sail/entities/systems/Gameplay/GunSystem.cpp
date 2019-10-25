@@ -109,7 +109,7 @@ void GunSystem::overloadGun(Entity* e, GunComponent* gun) {
 }
 
 void GunSystem::setGunStateSTART(Entity* e, GunComponent* gun) {
-	e->getComponent<NetworkSenderComponent>()->addDataType(
+	e->getComponent<NetworkSenderComponent>()->addMessageType(
 		Netcode::MessageType::SHOOT_START
 	);
 
@@ -122,7 +122,7 @@ void GunSystem::setGunStateLOOP(Entity* e, GunComponent* gun) {
 }
 
 void GunSystem::setGunStateEND(Entity* e, GunComponent* gun) {
-	e->getComponent<NetworkSenderComponent>()->addDataType(
+	e->getComponent<NetworkSenderComponent>()->addMessageType(
 		Netcode::MessageType::SHOOT_END
 	);
 	gun->state = GunState::ENDING;
