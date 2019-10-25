@@ -1041,16 +1041,16 @@ void GameState::populateScene(Model* characterModel, Model* lightModel, Model* b
 		e->addComponent<CollisionComponent>();
 		e->addComponent<GunComponent>(projectileModel, bbModel);
 
-		/* Audio */
-		e->addComponent<AudioComponent>();
-		Audio::SoundInfo sound{};
-		sound.fileName = "../Audio/guitar.wav";
-		sound.soundEffectLength = 104.0f;
-		sound.volume = 1.0f;
-		sound.playOnce = false;
-		sound.positionalOffset = { 0.f, 1.2f, 0.f };
-		sound.isPlaying = true; // Start playing the sound immediately
-		e->getComponent<AudioComponent>()->defineSound(Audio::SoundType::AMBIENT, sound);
+		///* Audio */
+		//e->addComponent<AudioComponent>();
+		//Audio::SoundInfo sound{};
+		//sound.fileName = "../Audio/guitar.wav";
+		//sound.soundEffectLength = 104.0f;
+		//sound.volume = 1.0f;
+		//sound.playOnce = false;
+		//sound.positionalOffset = { 0.f, 1.2f, 0.f };
+		//sound.isPlaying = true; // Start playing the sound immediately
+		//e->getComponent<AudioComponent>()->defineSound(Audio::SoundType::AMBIENT, sound);
 
 		// Add candle
 		/*if (i != 12) {
