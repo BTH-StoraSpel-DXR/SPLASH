@@ -97,8 +97,9 @@ namespace ShaderComponent {
 		}
 	}
 
-	ID3D12Resource* DX12ConstantBuffer::getBuffer() const {
-		return m_constantBufferUploadHeap[m_context->getSwapIndex()].Get();
+	ID3D12Resource* DX12ConstantBuffer::getBuffer(int bufferIndex) const {
+		unsigned int index = (bufferIndex == -1) ? m_context->getSwapIndex() : bufferIndex;
+		return m_constantBufferUploadHeap[index].Get();
 	}
 
 	void DX12ConstantBuffer::createBuffers() {

@@ -317,7 +317,7 @@ void DXRBase::dispatch(DX12RenderableTexture* outputTexture, ID3D12GraphicsComma
 	// Copy output texture srv to beginning of heap
 	outputTexture->transitionStateTo(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
 	D3D12_CPU_DESCRIPTOR_HANDLE outputTexHandle;
-	outputTexHandle.ptr = m_rtDescriptorHeap->GetCPUDescriptorHandleForHeapStart().ptr + m_heapIncr * frameIndex;
+	outputTexHandle.ptr = m_rtDescriptorHeap->GetCPUDescriptorHandleForHeapStart().ptr + m_heapIncr * lastFrameIndex;
 	m_context->getDevice()->CopyDescriptorsSimple(1, outputTexHandle, outputTexture->getUavCDH(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	//Set constant buffer descriptor heap
@@ -352,9 +352,9 @@ void DXRBase::dispatch(DX12RenderableTexture* outputTexture, ID3D12GraphicsComma
 	// Set acceleration structure
 	cmdList->SetComputeRootShaderResourceView(m_dxrGlobalRootSignature->getIndex("AccelerationStructure"), m_DXR_TopBuffer[lastFrameIndex].result->GetGPUVirtualAddress());
 	// Set scene constant buffer
-	cmdList->SetComputeRootConstantBufferView(m_dxrGlobalRootSignature->getIndex("SceneCBuffer"), m_sceneCB->getBuffer()->GetGPUVirtualAddress());
+	cmdList->SetComputeRootConstantBufferView(m_dxrGlobalRootSignature->getIndex("SceneCBuffer"), m_sceneCB->getBuffer(lastFrameIndex)->GetGPUVirtualAddress());
 	// Set water "decal" data
-	cmdList->SetComputeRootShaderResourceView(m_dxrGlobalRootSignature->getIndex("WaterData"), m_waterStructuredBuffer->getBuffer()->GetGPUVirtualAddress());
+	cmdList->SetComputeRootShaderResourceView(m_dxrGlobalRootSignature->getIndex("WaterData"), m_waterStructuredBuffer->getBuffer(frameIndex)->GetGPUVirtualAddress());
 
 	// Dispatch
 	cmdList->SetPipelineState1(m_rtPipelineState.Get());
@@ -770,6 +770,7 @@ void DXRBase::updateShaderTables() {
 	// 	 "Shader tables can be modified freely by the application (with appropriate state barriers)"
 
 	auto frameIndex = m_context->getSwapIndex();
+	auto lastFrameIndex = 1 - frameIndex;
 
 	// Ray gen
 	{

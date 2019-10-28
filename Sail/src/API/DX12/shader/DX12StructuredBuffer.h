@@ -16,7 +16,7 @@ namespace ShaderComponent {
 		virtual void bind(void* cmdList) const override;
 		void bind_new(void* cmdList, int meshIndex) const;
 
-		ID3D12Resource* getBuffer() const;
+		ID3D12Resource* getBuffer(int bufferIndex = -1) const;
 
 	private:
 		void createBuffers(unsigned int numElements);

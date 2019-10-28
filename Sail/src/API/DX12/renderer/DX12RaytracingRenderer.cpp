@@ -27,7 +27,7 @@ DX12RaytracingRenderer::DX12RaytracingRenderer(DX12RenderableTexture** inputs)
 
 	auto windowWidth = app->getWindow()->getWindowWidth();
 	auto windowHeight = app->getWindow()->getWindowHeight();
-	m_outputTexture = std::unique_ptr<DX12RenderableTexture>(static_cast<DX12RenderableTexture*>(RenderableTexture::Create(windowWidth, windowHeight)));
+	m_outputTexture = std::unique_ptr<DX12RenderableTexture>(static_cast<DX12RenderableTexture*>(RenderableTexture::Create(windowWidth, windowHeight, "Raytracing output renderable texture")));
 
 	m_currNumDecals = 0;
 	memset(m_decals, 0, sizeof(DXRShaderCommon::DecalData) * MAX_DECALS);
@@ -132,8 +132,6 @@ void DX12RaytracingRenderer::present(PostProcessPipeline* postProcessPipeline, R
 		m_dxr.dispatch(m_outputTexture.get(), cmdListComputeDispatch.Get());
 	}
 	firstFrame = false;
-
-	// TODO: move this to a graphics queue when current cmdList is executed on the compute queue
 
 	RenderableTexture* renderOutput = m_outputTexture.get();
 	if (postProcessPipeline) {

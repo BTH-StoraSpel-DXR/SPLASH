@@ -21,7 +21,7 @@ namespace ShaderComponent {
 
 		void checkBufferSize(unsigned int nMeshes);
 
-		ID3D12Resource* getBuffer() const;
+		ID3D12Resource* getBuffer(int bufferIndex = -1) const;
 
 	private:
 		void createBuffers();

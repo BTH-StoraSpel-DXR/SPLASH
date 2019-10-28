@@ -39,7 +39,8 @@ DX12API::~DX12API() {
 		m_renderTargetsHeap.Reset();
 		m_depthStencilBuffer.Reset();
 		m_directCommandQueue->reset();
-		m_computeCommandQueue->reset();
+		m_mainComputeCommandQueue->reset();
+		m_asyncComputeCommandQueue->reset();
 		m_dsDescriptorHeap.Reset();
 		for (auto& rt : m_renderTargets) {
 			rt.Reset();

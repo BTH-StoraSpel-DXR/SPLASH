@@ -109,8 +109,9 @@ namespace ShaderComponent {
 		m_context->getDevice()->CreateShaderResourceView(m_bufferUploadHeap[frameIndex].Get(), &srvDesc, m_context->getComputeGPUDescriptorHeap()->getNextCPUDescriptorHandle());
 	}
 
-	ID3D12Resource* DX12StructuredBuffer::getBuffer() const {
-		return m_bufferUploadHeap[m_context->getSwapIndex()].Get();
+	ID3D12Resource* DX12StructuredBuffer::getBuffer(int bufferIndex) const {
+		unsigned int index = (bufferIndex == -1) ? m_context->getSwapIndex() : bufferIndex;
+		return m_bufferUploadHeap[index].Get();
 	}
 
 	void DX12StructuredBuffer::createBuffers(unsigned int numElements) {
