@@ -18,7 +18,8 @@ public:
 		DEFERRED,
 		RAYTRACED,
 		GBUFFER,
-		HYBRID
+		HYBRID,
+		SCREEN_SPACE
 	};
 
 	enum RenderFlag {

@@ -6,6 +6,7 @@ class InputLayout {
 public:
 	enum InputType {
 		POSITION,
+		POSITION2D,
 		TEXCOORD,
 		NORMAL,
 		TANGENT,

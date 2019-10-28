@@ -4,6 +4,7 @@
 #include "DX12RaytracingRenderer.h"
 #include "DX12GBufferRenderer.h"
 #include "DX12HybridRaytracerRenderer.h"
+#include "DX12ScreenSpaceRenderer.h"
 
 Renderer* Renderer::Create(Renderer::Type type) {
 	switch (type) {
@@ -13,6 +14,8 @@ Renderer* Renderer::Create(Renderer::Type type) {
 		return SAIL_NEW DX12GBufferRenderer();
 	case HYBRID:
 		return SAIL_NEW DX12HybridRaytracerRenderer();
+	case SCREEN_SPACE:
+		return SAIL_NEW DX12ScreenSpaceRenderer();
 	default:
 		Logger::Error("Tried to create a renderer of unknown or unimplemented type: " + std::to_string(type));
 	}

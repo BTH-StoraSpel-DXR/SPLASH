@@ -92,6 +92,17 @@ bool ResourceManager::hasTexture(const std::string& filename) {
 // Model
 //
 
+// Used to add a model created from the application
+void ResourceManager::addModel(const std::string& modelName, Model* model) {
+	if (m_models.find(modelName) != m_models.end()) {
+		Logger::Error("The model name is already in use");
+		return;
+	}
+	Logger::Log("Added model: " + modelName);
+	model->setName(modelName);
+	m_models.insert({modelName, std::unique_ptr<Model>(model)});
+}
+
 void ResourceManager::loadModel(const std::string& filename, Shader* shader, const ImporterType type) {
 	// Insert the new model
 	Shader* shaderToUse = shader ? shader : m_defaultShader;

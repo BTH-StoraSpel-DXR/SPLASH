@@ -12,6 +12,8 @@
 #include "Sail/entities/components/AudioComponent.h"
 #include "../src/Network/NWrapperSingleton.h"
 
+#include "Sail/TimeSettings.h"
+
 GameInputSystem::GameInputSystem() : BaseComponentSystem() {
 	registerComponent<LocalOwnerComponent>(true, true, false);
 	registerComponent<MovementComponent>(true, true, true);
@@ -36,8 +38,13 @@ GameInputSystem::~GameInputSystem() {
 }
 
 
+// Keyboard input is checked every tick
+void GameInputSystem::fixedUpdate() {
+	this->processKeyboardInput(TIMESTEP);
+}
+
+// Mouse input is checked every frame
 void GameInputSystem::update(float dt, float alpha) {
-	this->processKeyboardInput(dt);
 	this->processMouseInput(dt);
 	this->updateCameraPosition(alpha);
 }
@@ -205,9 +212,11 @@ void GameInputSystem::processMouseInput(const float& dt) {
 	// Toggle cursor capture on right click
 	for (auto e : entities) {
 
+#ifdef DEVELOPMENT
 		if (Input::WasMouseButtonJustPressed(KeyBinds::disableCursor)) {
 			Input::HideCursor(!Input::IsCursorHidden());
 		}
+#endif
 
 		if (!e->hasComponent<SpectatorComponent>() && Input::IsMouseButtonPressed(KeyBinds::shoot)) {
 			glm::vec3 camRight = glm::cross(m_cam->getCameraUp(), m_cam->getCameraDirection());

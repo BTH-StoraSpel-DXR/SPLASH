@@ -95,11 +95,13 @@ void StateStack::render(float dt, float alpha) {
 	for (auto& state : m_stack) {
 		state->renderImgui(dt);
 	}
+#ifdef DEVELOPMENT
 	if (m_renderImguiDebug) {
 		for (auto& state : m_stack) {
 			state->renderImguiDebug(dt);
 		}
 	}
+#endif
 	// Render console
 	Application::getInstance()->getConsole().renderWindow();
 	Application::getInstance()->getImGuiHandler()->end();

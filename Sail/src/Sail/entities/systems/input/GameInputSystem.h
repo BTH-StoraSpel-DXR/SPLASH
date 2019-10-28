@@ -17,6 +17,8 @@ public:
 	GameInputSystem();
 	~GameInputSystem();
 
+	void fixedUpdate();
+
 	void update(float dt, float alpha);
 	void initialize(Camera* cam);
 	void clean();

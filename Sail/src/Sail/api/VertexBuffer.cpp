@@ -26,6 +26,10 @@ void* VertexBuffer::getVertexData(const Mesh::Data& modelData) {
 				UINT size = sizeof(glm::vec3);
 				memcpy(addr, &modelData.positions[i], size);
 				byteOffset += size;
+			} else if (inputType == InputLayout::POSITION2D) {
+				UINT size = sizeof(glm::vec2);
+				memcpy(addr, &modelData.positions[i], size);
+				byteOffset += size;
 			} else if (inputType == InputLayout::TEXCOORD) {
 				UINT size = sizeof(glm::vec2);
 				// Check if model data contains texCoords

@@ -88,6 +88,7 @@ public:
 	StateStorage& getStateStorage();
 	const UINT getFPS() const;
 	float getDelta() const;
+	float getFixedUpdateDelta() const;
 
 private:
 
@@ -107,6 +108,7 @@ private:
 	Timer m_timer;
 	UINT m_fps;
 	float m_delta;
+	float m_fixedUpdateDelta;
 
 	static std::atomic_bool s_isRunning;
 };

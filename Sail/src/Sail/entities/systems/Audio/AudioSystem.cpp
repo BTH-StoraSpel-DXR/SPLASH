@@ -3,6 +3,7 @@
 #include "AudioSystem.h"
 
 #include "..//Sail/src/API/Audio/AudioEngine.h"
+#include "../Sail/src/Sail/entities/systems/Audio/AudioData.h"
 #include "..//Sail/src/Sail/Application.h"
 #include "..//Sail/src/Sail/entities/components/AudioComponent.h"
 #include "..//Sail/src/Sail/entities/components/TransformComponent.h"
@@ -24,8 +25,9 @@ AudioSystem::~AudioSystem() {
 	delete m_audioEngine;
 }
 
-// TODO: move to constructor?
+// TO DO: move to constructor?
 void AudioSystem::initialize() {
+#pragma region FOOTSTEPS
 	m_audioEngine->loadSound("../Audio/footsteps_metal_1.wav");
 	m_audioEngine->loadSound("../Audio/footsteps_metal_2.wav");
 	m_audioEngine->loadSound("../Audio/footsteps_metal_3.wav");
@@ -42,13 +44,18 @@ void AudioSystem::initialize() {
 	m_audioEngine->loadSound("../Audio/footsteps_water_tile_2.wav");
 	m_audioEngine->loadSound("../Audio/footsteps_water_tile_3.wav");
 	m_audioEngine->loadSound("../Audio/footsteps_water_tile_4.wav");
+#pragma endregion
+#pragma region JUMPING
 	m_audioEngine->loadSound("../Audio/jump.wav");
 	m_audioEngine->loadSound("../Audio/landing_ground.wav");
-	m_audioEngine->loadSound("../Audio/guitar.wav");
+#pragma endregion
+#pragma region WATERGUN
 	m_audioEngine->loadSound("../Audio/watergun_start.wav");
 	m_audioEngine->loadSound("../Audio/watergun_loop.wav");
 	m_audioEngine->loadSound("../Audio/watergun_end.wav");
 	m_audioEngine->loadSound("../Audio/watergun_reload.wav");
+#pragma endregion
+#pragma region IMPACTS
 	m_audioEngine->loadSound("../Audio/water_impact_enemy_candle.wav");
 	m_audioEngine->loadSound("../Audio/water_impact_my_candle.wav");
 	m_audioEngine->loadSound("../Audio/water_drip_1.wav");
@@ -58,6 +65,8 @@ void AudioSystem::initialize() {
 	m_audioEngine->loadSound("../Audio/water_drip_5.wav");
 	m_audioEngine->loadSound("../Audio/water_drip_6.wav");
 	m_audioEngine->loadSound("../Audio/water_drip_7.wav");
+#pragma endregion
+#pragma region DEATHS
 	m_audioEngine->loadSound("../Audio/death_enemy.wav");
 	m_audioEngine->loadSound("../Audio/death_me_1.wav");
 	m_audioEngine->loadSound("../Audio/death_me_2.wav");
@@ -65,6 +74,10 @@ void AudioSystem::initialize() {
 	m_audioEngine->loadSound("../Audio/death_me_4.wav");
 	m_audioEngine->loadSound("../Audio/death_me_5.wav");
 	m_audioEngine->loadSound("../Audio/death_me_6.wav");
+#pragma endregion
+#pragma region MISCELLANEOUS
+	m_audioEngine->loadSound("../Audio/guitar.wav");
+#pragma endregion
 }
 
 void AudioSystem::update(Camera& cam, float dt, float alpha) {
@@ -81,7 +94,7 @@ void AudioSystem::update(Camera& cam, float dt, float alpha) {
 			for (int i = 0; i < Audio::SoundType::COUNT; i++) {
 				soundGeneral = &audioC->m_sounds[i];
 
-				soundPoolSize = audioC->m_soundsUnique[i].size();
+				soundPoolSize = audioData.m_soundsUnique[i].size();
 				if (soundPoolSize > 0) {
 
 					if (soundGeneral->isPlaying) {
@@ -102,7 +115,7 @@ void AudioSystem::update(Camera& cam, float dt, float alpha) {
 							}
 
 							// To make the code easier to read
-							soundUnique = &audioC->m_soundsUnique[i].at(randomSoundIndex);
+							soundUnique = &audioData.m_soundsUnique[i].at(randomSoundIndex);
 
 							soundGeneral->soundID = m_audioEngine->initializeSound(soundUnique->fileName, soundUnique->volume);
 							soundGeneral->hasStartedPlaying = true;
@@ -225,7 +238,6 @@ void AudioSystem::update(Camera& cam, float dt, float alpha) {
 		}
 	}
 }
-
 
 void AudioSystem::stop() {
 	m_audioEngine->stopAllStreams();

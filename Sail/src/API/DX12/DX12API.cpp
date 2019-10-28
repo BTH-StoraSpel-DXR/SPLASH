@@ -38,6 +38,8 @@ DX12API::~DX12API() {
 		m_globalRootSignature.Reset();
 		m_renderTargetsHeap.Reset();
 		m_depthStencilBuffer.Reset();
+		m_directCommandQueue->reset();
+		m_computeCommandQueue->reset();
 		m_dsDescriptorHeap.Reset();
 		for (auto& rt : m_renderTargets) {
 			rt.Reset();
@@ -877,4 +879,11 @@ ID3D12CommandQueue* DX12API::CommandQueue::get() const {
 
 UINT64 DX12API::CommandQueue::getCurrentFenceValue() const {
 	return sFenceValue;
+}
+
+void DX12API::CommandQueue::reset() {
+	m_commandQueue.Reset();
+	if (sFence) {
+		sFence.Reset();
+	}
 }

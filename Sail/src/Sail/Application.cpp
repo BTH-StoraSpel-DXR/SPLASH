@@ -9,6 +9,12 @@
 #include "entities/ECS.h"
 #include "entities/systems/Systems.h"
 
+
+
+// If this is defined then fixed update will run every frame which speeds up/slows down
+// the game depending on how fast the program can run
+//#define PERFORMANCE_SPEED_TEST
+
 Application* Application::s_instance = nullptr;
 std::atomic_bool Application::s_isRunning = true;
 
@@ -62,6 +68,8 @@ Application::Application(int windowWidth, int windowHeight, const char* windowTi
 	ECS::Instance()->createSystem<MetaballSubmitSystem>();
 	ECS::Instance()->createSystem<ModelSubmitSystem>();
 	ECS::Instance()->createSystem<RealTimeModelSubmitSystem>();
+	ECS::Instance()->createSystem<GUISubmitSystem>();
+
 
 
 	// Initialize imgui
@@ -99,6 +107,7 @@ int Application::startGameLoop() {
 	float secCounter = 0.0f;
 	float elapsedTime = 0.0f;
 	UINT frameCounter = 0;
+	float fixedUpdateStartTime = 0.0f;
 
 	// Render loop, each iteration of it results in one rendered frame
 	while (msg.message != WM_QUIT) {
@@ -125,13 +134,9 @@ int Application::startGameLoop() {
 			m_delta = newTime - currentTime;
 			currentTime = newTime;
 
-			// Limit the amount of updates that can happen between frames to prevent the game from completely freezing
-			// when the update is really slow for whatever reason.
-			m_delta = std::min(m_delta, 4 * TIMESTEP);
 
 			// Update fps counter
 			secCounter += m_delta;
-			accumulator += m_delta;
 			frameCounter++;
 			if (secCounter >= 1.0) {
 				m_fps = frameCounter;
@@ -142,12 +147,10 @@ int Application::startGameLoop() {
 			// Update mouse deltas
 			Input::GetInstance()->beginFrame();
 
-			//UPDATES AUDIO
-			//Application::getAudioManager()->updateAudio();
-
 			// Quit on alt-f4
-			if (Input::IsKeyPressed(KeyBinds::alt) && Input::IsKeyPressed(KeyBinds::f4))
+			if (Input::IsKeyPressed(KeyBinds::alt) && Input::IsKeyPressed(KeyBinds::f4)) {
 				PostQuitMessage(0);
+			}
 
 #ifdef _DEBUG
 			/*if (Input::WasKeyJustPressed(SAIL_KEY_ESCAPE)) {
@@ -157,24 +160,37 @@ int Application::startGameLoop() {
 			//	Logger::Warning(std::to_string(elapsedTime) + " delta over 0.0166: " + std::to_string(m_delta));
 #endif
 			// Process state specific input
-			// NOTE: player movement is processed in update() except for mouse movement which is processed here
 			processInput(m_delta);
 
+
+			// Limit the amount of updates that can happen between frames to prevent the game from completely freezing
+			// when the update is really slow for whatever reason.
+			// Allows fixed update to run twice in a row before rendering a frame so the game
+			// will slow down if (3*FPS < TICKRATE)
+			accumulator += std::min(m_delta, 3.01f * TIMESTEP);
+
+
 			// Run the update if enough time has passed since the last update
+#ifndef PERFORMANCE_SPEED_TEST
 			while (accumulator >= TIMESTEP) {
+#endif
 				accumulator -= TIMESTEP;
+
+				fixedUpdateStartTime = m_timer.getTimeSince<float>(startTime);
 				fixedUpdate(TIMESTEP);
+				m_fixedUpdateDelta = m_timer.getTimeSince<float>(startTime) - fixedUpdateStartTime;
+#ifndef PERFORMANCE_SPEED_TEST
 			}
-
-
 			// alpha value used for the interpolation
 			float alpha = accumulator / TIMESTEP;
+#else
+			float alpha = 1.0f; // disable interpolation
+#endif
 
 			update(m_delta, alpha);
 
 			// Render
 			render(m_delta, alpha);
-			//render(m_delta, 1.0f); // disable interpolation
 
 			// Reset just pressed keys
 			Input::GetInstance()->endFrame();
@@ -244,5 +260,9 @@ const UINT Application::getFPS() const {
 }
 float Application::getDelta() const {
 	return m_delta;
+}
+
+float Application::getFixedUpdateDelta() const {
+	return m_fixedUpdateDelta;
 }
 

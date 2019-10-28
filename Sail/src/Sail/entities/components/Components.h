@@ -31,3 +31,5 @@
 //#include "TextComponent.h"
 #include "TransformComponent.h"
 #include "VerticalCylinderComponent.h"
+
+#include "GUIComponent.h"

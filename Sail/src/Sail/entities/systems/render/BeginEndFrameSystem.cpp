@@ -19,6 +19,7 @@ void BeginEndFrameSystem::renderNothing() {
 
 void BeginEndFrameSystem::beginFrame(Camera& camera) {
 	Application::getInstance()->getRenderWrapper()->getCurrentRenderer()->begin(&camera);
+	Application::getInstance()->getRenderWrapper()->getScreenSpaceRenderer()->begin(&camera);
 }
 
 void BeginEndFrameSystem::endFrameAndPresent() {
@@ -26,4 +27,7 @@ void BeginEndFrameSystem::endFrameAndPresent() {
 	renderWrapper->getCurrentRenderer()->end();
 	renderWrapper->getCurrentRenderer()->present((renderWrapper->getDoPostProcessing()
 		) ? renderWrapper->getPostProcessPipeline() : nullptr);
+	
+	renderWrapper->getScreenSpaceRenderer()->end();
+	renderWrapper->getScreenSpaceRenderer()->present();
 }

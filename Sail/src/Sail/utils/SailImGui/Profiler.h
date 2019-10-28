@@ -35,10 +35,13 @@ private:
 	float* m_cpuHistory;
 	float* m_vramUsageHistory;
 	float* m_frameTimesHistory;
+	float* m_fixedUpdateHistory;
 	std::string m_virtCount;
 	std::string m_physCount;
 	std::string m_vramUCount;
 	std::string m_cpuCount;
 	std::string m_ftCount;
+	std::string m_fixedUpdateCount;
+	std::string m_potentialFixedUpdateRate;
 
 };

@@ -17,6 +17,8 @@ ShaderPipeline* ShaderPipeline::Create(const std::string& filename) {
 DX12ShaderPipeline::DX12ShaderPipeline(const std::string& filename)
 	: ShaderPipeline(filename) 
 	, m_numRenderTargets(1)
+	, m_enableDepth(true)
+	, m_enableBlending(false)
 {
 	m_context = Application::getInstance()->getAPI<DX12API>();
 
@@ -261,6 +263,14 @@ void DX12ShaderPipeline::setNumRenderTargets(unsigned int numRenderTargets) {
 	m_numRenderTargets = numRenderTargets;
 }
 
+void DX12ShaderPipeline::enableDepthStencil(bool enable) {
+	m_enableDepth = enable;
+}
+
+void DX12ShaderPipeline::enableAlphaBlending(bool enable) {
+	m_enableBlending = enable;
+}
+
 void DX12ShaderPipeline::compile() {
 	ShaderPipeline::compile();
 }
@@ -330,18 +340,28 @@ void DX12ShaderPipeline::createGraphicsPipelineState() {
 	}
 
 	//Specify blend descriptions.
-	D3D12_RENDER_TARGET_BLEND_DESC defaultRTdesc = {
-		false, false,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL
-	};
+	D3D12_RENDER_TARGET_BLEND_DESC defaultRTdesc;
+	if (m_enableBlending) {
+		defaultRTdesc = {
+			true, false,
+			D3D12_BLEND_SRC_ALPHA, D3D12_BLEND_ONE, D3D12_BLEND_OP_ADD,
+			D3D12_BLEND_ZERO, D3D12_BLEND_ONE, D3D12_BLEND_OP_ADD,
+			D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL
+		};
+	} else {
+		defaultRTdesc = {
+			false, false,
+			D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+			D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+			D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL
+		};
+	}
 	for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
 		gpsd.BlendState.RenderTarget[i] = defaultRTdesc;
 
 	// Specify depth stencil state descriptor.
 	D3D12_DEPTH_STENCIL_DESC dsDesc{};
-	dsDesc.DepthEnable = TRUE;
+	dsDesc.DepthEnable = m_enableDepth;
 	dsDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 	dsDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
 	dsDesc.StencilEnable = FALSE;
