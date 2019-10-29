@@ -174,11 +174,14 @@ int Application::startGameLoop() {
 #ifndef PERFORMANCE_SPEED_TEST
 			while (accumulator >= TIMESTEP) {
 #endif
-				accumulator -= TIMESTEP;
 
-				fixedUpdateStartTime = m_timer.getTimeSince<float>(startTime);
-				fixedUpdate(TIMESTEP);
-				m_fixedUpdateDelta = m_timer.getTimeSince<float>(startTime) - fixedUpdateStartTime;
+			accumulator -= TIMESTEP;
+
+			fixedUpdateStartTime = m_timer.getTimeSince<float>(startTime);
+			fixedUpdate(TIMESTEP);
+			m_fixedUpdateDelta = m_timer.getTimeSince<float>(startTime) - fixedUpdateStartTime;
+
+
 #ifndef PERFORMANCE_SPEED_TEST
 			}
 			// alpha value used for the interpolation
