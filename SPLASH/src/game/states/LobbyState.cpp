@@ -204,7 +204,7 @@ void LobbyState::renderStartButton() {
 
 void LobbyState::renderQuitButton() {
 	ImGui::Begin("Return");
-	if (ImGui::Button("Quit to Lobby")) {
+	if (ImGui::Button("Return to Lobby")) {
 	
 		// Set temp window pos
 		ImGui::SetWindowPos({ 424,641 });
