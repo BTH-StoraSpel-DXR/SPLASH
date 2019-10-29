@@ -2,6 +2,7 @@
 
 #include "Sail/states/State.h"
 #include "../SPLASH/src/game/events/NetworkBackToLobby.h"
+#include "../SPLASH/src/game/events/NetworkDisconnectEvent.h"
 
 class EndGameState : public State {
 public:
@@ -22,6 +23,7 @@ public:
 
 private:
 	bool onReturnToLobby(NetworkBackToLobby& event);
+	bool onClientLeft(NetworkDisconnectEvent& event);
 
 	void updatePerTickComponentSystems(float dt);
 	void updatePerFrameComponentSystems(float dt, float alpha);

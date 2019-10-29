@@ -18,6 +18,16 @@ GameDataTracker::~GameDataTracker() {
 
 }
 
+void GameDataTracker::sort() {
+	// Sort rankings
+	for (auto player : m_hostPlayerTracker) {
+		m_placementMap[player.second.placement].name = m_network->getPlayer((Netcode::PlayerID)player.first)->name;
+		m_placementMap[player.second.placement].nKills = player.second.nKills;
+	}
+
+	m_sorted = true;
+}
+
 GameDataTracker& GameDataTracker::getInstance() {
 	static GameDataTracker instance;
 
@@ -131,24 +141,19 @@ void GameDataTracker::renderImgui() {
 	ImGui::Begin("Game Statistics", NULL);
 	ImGui::SetWindowPos({ 18,12 });
 	ImGui::SetWindowSize({ 307,600 });
-	struct mapLayout {
-		std::string name;
-		int nKills;
-	};
-	std::map<int, mapLayout> tempPlacementMap;
 
-
-	ImGui::Text("\n Placement------");
-	// Sort rankings
-	for (auto player : m_hostPlayerTracker) {
-		tempPlacementMap[player.second.placement].name = m_network->getPlayer((Netcode::PlayerID)player.first)->name;
-		tempPlacementMap[player.second.placement].nKills = player.second.nKills;
+	// Sort if not sorted.
+	if (!m_sorted) {
+		sort();
 	}
 
-	for (int i = 1; i < (int)tempPlacementMap.size() + 1; i++) {
-		std::string name = tempPlacementMap[i].name;
+	ImGui::Text("\n Placement------");
+
+
+	for (int i = 1; i < (int)m_placementMap.size() + 1; i++) {
+		std::string name = m_placementMap[i].name;
 		std::string playerStats = name + " placed: " + std::to_string(i)
-			+ " Kills: " + std::to_string(tempPlacementMap[i].nKills);
+			+ " Kills: " + std::to_string(m_placementMap[i].nKills);
 
 		ImGui::Text(playerStats.c_str());
 	}
@@ -175,7 +180,7 @@ void GameDataTracker::renderImgui() {
 	ImGui::SetWindowFontScale(5.0f);
 	ImGui::SetWindowPos({331,12});
 	ImGui::SetWindowSize({ 404,292 });
-	ImGui::Text(tempPlacementMap[1].name.c_str());
+	ImGui::Text(m_placementMap[1].name.c_str());
 	ImGui::End();
 
 	ImGui::Begin("Personal Statistics", NULL);

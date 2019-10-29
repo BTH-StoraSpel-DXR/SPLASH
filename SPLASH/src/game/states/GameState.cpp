@@ -716,6 +716,8 @@ void GameState::updatePerFrameComponentSystems(float dt, float alpha) {
 	m_componentSystems.animationSystem->updatePerFrame();
 	m_componentSystems.audioSystem->update(m_cam, dt, alpha);
 	m_componentSystems.octreeAddRemoverSystem->updatePerFrame(dt);
+
+
 }
 
 void GameState::runSystem(float dt, BaseComponentSystem* toRun) {

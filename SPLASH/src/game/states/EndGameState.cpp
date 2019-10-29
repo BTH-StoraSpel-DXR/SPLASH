@@ -72,6 +72,7 @@ bool EndGameState::renderImgui(float dt) {
 bool EndGameState::onEvent(Event& event) {
 
 	EventHandler::dispatch<NetworkBackToLobby>(event, SAIL_BIND_EVENT(&EndGameState::onReturnToLobby));
+	EventHandler::dispatch<NetworkDisconnectEvent>(event, SAIL_BIND_EVENT(&EndGameState::onClientLeft));
 
 	return true;
 }
@@ -90,6 +91,14 @@ bool EndGameState::onReturnToLobby(NetworkBackToLobby& event) {
 	}
 	GameDataTracker::getInstance().resetData();
 	
+	return true;
+}
+
+bool EndGameState::onClientLeft(NetworkDisconnectEvent& event) {
+	Netcode::PlayerID id = event.getPlayerID();
+	NWrapperSingleton::getInstance().playerLeft(id);
+
+
 	return true;
 }
 

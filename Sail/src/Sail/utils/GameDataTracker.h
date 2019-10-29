@@ -79,6 +79,14 @@ private:
 
 	std::vector<std::string> m_playerDeaths;
 
+	struct mapLayout {
+		std::string name;
+		int nKills;
+	};
+	std::map<int, mapLayout> m_placementMap;
+	void sort();
+	bool m_sorted = false;
+
 	// -+-+-+-+-+- Singleton requirements below -+-+-+-+-+-
 public:
 	GameDataTracker(GameDataTracker const&) = delete;
