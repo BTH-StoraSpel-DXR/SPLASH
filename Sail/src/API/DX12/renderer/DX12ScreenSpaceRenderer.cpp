@@ -64,7 +64,6 @@ void DX12ScreenSpaceRenderer::present(PostProcessPipeline* postProcessPipeline, 
 		shaderPipeline->checkBufferSizes(commandQueue.size()); //Temp fix to expand constant buffers if the scene contain to many objects
 		shaderPipeline->bind_new(cmdList.Get(), meshIndex);
 
-		// Used in most shaders
 		static_cast<DX12Mesh*>(command.model.mesh)->draw_new(*this, cmdList.Get(), meshIndex);
 		meshIndex++;
 	}

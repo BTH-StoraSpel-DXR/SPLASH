@@ -46,6 +46,23 @@ Entity::SPtr EntityFactory::CreateCandle(const std::string& name, const glm::vec
 	return candle;
 }
 
+Entity::SPtr EntityFactory::CreateWaterGun(const std::string& name) {
+
+	auto* shader = &Application::getInstance()->getResourceManager().getShaderSet<GBufferOutShader>();
+	Model* candleModel = &Application::getInstance()->getResourceManager().getModel("WaterPistol.fbx", shader);
+	candleModel->getMesh(0)->getMaterial()->setAlbedoTexture("pbr/WaterGun/Watergun_Albedo.tga");
+	candleModel->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/WaterGun/Watergun_MRAO.tga");
+	candleModel->getMesh(0)->getMaterial()->setNormalTexture("pbr/WaterGun/Watergun_NM.tga");
+
+
+	auto gun = ECS::Instance()->createEntity(name.c_str());
+	gun->addComponent<ModelComponent>(candleModel);
+	gun->addComponent<TransformComponent>();
+	gun->addComponent<CullingComponent>();
+	//gun->addComponent<GunComponent>();
+	return gun;
+}
+
 
 void EntityFactory::AddWeaponAndCandleToPlayer(Entity::SPtr& player, const size_t& lightIndex, const Netcode::PlayerID& playerID) {
 
@@ -62,14 +79,10 @@ void EntityFactory::AddWeaponAndCandleToPlayer(Entity::SPtr& player, const size_
 
 		}
 		CandleComponent* cc = c->getComponent<CandleComponent>();
-		GunComponent* gc = c->getComponent<GunComponent>();
 		if (cc) {
 			c->addComponent<CollidableComponent>();
 			c->addComponent<CandleComponent>();
 			cc->setOwner(playerID);
-		}
-		if (gc) {
-			//TODO: ADD GUN STUFF?
 		}
 	}
 }
@@ -92,6 +105,13 @@ Entity::SPtr EntityFactory::CreateMyPlayer(Netcode::PlayerID playerID, size_t li
 	myPlayer->addComponent<MovementComponent>()->constantAcceleration = glm::vec3(0.0f, -9.8f, 0.0f);
 
 	AddWeaponAndCandleToPlayer(myPlayer, lightIndex, playerID);
+	for (Entity::SPtr& c : myPlayer->getChildEntities()) {
+		if (c->getName() == myPlayer->getName() + "WaterGun") {
+			//c->addComponent<GunComponent>();
+		}
+	}
+
+
 
 	return myPlayer;
 }
@@ -115,7 +135,7 @@ void EntityFactory::CreateOtherPlayer(Entity::SPtr otherPlayer, Netcode::Compone
 // Creates a player enitty without a candle and without a model
 void EntityFactory::CreateGenericPlayer(Entity::SPtr playerEntity, size_t lightIndex, glm::vec3 spawnLocation) {
 	
-	std::string modelName = "DocTorch.fbx";
+	std::string modelName = "Doc.fbx";
 	auto* shader = &Application::getInstance()->getResourceManager().getShaderSet<GBufferOutShader>();
 	Model* characterModel = &Application::getInstance()->getResourceManager().getModelCopy(modelName, shader);
 	characterModel->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/Character/CharacterMRAO.tga");
@@ -136,7 +156,6 @@ void EntityFactory::CreateGenericPlayer(Entity::SPtr playerEntity, size_t lightI
 	playerEntity->addComponent<CullingComponent>();
 	playerEntity->addComponent<ModelComponent>(characterModel);
 	playerEntity->addComponent<CollidableComponent>();
-
 	playerEntity->addComponent<SpeedLimitComponent>()->maxSpeed = 6.0f;
 
 
@@ -150,32 +169,33 @@ void EntityFactory::CreateGenericPlayer(Entity::SPtr playerEntity, size_t lightI
 	playerEntity->addComponent<GunComponent>();
 	playerEntity->getComponent<TransformComponent>()->setStartTranslation(glm::vec3(1.6f, 0.9f, 1.f) + spawnLocation);
 
-	// Create the player's candle
-
-
-
-
-
 
 	AnimationComponent* ac = playerEntity->addComponent<AnimationComponent>(stack);
 	ac->currentAnimation = stack->getAnimation(1);
 
+
+
+	// Create the player's candle
 	auto candle = CreateCandle(playerEntity->getName()+"Candle", glm::vec3(0.f, 0.f, 0.f), lightIndex);
 	candle->addComponent<RealTimeComponent>(); // Player candle will have its position updated each frame
 	playerEntity->addChildEntity(candle);
 	
-	
+
+	auto gun = CreateWaterGun(playerEntity->getName() + "WaterGun");
+	gun->addComponent<RealTimeComponent>(); // Player gun will have its position updated each frame
+	playerEntity->addChildEntity(gun);
+
 	// Attach the candle to the player's left hand
-	ac->leftHandEntity = candle.get();
+	ac->leftHandEntity = gun.get();
 	ac->leftHandPosition = glm::identity<glm::mat4>();
-	ac->leftHandPosition = glm::translate(ac->leftHandPosition, glm::vec3(0.57f, 1.03f, 0.05f));
-	ac->leftHandPosition = ac->leftHandPosition * glm::toMat4(glm::quat(glm::vec3(3.14f * 0.5f, -3.14f * 0.17f, 0.0f)));
+	ac->leftHandPosition = glm::translate(ac->leftHandPosition, glm::vec3(0.563f, 1.059f, 0.110f));
+	ac->leftHandPosition = ac->leftHandPosition * glm::toMat4(glm::quat(glm::vec3(1.178f, -0.462f, 0.600f)));
 	
 	// Attach the something to the player's right hand
-	ac->rightHandEntity = nullptr;
+	ac->rightHandEntity = candle.get();
 	ac->rightHandPosition = glm::identity<glm::mat4>();
-	ac->rightHandPosition = glm::translate(ac->rightHandPosition, glm::vec3(0.57f, 1.03f, 0.05f));
-	ac->rightHandPosition = ac->rightHandPosition * glm::toMat4(glm::quat(glm::vec3(3.14f * 0.5f, -3.14f * 0.17f, 0.0f)));
+	ac->rightHandPosition = glm::translate(ac->rightHandPosition, glm::vec3(-0.596f, 1.026f, 0.055f));
+	ac->rightHandPosition = ac->rightHandPosition * glm::toMat4(glm::quat(glm::vec3(1.178f, 0.646f, -0.300f)));
 
 }
 

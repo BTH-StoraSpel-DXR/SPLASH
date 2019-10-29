@@ -5,7 +5,7 @@
 
 class DescriptorHeap {
 public:
-	DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, unsigned int numDescriptors, bool shaderVisible = false);
+	DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, unsigned int numDescriptors, bool shaderVisible = false, bool frameDependant = false);
 	~DescriptorHeap();
 
 	ID3D12DescriptorHeap* get() const;
@@ -36,5 +36,11 @@ private:
 	unsigned int m_numDescriptors;
 
 	unsigned int m_index;
-
+	
+	// Frame dependant splits the descriptor heap into two equally sized parts
+	// Where each half is allocated for one swap buffer
+	bool m_frameDependant;
+	D3D12_CPU_DESCRIPTOR_HANDLE m_secondHalfCPUHandleStart;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_secondHalfGPUHandleStart;
+	DX12API* m_context;
 };

@@ -252,7 +252,7 @@ void Octree::getCollisionsRec(Entity* entity, BoundingBox* entityBoundingBox, No
 	if (Intersection::AabbWithAabb(entityBoundingBox->getPosition(), entityBoundingBox->getHalfSize(), nodeBoundingBox->getPosition(), nodeBoundingBox->getHalfSize())) { //Bounding box collides with the current node
 		//Check against entities
 		for (int i = 0; i < currentNode->nrOfEntities; i++) {
-			if (entity != currentNode->entities[i]) { //Don't let an entity collide with itself
+			if (entity != currentNode->entities[i] && entity != currentNode->entities[i]->getParent() ) { //Don't let an entity collide with itself or its children
 				const BoundingBox* otherBoundingBox = currentNode->entities[i]->getComponent<BoundingBoxComponent>()->getBoundingBox();
 
 				if (Intersection::AabbWithAabb(entityBoundingBox->getPosition(), entityBoundingBox->getHalfSize(), otherBoundingBox->getPosition(), otherBoundingBox->getHalfSize())) { //Bounding box collides with entity bounding box

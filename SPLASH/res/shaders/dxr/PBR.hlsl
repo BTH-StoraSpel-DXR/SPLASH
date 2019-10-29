@@ -75,7 +75,7 @@ float4 pbrShade(float3 worldPosition, float3 worldNormal, float3 invViewDir, flo
         float  denominator  = 4.0f * max(dot(N, V), 0.0f) * max(dot(N, L), 0.0f);
         float3 specular     = numerator / max(denominator, 0.001f); // constrain the denominator to 0.001 to prevent a divide by zero in case any dot product ends up 0.0
         specular *= attenuation;
-        
+
         // The fresnel value directly corresponds to the specular contribution
         float3 kS = F;
         // The rest is the diffuse contribution (energy conserving)

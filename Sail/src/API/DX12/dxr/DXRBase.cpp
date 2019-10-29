@@ -556,8 +556,11 @@ void DXRBase::createInitialShaderResources(bool remake) {
 	// Create some resources only once on init
 	if (!m_rtDescriptorHeap || remake) {
 		m_rtDescriptorHeap.Reset();
+		UINT numDescriptors = 5000; // TODO: this does not throw error when full
+		m_usedDescriptors = 0;
+
 		D3D12_DESCRIPTOR_HEAP_DESC heapDescriptorDesc = {};
-		heapDescriptorDesc.NumDescriptors = 2000; // TODO: this does not throw error when full
+		heapDescriptorDesc.NumDescriptors = numDescriptors;
 		heapDescriptorDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		heapDescriptorDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		m_context->getDevice()->CreateDescriptorHeap(&heapDescriptorDesc, IID_PPV_ARGS(&m_rtDescriptorHeap));
@@ -575,9 +578,11 @@ void DXRBase::createInitialShaderResources(bool remake) {
 		m_rtOutputTextureUavGPUHandles[0] = gpuHandle;
 		cpuHandle.ptr += m_heapIncr;
 		gpuHandle.ptr += m_heapIncr;
+		m_usedDescriptors++;
 		m_rtOutputTextureUavGPUHandles[1] = gpuHandle;
 		cpuHandle.ptr += m_heapIncr;
 		gpuHandle.ptr += m_heapIncr;
+		m_usedDescriptors++;
 
 		// Next slot is used for the brdfLUT
 		m_rtBrdfLUTGPUHandle = gpuHandle;
@@ -588,6 +593,7 @@ void DXRBase::createInitialShaderResources(bool remake) {
 		m_context->getDevice()->CopyDescriptorsSimple(1, cpuHandle, brdfLutTex.getSrvCDH(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		cpuHandle.ptr += m_heapIncr;
 		gpuHandle.ptr += m_heapIncr;
+		m_usedDescriptors++;
 
 		// Next (4 * numSwapBuffers) slots are used for input gbuffers
 		for (unsigned int i = 0; i < m_context->getNumGPUBuffers(); i++) {
@@ -603,6 +609,7 @@ void DXRBase::createInitialShaderResources(bool remake) {
 			m_context->getDevice()->CopyDescriptors(1, &cpuHandle, dstRangeSizes, 4, srcDescriptors, srcRangeSizes, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 			cpuHandle.ptr += m_heapIncr * 4;
 			gpuHandle.ptr += m_heapIncr * 4;
+			m_usedDescriptors+=4;
 		}
 
 		// Initialize decal SRVs
@@ -619,8 +626,15 @@ void DXRBase::createInitialShaderResources(bool remake) {
 		//m_rayGenSettingsCB->setData(&m_rayGenCBData, 0);
 
 		// Store heap start for views that might update in runtime
-		m_rtHeapCPUHandle = cpuHandle;
-		m_rtHeapGPUHandle = gpuHandle;
+		// Half of the rest of the list is allocated for each swap frame
+		m_rtHeapCPUHandle[0] = cpuHandle;
+		m_rtHeapGPUHandle[0] = gpuHandle;
+
+		auto frameDescriptorSlots = (numDescriptors - m_usedDescriptors) / 2;
+		cpuHandle.ptr += m_heapIncr * frameDescriptorSlots;
+		gpuHandle.ptr += m_heapIncr * frameDescriptorSlots;
+		m_rtHeapCPUHandle[1] = cpuHandle;
+		m_rtHeapGPUHandle[1] = gpuHandle;
 
 		// Scene CB
 		{
@@ -679,9 +693,9 @@ void DXRBase::updateDescriptorHeap(ID3D12GraphicsCommandList4* cmdList) {
 	}
 
 	// Update descriptors for vertices, indices, textures etc
-	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_rtHeapCPUHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = m_rtHeapGPUHandle;
-	m_rtMeshHandles.clear();
+	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_rtHeapCPUHandle[frameIndex];
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = m_rtHeapGPUHandle[frameIndex];
+	m_rtMeshHandles[frameIndex].clear();
 
 	unsigned int blasIndex = 0;
 	unsigned int metaballIndex = 0;
@@ -735,9 +749,9 @@ void DXRBase::updateDescriptorHeap(ID3D12GraphicsCommandList4* cmdList) {
 			meshData.metalnessRoughnessAoScales.b = materialSettings.aoScale;
 			m_meshCB->updateData(&meshData, meshDataSize, blasIndex * meshDataSize);
 
-			m_rtMeshHandles.emplace_back(handles);
+			m_rtMeshHandles[frameIndex].emplace_back(handles);
 		} else {
-			m_rtMeshHandles.emplace_back(handles);
+			m_rtMeshHandles[frameIndex].emplace_back(handles);
 			static float time = 0.f;
 			static float totalTime = 0.f;
 			static float inc = 0.001f;
@@ -833,17 +847,17 @@ void DXRBase::updateShaderTables() {
 				tableBuilder.addShader(m_hitGroupTriangleName);//Set the shadergroup to use
 				m_localSignatureHitGroup_mesh->doInOrder([&](const std::string& parameterName) {
 					if (parameterName == "VertexBuffer") {
-						tableBuilder.addDescriptor(m_rtMeshHandles[blasIndex].vertexBufferHandle, blasIndex * 2);
+						tableBuilder.addDescriptor(m_rtMeshHandles[frameIndex][blasIndex].vertexBufferHandle, blasIndex * 2);
 					} else if (parameterName == "IndexBuffer") {
 						D3D12_GPU_VIRTUAL_ADDRESS nullAddr = 0;
-						tableBuilder.addDescriptor((mesh->getNumIndices() > 0) ? m_rtMeshHandles[blasIndex].indexBufferHandle : nullAddr, blasIndex * 2);
+						tableBuilder.addDescriptor((mesh->getNumIndices() > 0) ? m_rtMeshHandles[frameIndex][blasIndex].indexBufferHandle : nullAddr, blasIndex * 2);
 					} else if (parameterName == "MeshCBuffer") {
 						D3D12_GPU_VIRTUAL_ADDRESS meshCBHandle = m_meshCB->getBuffer()->GetGPUVirtualAddress();
 						tableBuilder.addDescriptor(meshCBHandle, blasIndex * 2);
 					} else if (parameterName == "Textures") {
 						// Three textures
 						for (unsigned int textureNum = 0; textureNum < 3; textureNum++) {
-							tableBuilder.addDescriptor(m_rtMeshHandles[blasIndex].textureHandles[textureNum].ptr, blasIndex * 2);
+							tableBuilder.addDescriptor(m_rtMeshHandles[frameIndex][blasIndex].textureHandles[textureNum].ptr, blasIndex * 2);
 						}
 					} else if (parameterName == "sys_brdfLUT") {
 						tableBuilder.addDescriptor(m_rtBrdfLUTGPUHandle.ptr, blasIndex * 2);
@@ -959,6 +973,7 @@ void DXRBase::initDecals(D3D12_GPU_DESCRIPTOR_HANDLE* gpuHandle, D3D12_CPU_DESCR
 	m_context->getDevice()->CopyDescriptors(1, cpuHandle, dstRangeSizes, 3, srcDescriptors, srcRangeSizes, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	cpuHandle->ptr += m_heapIncr * 3;
 	gpuHandle->ptr += m_heapIncr * 3;
+	m_usedDescriptors += 3;
 }
 
 void DXRBase::createEmptyLocalRootSignature() {

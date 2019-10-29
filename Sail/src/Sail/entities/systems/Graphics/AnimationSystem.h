@@ -11,6 +11,8 @@ public:
 	AnimationSystem();
 	~AnimationSystem();
 
+	void updateHands(const glm::vec3& lPos, const glm::vec3& rPos, const glm::vec3& lRot, const glm::vec3& rRot);
+
 	void update(float dt) override;
 	void updatePerFrame();
 	void toggleInterpolation();
