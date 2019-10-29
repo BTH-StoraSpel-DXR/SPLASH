@@ -60,6 +60,39 @@ DXRBase::DXRBase(const std::string& shaderFilename, DX12RenderableTexture** inpu
 	m_waterStructuredBuffer = std::make_unique<ShaderComponent::DX12StructuredBuffer>(initData, numElements, sizeof(unsigned int));
 	delete initData;
 
+	// Add console commands for debugging
+#ifdef DEVELOPMENT
+	auto& console = Application::getInstance()->getConsole();
+	console.addCommand("dxr", [&]() {
+		std::string returnMsg;
+		returnMsg = "Number of unique bottom layer acceleration structures: " + std::to_string(m_bottomBuffers[0].size());
+		unsigned int totalVertices = 0;
+		unsigned int totalIndices = 0;
+		unsigned int totalInstances = 0;
+		unsigned int i = 0;
+		for (auto& blas : m_bottomBuffers[0]) {
+			unsigned int numVertices = blas.first->getNumVertices();
+			unsigned int numIndices = blas.first->getNumIndices();
+			unsigned int numInstances = blas.second.instanceTransforms.size();
+				
+			returnMsg += "\nMesh index " + std::to_string(i);
+			returnMsg += "\n\t" + std::to_string(numVertices) + " vertices";
+			returnMsg += "\n\t" + std::to_string(numIndices) + " indices";
+			returnMsg += "\n\t" + std::to_string(numInstances) + " instances";
+
+			totalVertices += numVertices;
+			totalIndices += numIndices;
+			totalInstances += numInstances;
+			i++;
+		}
+		returnMsg += "\nTotal vertices in scene: " + std::to_string(totalVertices);
+		returnMsg += "\nTotal indices in scene: " + std::to_string(totalIndices);
+		returnMsg += "\nTotal instances in scene: " + std::to_string(totalInstances);
+		return returnMsg;
+
+	}, "DXRBase");
+#endif
+
 }
 
 DXRBase::~DXRBase() {
@@ -87,6 +120,10 @@ DXRBase::~DXRBase() {
 	}
 
 	m_aabb_desc_resource->Release();
+
+#ifdef DEVELOPMENT
+	Application::getInstance()->getConsole().removeAllCommandsWithIdentifier("DXRBase");
+#endif
 }
 
 void DXRBase::setGBufferInputs(DX12RenderableTexture** inputs) {
