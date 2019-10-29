@@ -12,9 +12,7 @@ DX12ScreenSpaceRenderer::DX12ScreenSpaceRenderer() {
 	Application* app = Application::getInstance();
 	m_context = app->getAPI<DX12API>();
 
-	m_context->initCommand(m_command);
-	std::wstring name = L"ScreenSpace Renderer main command list";
-	m_command.list->SetName(name.c_str());
+	m_context->initCommand(m_command, D3D12_COMMAND_LIST_TYPE_DIRECT, L"ScreenSpace Renderer main command list");
 	
 	auto windowWidth = app->getWindow()->getWindowWidth();
 	auto windowHeight = app->getWindow()->getWindowHeight();

@@ -55,11 +55,12 @@ public:
 		CommandQueue(DX12API* context, D3D12_COMMAND_LIST_TYPE type, LPCWSTR name = L"Unnamed Command Queue");
 		UINT64 signal();
 		void wait(UINT64 fenceValue) const;
-		void waitOnCPU(UINT64 fenceValue, HANDLE eventHandle) const;
+		bool waitOnCPU(UINT64 fenceValue, HANDLE eventHandle) const;
 		ID3D12CommandQueue* get() const;
 		UINT64 getCurrentFenceValue() const;
 		void reset();
 	private:
+		DX12API* m_context;
 		wComPtr<ID3D12CommandQueue> m_commandQueue;
 		static UINT64 sFenceValue;
 		static wComPtr<ID3D12Fence1> sFence;
@@ -117,7 +118,7 @@ public:
 	void endPIXCapture() const;
 #endif
 
-	void initCommand(Command& cmd, D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT);
+	void initCommand(Command& cmd, D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT, LPCWSTR name = L"Unnamed Commmand list or allocator object");
 	void executeCommandLists(std::initializer_list<ID3D12CommandList*> cmdLists, D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT) const;
 	void executeCommandLists(ID3D12CommandList* const* cmdLists, const int nLists) const;
 	void renderToBackBuffer(ID3D12GraphicsCommandList4* cmdList) const;

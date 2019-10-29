@@ -14,10 +14,8 @@ DX12RaytracingRenderer::DX12RaytracingRenderer(DX12RenderableTexture** inputs)
 {
 	Application* app = Application::getInstance();
 	m_context = app->getAPI<DX12API>();
-	m_context->initCommand(m_commandDirect, D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_commandDirect.list->SetName(L"Raytracing Renderer main command list");
-	m_context->initCommand(m_commandCompute, D3D12_COMMAND_LIST_TYPE_COMPUTE);
-	m_commandCompute.list->SetName(L"Raytracing Renderer main command list");
+	m_context->initCommand(m_commandDirect, D3D12_COMMAND_LIST_TYPE_DIRECT, L"Raytracing Renderer DIRECT command list or allocator");
+	m_context->initCommand(m_commandCompute, D3D12_COMMAND_LIST_TYPE_COMPUTE, L"Raytracing Renderer main COMPUTE command list or allocator");
 
 	auto windowWidth = app->getWindow()->getWindowWidth();
 	auto windowHeight = app->getWindow()->getWindowHeight();

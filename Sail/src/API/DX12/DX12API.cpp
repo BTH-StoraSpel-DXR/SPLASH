@@ -425,10 +425,10 @@ void DX12API::nextFrame() {
 	m_swapIndex = 1 - m_swapIndex; // Toggle between 0 and 1
 
 	static bool firstFrame = true;
-	// Wait until the next frame is ready
+	// Wait until the next frame is ready, dont wait on the first frame as there is nothing to wait for
 	if (!firstFrame) {
-		m_directCommandQueue->waitOnCPU(m_directQueueFenceValues[m_swapIndex], m_eventHandle);
 		m_computeCommandQueue->waitOnCPU(m_computeQueueFenceValues[m_swapIndex], m_eventHandle);
+		m_directCommandQueue->waitOnCPU(m_directQueueFenceValues[m_swapIndex], m_eventHandle);
 	}
 	firstFrame = false;
 
@@ -445,7 +445,6 @@ void DX12API::nextFrame() {
 		getMainGPUDescriptorHeap()->setIndex(0);
 		getComputeGPUDescriptorHeap()->setIndex(0);
 	}
-
 }
 
 void DX12API::resizeBuffers(UINT width, UINT height) {
@@ -473,6 +472,9 @@ void DX12API::resizeBuffers(UINT width, UINT height) {
 	auto tmpFenceVal = m_directQueueFenceValues[0];
 	m_directQueueFenceValues[0] = m_directQueueFenceValues[1];
 	m_directQueueFenceValues[1] = tmpFenceVal;
+	tmpFenceVal = m_computeQueueFenceValues[0];
+	m_computeQueueFenceValues[0] = m_computeQueueFenceValues[1];
+	m_computeQueueFenceValues[1] = tmpFenceVal;
 
 	m_backBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 	m_swapIndex = m_backBufferIndex % NUM_GPU_BUFFERS;
@@ -579,14 +581,12 @@ void DX12API::clear(ID3D12GraphicsCommandList4* cmdList, const glm::vec4& color)
 }
 
 void DX12API::present(bool vsync) {
-
 	//Present the frame.
 	DXGI_PRESENT_PARAMETERS pp = { };
 	m_swapChain->Present1((UINT)vsync, (vsync || !m_windowedMode || !m_tearingSupport) ? 0 : DXGI_PRESENT_ALLOW_TEARING, &pp);
 
 	//waitForGPU();
 	nextFrame();
-
 }
 
 unsigned int DX12API::getMemoryUsage() const {
@@ -687,14 +687,16 @@ void DX12API::endPIXCapture() const {
 }
 #endif
 
-void DX12API::initCommand(Command& cmd, D3D12_COMMAND_LIST_TYPE type) {
+void DX12API::initCommand(Command& cmd, D3D12_COMMAND_LIST_TYPE type, LPCWSTR name) {
 	// Create allocators
 	cmd.allocators.resize(NUM_SWAP_BUFFERS);
 	for (UINT i = 0; i < NUM_SWAP_BUFFERS; i++) {
 		ThrowIfFailed(m_device->CreateCommandAllocator(type, IID_PPV_ARGS(&cmd.allocators[i])));
+		cmd.allocators[i]->SetName(name);
 	}
 	// Create command lists
 	ThrowIfFailed(m_device->CreateCommandList(0, type, cmd.allocators[0].Get(), nullptr, IID_PPV_ARGS(&cmd.list)));
+	cmd.list->SetName(name);
 	// Command lists are created in the recording state. Since there is nothing to
 	// record right now and the main loop expects it to be closed, we close them
 	cmd.list->Close();
@@ -816,22 +818,19 @@ void DX12API::toggleFullscreen() {
 }
 
 void DX12API::waitForGPU() {
-	// Waits for the GPU to finish all current tasks in the direct queue
+	// Waits for the GPU to finish all current tasks in all queues
 
-	// Schedule signals
-	m_directQueueFenceValues[m_swapIndex] = m_directCommandQueue->signal();
-	m_computeQueueFenceValues[m_swapIndex] = m_computeCommandQueue->signal();
-
-	// Wait until command queues are done
-	m_directCommandQueue->waitOnCPU(m_directQueueFenceValues[m_swapIndex], m_eventHandle);
-	m_computeCommandQueue->waitOnCPU(m_computeQueueFenceValues[m_swapIndex], m_eventHandle);
-	
+	// Schedule signals and wait for them
+	m_directCommandQueue->waitOnCPU(m_directCommandQueue->signal(), m_eventHandle);
+	m_computeCommandQueue->waitOnCPU(m_computeCommandQueue->signal(), m_eventHandle);
 }
 
 UINT64 DX12API::CommandQueue::sFenceValue = 0;
 wComPtr<ID3D12Fence1> DX12API::CommandQueue::sFence;
 
-DX12API::CommandQueue::CommandQueue(DX12API* context, D3D12_COMMAND_LIST_TYPE type, LPCWSTR name) {
+DX12API::CommandQueue::CommandQueue(DX12API* context, D3D12_COMMAND_LIST_TYPE type, LPCWSTR name) 
+	: m_context(context)
+{
 	// Create command queue
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 	queueDesc.Type = type;
@@ -845,8 +844,8 @@ DX12API::CommandQueue::CommandQueue(DX12API* context, D3D12_COMMAND_LIST_TYPE ty
 }
 
 UINT64 DX12API::CommandQueue::signal() {
-	auto fenceVal = ++sFenceValue;
-	m_commandQueue->Signal(sFence.Get(), fenceVal);
+	auto fenceVal = sFenceValue++;
+	ThrowIfFailed(m_commandQueue->Signal(sFence.Get(), fenceVal));
 	return fenceVal;
 }
 
@@ -854,11 +853,13 @@ void DX12API::CommandQueue::wait(UINT64 fenceValue) const {
 	m_commandQueue->Wait(sFence.Get(), fenceValue);
 }
 
-void DX12API::CommandQueue::waitOnCPU(UINT64 fenceValue, HANDLE eventHandle) const {
+bool DX12API::CommandQueue::waitOnCPU(UINT64 fenceValue, HANDLE eventHandle) const {
 	if (sFence->GetCompletedValue() < fenceValue) {
-		sFence->SetEventOnCompletion(fenceValue, eventHandle);
+		ThrowIfFailed(sFence->SetEventOnCompletion(fenceValue, eventHandle));
 		WaitForSingleObjectEx(eventHandle, INFINITE, FALSE);
+		return true;
 	}
+	return false;
 }
 
 ID3D12CommandQueue* DX12API::CommandQueue::get() const {

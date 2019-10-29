@@ -19,9 +19,8 @@ DX12ForwardRenderer::DX12ForwardRenderer() {
 	m_context = app->getAPI<DX12API>();
 
 	for (size_t i = 0; i < MAX_RECORD_THREADS; i++) {
-		m_context->initCommand(m_command[i]);
 		std::wstring name = L"Forward Renderer main command list for render thread: " + std::to_wstring(i);
-		m_command[i].list->SetName(name.c_str());
+		m_context->initCommand(m_command[i], D3D12_COMMAND_LIST_TYPE_DIRECT, name.c_str());
 	}
 
 

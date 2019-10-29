@@ -22,11 +22,10 @@ DX12GBufferRenderer::DX12GBufferRenderer() {
 	m_context = app->getAPI<DX12API>();
 
 	for (size_t i = 0; i < MAX_RECORD_THREADS; i++) {
-		m_context->initCommand(m_command[i]);
-		std::wstring name = L"Forward Renderer main command list for render thread: " + std::to_wstring(i);
-		m_command[i].list->SetName(name.c_str());
+		std::wstring name = L"GBuffer renderer DIRECT command list or allocator for render thread: " + std::to_wstring(i);
+		m_context->initCommand(m_command[i], D3D12_COMMAND_LIST_TYPE_DIRECT, name.c_str());
 	}
-	m_context->initCommand(m_computeCommand, D3D12_COMMAND_LIST_TYPE_COMPUTE);
+	m_context->initCommand(m_computeCommand, D3D12_COMMAND_LIST_TYPE_COMPUTE, L"GBuffer renderer COMPUTE command list or allocator");
 	m_computeCommand.list->SetName(L"Animation compute command list");
 
 

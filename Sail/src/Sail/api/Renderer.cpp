@@ -25,7 +25,3 @@ void Renderer::submit(Mesh* mesh, const glm::mat4& modelMatrix, RenderFlag flags
 void Renderer::setLightSetup(LightSetup* lightSetup) {
 	this->lightSetup = lightSetup;
 }
-
-void Renderer::end() {
-
-}
