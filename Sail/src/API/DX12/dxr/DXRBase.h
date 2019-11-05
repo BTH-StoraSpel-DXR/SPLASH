@@ -25,6 +25,22 @@ public:
 		float distToCamera;
 	};
 
+	struct Cluster {
+		void Add(const Metaball* ball, float dist2) {
+			if (dist2 > m_mostDistant_dist || m_metaballs.empty()) {
+				//m_mostDistant = ball;
+				m_mostDistant_dist = dist2;
+			}
+
+			m_metaballs.push_back(ball);
+		}
+
+		//const Metaball* m_mostDistant;
+		float m_mostDistant_dist;
+		glm::vec3 m_center;
+		std::vector<const Metaball*> m_metaballs;
+	};
+
 	DXRBase(const std::string& shaderFilename, DX12RenderableTexture** inputs);
 	~DXRBase();
 
@@ -88,6 +104,7 @@ private:
 
 	void initMetaballBuffers();
 	void updateMetaballpositions(const std::vector<Metaball>& metaballs, const D3D12_RAYTRACING_AABB& m_next_metaball_aabb);
+	void metaballClustering(const std::vector<Metaball>& metaballs, const D3D12_RAYTRACING_AABB& m_next_metaball_aabb);
 
 	void initDecals(D3D12_GPU_DESCRIPTOR_HANDLE* gpuHandle, D3D12_CPU_DESCRIPTOR_HANDLE* cpuHandle);
 
@@ -156,6 +173,8 @@ private:
 
 	// Metaball Stuff
 	std::vector<ID3D12Resource1*> m_aabb_desc_resource; // m_aabb_desc uploaded to GPU
+	Cluster* m_clusters = nullptr;
+	const int m_N_CLUSTERS = 8;
 
 	// Water voxel grid stuff
 	std::unique_ptr<ShaderComponent::DX12StructuredBuffer> m_waterStructuredBuffer;

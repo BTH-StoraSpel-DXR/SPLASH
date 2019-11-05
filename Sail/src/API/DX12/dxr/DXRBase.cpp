@@ -289,6 +289,9 @@ void DXRBase::updateMetaballpositions(const std::vector<Metaball>& metaballs, co
 	if (m_metaballsToRender == 0) {
 		return;
 	}
+
+	metaballClustering(metaballs, m_next_metaball_aabb);
+
 	void* pMappedData;
 	ID3D12Resource1* res;
 
@@ -321,6 +324,79 @@ void DXRBase::updateMetaballpositions(const std::vector<Metaball>& metaballs, co
 		offset += offsetInc;
 	}
 	res->Unmap(0, nullptr);
+}
+
+void DXRBase::metaballClustering(const std::vector<Metaball>& metaballs, const D3D12_RAYTRACING_AABB& m_next_metaball_aabb) {
+
+	//glm::vec3 centers[] = { 
+	//	{m_next_metaball_aabb.MaxX - (m_next_metaball_aabb.MaxX - m_next_metaball_aabb.MinX) / 4, m_next_metaball_aabb.MaxY - (m_next_metaball_aabb.MaxY - m_next_metaball_aabb.MinY) / 4, m_next_metaball_aabb.MaxZ - (m_next_metaball_aabb.MaxZ - m_next_metaball_aabb.MinZ) / 4},
+	//	{m_next_metaball_aabb.MaxX - (m_next_metaball_aabb.MaxX - m_next_metaball_aabb.MinX) / 4, m_next_metaball_aabb.MaxY - (m_next_metaball_aabb.MaxY - m_next_metaball_aabb.MinY) / 4, m_next_metaball_aabb.MinZ + (m_next_metaball_aabb.MaxZ - m_next_metaball_aabb.MinZ) / 4},
+	//	{m_next_metaball_aabb.MaxX - (m_next_metaball_aabb.MaxX - m_next_metaball_aabb.MinX) / 4, m_next_metaball_aabb.MinY + (m_next_metaball_aabb.MaxY - m_next_metaball_aabb.MinY) / 4, m_next_metaball_aabb.MaxZ - (m_next_metaball_aabb.MaxZ - m_next_metaball_aabb.MinZ) / 4},
+	//	{m_next_metaball_aabb.MaxX - (m_next_metaball_aabb.MaxX - m_next_metaball_aabb.MinX) / 4, m_next_metaball_aabb.MinY + (m_next_metaball_aabb.MaxY - m_next_metaball_aabb.MinY) / 4, m_next_metaball_aabb.MinZ + (m_next_metaball_aabb.MaxZ - m_next_metaball_aabb.MinZ) / 4},
+	//	
+	//	{m_next_metaball_aabb.MinX + (m_next_metaball_aabb.MaxX - m_next_metaball_aabb.MinX) / 4, m_next_metaball_aabb.MaxY - (m_next_metaball_aabb.MaxY - m_next_metaball_aabb.MinY) / 4, m_next_metaball_aabb.MaxZ - (m_next_metaball_aabb.MaxZ - m_next_metaball_aabb.MinZ) / 4},
+	//	{m_next_metaball_aabb.MinX + (m_next_metaball_aabb.MaxX - m_next_metaball_aabb.MinX) / 4, m_next_metaball_aabb.MaxY - (m_next_metaball_aabb.MaxY - m_next_metaball_aabb.MinY) / 4, m_next_metaball_aabb.MinZ + (m_next_metaball_aabb.MaxZ - m_next_metaball_aabb.MinZ) / 4},
+	//	{m_next_metaball_aabb.MinX + (m_next_metaball_aabb.MaxX - m_next_metaball_aabb.MinX) / 4, m_next_metaball_aabb.MinY + (m_next_metaball_aabb.MaxY - m_next_metaball_aabb.MinY) / 4, m_next_metaball_aabb.MaxZ - (m_next_metaball_aabb.MaxZ - m_next_metaball_aabb.MinZ) / 4},
+	//	{m_next_metaball_aabb.MinX + (m_next_metaball_aabb.MaxX - m_next_metaball_aabb.MinX) / 4, m_next_metaball_aabb.MinY + (m_next_metaball_aabb.MaxY - m_next_metaball_aabb.MinY) / 4, m_next_metaball_aabb.MinZ + (m_next_metaball_aabb.MaxZ - m_next_metaball_aabb.MinZ) / 4},
+	//};
+
+	//Cluster clusters[8];
+
+	//glm::vec3* centers = new glm::vec3[k];
+	if (!m_clusters) {
+		m_clusters = new Cluster[m_N_CLUSTERS];
+	}
+
+	for (size_t i = 0; i < m_N_CLUSTERS; i++) {
+		m_clusters[i].m_center.x = Utils::rnd() * (m_next_metaball_aabb.MaxX - m_next_metaball_aabb.MinX) + m_next_metaball_aabb.MinX;
+		m_clusters[i].m_center.y = Utils::rnd() * (m_next_metaball_aabb.MaxY - m_next_metaball_aabb.MinY) + m_next_metaball_aabb.MinY;
+		m_clusters[i].m_center.z = Utils::rnd() * (m_next_metaball_aabb.MaxZ - m_next_metaball_aabb.MinZ) + m_next_metaball_aabb.MinZ;
+	}
+
+	int n_balls = std::min((int)metaballs.size(), MAX_NUM_METABALLS);
+
+	int cluster = 0;
+	float dist = 100000;
+	float dist_temp = 0;
+
+	for (size_t iteration = 0; iteration < 2; iteration++) {
+		for (size_t c = 0; c < m_N_CLUSTERS; c++) {
+			m_clusters[c].m_mostDistant_dist = 0;
+			m_clusters[c].m_metaballs.clear();
+		}
+
+		//Assign balls to clusters
+		for (size_t ball = 0; ball < n_balls; ball++) {
+			for (size_t c = 0; c < m_N_CLUSTERS; c++) {
+				dist_temp = glm::distance2(m_clusters[c].m_center, metaballs[ball].pos);
+				if (c == 0 || dist_temp < dist) {
+					cluster = c;
+					dist = dist_temp;
+				}
+			}
+
+			m_clusters[cluster].Add(&metaballs[ball], dist);
+		}
+
+		//Recalculate clusters center
+		for (size_t c = 0; c < m_N_CLUSTERS; c++) {
+			size_t balls = m_clusters[c].m_metaballs.size();
+			glm::vec3 p(0, 0, 0);
+			for (auto e : m_clusters[c].m_metaballs) {
+				p += e->pos;
+			}
+
+			m_clusters[c].m_center = (p / (float)balls);
+		}
+	}
+
+	std::string s = "\n";
+	for (size_t i = 0; i < m_N_CLUSTERS; i++) {
+		m_clusters[i].m_mostDistant_dist = sqrt(m_clusters[i].m_mostDistant_dist);
+		s += "Cluster " + std::to_string(i) + ": " + std::to_string(m_clusters[i].m_metaballs.size()) + " Balls\n";
+	}
+	
+	Logger::Log(s);
 }
 
 void DXRBase::dispatch(DX12RenderableTexture* outputTexture, ID3D12GraphicsCommandList4* cmdList) {
