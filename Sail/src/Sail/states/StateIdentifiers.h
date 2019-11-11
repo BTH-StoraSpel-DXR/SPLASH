@@ -4,8 +4,8 @@
 
 namespace States {
 
-	enum ID {
-		None,
+	enum ID : char {
+		None = 0,
 		SplashScreen,
 		MainMenu,
 		Lobby,

@@ -302,8 +302,7 @@ void NetworkReceiverSystem::update(float dt) {
 				ar(jumpsMade);
 				ar(jumpsMadeID);
 
-				GameDataTracker::getInstance().setStatsForOtherData(
-					bulletsFiredID, bulletsFired, distanceWalkedID, distanceWalked, jumpsMadeID, jumpsMade);
+				GameDataTracker::getInstance().setStatsForOtherData(bulletsFiredID, bulletsFired, distanceWalkedID, distanceWalked, jumpsMadeID, jumpsMade);
 
 				endMatch();
 			}

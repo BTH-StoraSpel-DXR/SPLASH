@@ -166,3 +166,9 @@ void NWrapperHost::updateClientName(TCP_CONNECTION_ID tcp_id, Netcode::PlayerID 
 		//If they should, the host network related code to inform other players can be implemented here.
 	}
 }
+
+//This will inform all clients to switch to the wanted state
+void NWrapperHost::switchToState(States::ID state) {
+	char msg[] = { 't', state, '\0' };
+	sendMsgAllClients(msg);
+}

@@ -9,11 +9,10 @@
 #include "../../SPLASH/src/game/events/NetworkChatEvent.h"
 #include "../../SPLASH/src/game/events/NetworkNameEvent.h"
 #include "../../SPLASH/src/game/events/NetworkDroppedEvent.h"
-#include "../../SPLASH/src/game/events/NetworkStartGameEvent.h"
 #include "../../SPLASH/src/game/events/NetworkSerializedPackageEvent.h"
 #include "../../SPLASH/src/game/states/LobbyState.h"
-#include "../../SPLASH/src/game/events/NetworkBackToLobby.h"
 #include "../../SPLASH/src/game/events/SettingsEvent.h"
+#include "../../SPLASH/src/game/events/NetworkSwitchState.h"
 
 bool NWrapperClient::host(int port) {
 	// A client does not host, do nothing.
@@ -123,9 +122,9 @@ void NWrapperClient::decodeMessage(NetworkEvent nEvent) {
 		break;
 	case 't':
 	{
-		char seed = nEvent.data->Message.rawMsg[1];
+		States::ID state = nEvent.data->Message.rawMsg[1];
 		NWrapperSingleton::getInstance().setSeed(seed);
-		EventDispatcher::Instance().emit(NetworkStartGameEvent());
+		EventDispatcher::Instance().emit(NetworkSwitchState());
 	}
 	break;
 	case 'w':

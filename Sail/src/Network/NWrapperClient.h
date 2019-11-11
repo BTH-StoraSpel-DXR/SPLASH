@@ -19,4 +19,6 @@ private:
 	void decodeMessage(NetworkEvent nEvent);
 	void sendMyNameToHost();
 	void updatePlayerList(std::list<Player>& playerList);
+
+	virtual void switchToState(States::ID state) {};
 };

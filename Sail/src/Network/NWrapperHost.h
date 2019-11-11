@@ -26,4 +26,6 @@ private:
 	void playerReconnected(TCP_CONNECTION_ID tcp_id);
 	void decodeMessage(NetworkEvent nEvent);
 	void updateClientName(TCP_CONNECTION_ID tcp_id, Netcode::PlayerID playerId, std::string& name);
+
+	virtual void switchToState(States::ID state);
 };

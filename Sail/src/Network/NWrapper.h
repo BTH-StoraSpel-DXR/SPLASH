@@ -69,4 +69,6 @@ private:
 	virtual void playerDisconnected(TCP_CONNECTION_ID id) = 0;
 	virtual void playerReconnected(TCP_CONNECTION_ID id) = 0;
 	virtual void decodeMessage(NetworkEvent nEvent) = 0;
+
+	virtual void switchToState(States::ID state) = 0;
 };
