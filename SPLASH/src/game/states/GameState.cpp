@@ -136,7 +136,7 @@ GameState::GameState(StateStack& stack)
 #endif
 
 	// Crosshair
-	//EntityFactory::CreateGUIEntity("crosshairEntity", "crosshair.tga", glm::vec2(0.f, 0.f), glm::vec2(0.005f, 0.00888f));
+	EntityFactory::CreateGUIEntity("crosshairEntity", "crosshair.tga", glm::vec2(0.f, 0.f), glm::vec2(0.005f, 0.00888f));
 
 
 	// Level Creation
