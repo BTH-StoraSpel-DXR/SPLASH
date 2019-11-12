@@ -8,7 +8,8 @@ GUISubmitSystem::GUISubmitSystem() {
 	registerComponent<GUIComponent>(true, false, false);
 }
 
-GUISubmitSystem::~GUISubmitSystem() {}
+GUISubmitSystem::~GUISubmitSystem() {
+}
 
 void GUISubmitSystem::submitAll() {
 	Renderer* renderer = Application::getInstance()->getRenderWrapper()->getScreenSpaceRenderer();
