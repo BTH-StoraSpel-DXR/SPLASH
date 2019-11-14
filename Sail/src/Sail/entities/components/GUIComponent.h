@@ -3,18 +3,18 @@
 
 class GUIComponent : public Component<GUIComponent> {
 public:
-	GUIComponent(Model** model) : m_ppCurrentModel(model) { }
+	GUIComponent(Model* model) : m_ppCurrentModel(model) { }
 	~GUIComponent() { }
 
-	Model** getCurrentModel() {
+	Model* getCurrentModel() {
 		return m_ppCurrentModel;
 	}
-	void setCurrentModel(Model** model) {
+	void setCurrentModel(Model* model) {
 		m_ppCurrentModel = model;
 	}
-private:
-	// GUIComponent does not 'own' the model, just a pointer to it.
-	Model** m_ppCurrentModel = nullptr;	
 
+public:
+	// GUIComponent does not 'own' the model, just a pointer to it.
+	Model* m_ppCurrentModel = nullptr;	
 	
 };

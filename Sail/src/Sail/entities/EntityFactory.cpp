@@ -417,9 +417,17 @@ Entity::SPtr EntityFactory::CreateGUIEntity(const std::string& name, const std::
 	}
 	entModel->getMesh(0)->getMaterial()->setAlbedoTexture(texture);
 	Application::getInstance()->getResourceManager().addModel(name + "Model", entModel);
+
+	auto model = Application::getInstance()->getResourceManager().getModel(name + "Model");
+	model->getMesh(0)->getMaterial()->setAlbedoTexture();
+
+	Model* model = Application::getInstance()->getResourceManager().getModel(name + "Model");
+
 	ent->addComponent<GUIComponent>(
-		Application::getInstance()->getResourceManager().getModel(name + "Model"))
+		nullptr
 	);
+
+	*ent->getComponent<GUIComponent>()->m_ppCurrentModel = &Application::getInstance()->getResourceManager().getModel(name + "Model");
 
 	return ent;
 }
@@ -447,23 +455,7 @@ Entity::SPtr EntityFactory::CreateCrosshairEntity(const std::string& name, const
 		// 
 		Application::getInstance()->getResourceManager().addModel(name + "normalModel", normalModel);
 	}
-	
-	// Set up altered crosshair model
-	{
-		// Model
-		Model* alteredModel = ModelFactory::QuadModel::Create(
-			&Application::getInstance()->getResourceManager().getShaderSet<GuiShader>(),
-			constraints
-		);
-		// Texture
-		if (!Application::getInstance()->getResourceManager().hasTexture(alteredTexture)) {
-			Application::getInstance()->getResourceManager().loadTexture(alteredTexture);
-		}
-		alteredModel->getMesh(0)->getMaterial()->setAlbedoTexture(alteredTexture);
-		//
-		Application::getInstance()->getResourceManager().addModel(name + "alteredModel", alteredModel);
-	}
-	
+
 	// Add CrosshairHitComponent to entity
 	entity->addComponent<CrosshairHitComponent>(
 		0.5,

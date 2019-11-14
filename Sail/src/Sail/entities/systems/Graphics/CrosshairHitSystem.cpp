@@ -34,10 +34,14 @@ void CrosshairHitSystem::alterCrosshair(Entity* e, float dt) {
 	if (c->passedTimeSinceAlteration >= c->durationOfAlteredCrosshair) {
 		c->recentlyHitSomeone = false;
 		c->passedTimeSinceAlteration = 0;
+		e->getComponent<GUIComponent>()->getCurrentModel()->getMesh(0)->getMaterial()->setAlbedoTexture(
+			c->normalTexture
+		);
 	}
 	else {
 		// Do the actual change here, moving the crosshair or changing its color etc.
-		GUIComponent* guiC = e->getComponent<GUIComponent>();
-		guiC->setCurrentModel(&c->alteredModel);
+		e->getComponent<GUIComponent>()->getCurrentModel()->getMesh(0)->getMaterial()->setAlbedoTexture(
+			c->alteredTexture
+		);
 	}
 }

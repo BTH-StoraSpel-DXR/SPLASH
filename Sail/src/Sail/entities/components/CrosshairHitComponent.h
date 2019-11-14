@@ -26,8 +26,8 @@ public:
 		ImGui::Checkbox(tempString.c_str(), &recentlyHitSomeone);
 	}
 #endif
-	Model* normalModel = nullptr;
-	Model* alteredModel = nullptr;			 // Is supposed to be set upon constructing this component
+	std::string normalTexture = "";
+	std::string alteredTexture = "";		 // Is supposed to be set upon constructing this component
 	bool recentlyHitSomeone = false;
 	float passedTimeSinceAlteration = 0.0f;
 	float durationOfAlteredCrosshair = 0.0f; // Is supposed to be set upon constructing this component
