@@ -55,13 +55,15 @@ bool SplashScreenState::loadModels(Application* app) {
 	rm->loadModel("Torch.fbx");
 	rm->loadModel("candleExported.fbx");
 	rm->loadModel("Tiles/tileFlat.fbx");
-	rm->loadModel("Tiles/RoomWall.fbx");
+	rm->loadModel("Tiles/RoomWall.fbx"); 
 	rm->loadModel("Tiles/tileDoor.fbx"); 
 	rm->loadModel("Tiles/RoomDoor.fbx");
 	rm->loadModel("Tiles/CorridorDoor.fbx");
 	rm->loadModel("Tiles/CorridorWall.fbx"); 
 	rm->loadModel("Tiles/RoomCeiling.fbx");
+	rm->loadModel("Tiles/CorridorFloor.fbx");
 	rm->loadModel("Tiles/RoomFloor.fbx");
+	rm->loadModel("Tiles/CorridorCeiling.fbx");
 	rm->loadModel("Tiles/CorridorCorner.fbx");
 	rm->loadModel("Tiles/RoomCorner.fbx"); 
 	rm->loadModel("Clutter/Table.fbx");
@@ -69,6 +71,7 @@ bool SplashScreenState::loadModels(Application* app) {
 	rm->loadModel("Clutter/MediumBox.fbx");
 	rm->loadModel("Clutter/SquareBox.fbx");
 	rm->loadModel("Clutter/Books1.fbx");
+	rm->loadModel("Clutter/Books2.fbx");
 	rm->loadModel("Clutter/Screen.fbx");
 	rm->loadModel("Clutter/Notepad.fbx");
 	rm->loadModel("Clutter/Saftblandare.fbx");
@@ -123,10 +126,6 @@ bool SplashScreenState::loadTextures(Application* app) {
 	rm->loadTexture("pbr/Tiles/RoomWallMRAO.tga");
 	rm->loadTexture("pbr/Tiles/RoomWallNM.tga");
 	rm->loadTexture("pbr/Tiles/RoomWallAlbedo.tga");
-
-	rm->loadTexture("pbr/Tiles/RS_MRAo.tga");
-	rm->loadTexture("pbr/Tiles/RS_NM.tga");
-	rm->loadTexture("pbr/Tiles/RS_Albedo.tga");
 
 	rm->loadTexture("pbr/Tiles/RD_MRAo.tga");
 	rm->loadTexture("pbr/Tiles/RD_NM.tga");

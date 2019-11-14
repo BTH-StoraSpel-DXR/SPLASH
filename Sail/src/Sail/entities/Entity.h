@@ -23,12 +23,19 @@ public:
 
 	template<typename ComponentType, typename... Targs>
 	ComponentType* addComponent(Targs... args);
+
 	template<typename ComponentType>
 	void removeComponent();
+
+	void removeComponent(const ComponentTypeID id);
+
 	template<typename ComponentType>
 	ComponentType* getComponent();
+
 	template<typename ComponentType>
 	bool hasComponent() const;
+
+
 	bool hasComponents(std::bitset<MAX_NUM_COMPONENTS_TYPES> componentTypes) const;
 #ifdef DEVELOPMENT
 	const BaseComponent::Ptr* getComponents() const;

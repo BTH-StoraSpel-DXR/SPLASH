@@ -71,7 +71,8 @@ void CandleHealthSystem::update(float dt) {
 						SAIL_NEW Netcode::MessagePlayerDied{
 							e->getParent()->getComponent<NetworkReceiverComponent>()->m_id,
 							candle->wasHitByPlayerID
-						}
+						},
+						true
 					);
 
 					// Save the placement for the player who lost

@@ -94,6 +94,7 @@ Entity::SPtr EntityFactory::CreateMyPlayer(Netcode::PlayerID playerID, size_t li
 
 	Netcode::ComponentID netComponentID = myPlayer->getComponent<NetworkSenderComponent>()->m_id;
 	myPlayer->addComponent<NetworkReceiverComponent>(netComponentID, Netcode::EntityType::PLAYER_ENTITY);
+	myPlayer->addComponent<ReplayComponent>(netComponentID, Netcode::EntityType::PLAYER_ENTITY);
 	myPlayer->addComponent<LocalOwnerComponent>(netComponentID);
 	myPlayer->addComponent<CollisionComponent>();
 	myPlayer->getComponent<ModelComponent>()->renderToGBuffer = false;
@@ -123,6 +124,7 @@ Entity::SPtr EntityFactory::CreateMyPlayer(Netcode::PlayerID playerID, size_t li
 		if (c->getName() == myPlayer->getName() + "WaterGun") {
 			gunNetID = c->addComponent<NetworkSenderComponent>(Netcode::EntityType::GUN_ENTITY, playerID)->m_id;
 			c->addComponent<NetworkReceiverComponent>(gunNetID, Netcode::EntityType::GUN_ENTITY);
+			c->addComponent<ReplayComponent>(gunNetID, Netcode::EntityType::GUN_ENTITY);
 			//leave this for now
 			//c->addComponent<GunComponent>();]
 			c->addComponent<RealTimeComponent>(); // The player's gun is updated each frame
@@ -132,6 +134,7 @@ Entity::SPtr EntityFactory::CreateMyPlayer(Netcode::PlayerID playerID, size_t li
 		if (c->hasComponent<CandleComponent>()) {
 			candleNetID = c->addComponent<NetworkSenderComponent>(Netcode::EntityType::CANDLE_ENTITY, playerID)->m_id;
 			c->addComponent<NetworkReceiverComponent>(candleNetID, Netcode::EntityType::CANDLE_ENTITY);
+			c->addComponent<ReplayComponent>(candleNetID, Netcode::EntityType::CANDLE_ENTITY);
 			c->addComponent<LocalOwnerComponent>(netComponentID);
 			c->addComponent<RealTimeComponent>(); // The player's candle is updated each frame
 		}
@@ -167,6 +170,7 @@ void EntityFactory::CreateOtherPlayer(Entity::SPtr otherPlayer,
 	// Other players have a character model and animations
 
 	otherPlayer->addComponent<NetworkReceiverComponent>(playerCompID, Netcode::EntityType::PLAYER_ENTITY);
+	otherPlayer->addComponent<ReplayComponent>(playerCompID, Netcode::EntityType::PLAYER_ENTITY);
 	otherPlayer->addComponent<OnlineOwnerComponent>(playerCompID);
 
 	// Create the player
@@ -175,11 +179,13 @@ void EntityFactory::CreateOtherPlayer(Entity::SPtr otherPlayer,
 	for (Entity* c : otherPlayer->getChildEntities()) {
 		if (c->getName() == otherPlayer->getName() + "WaterGun") {
 			c->addComponent<NetworkReceiverComponent>(gunCompID, Netcode::EntityType::GUN_ENTITY);
+			c->addComponent<ReplayComponent>(gunCompID, Netcode::EntityType::GUN_ENTITY);
 			c->addComponent<OnlineOwnerComponent>(playerCompID);
 		}
 
 		if (c->hasComponent<CandleComponent>()) {
 			c->addComponent<NetworkReceiverComponent>(candleCompID, Netcode::EntityType::CANDLE_ENTITY);
+			c->addComponent<ReplayComponent>(candleCompID, Netcode::EntityType::CANDLE_ENTITY);
 			c->addComponent<OnlineOwnerComponent>(playerCompID);
 		}
 	}
@@ -343,13 +349,11 @@ Entity::SPtr EntityFactory::CreateStaticMapObject(const std::string& name, Model
 	return e;
 }
 
-Entity::SPtr EntityFactory::CreateProjectile(
+Entity::SPtr EntityFactory::CreateProjectile(Entity::SPtr e,
 		const glm::vec3& pos, const glm::vec3& velocity, 
 		bool hasLocalOwner, Netcode::ComponentID ownersNetId, 
 		Netcode::ComponentID netCompId, float lifetime) 
 {
-	auto e = ECS::Instance()->createEntity("projectile");
-
 	e->addComponent<MetaballComponent>();
 	e->addComponent<BoundingBoxComponent>()->getBoundingBox()->setHalfSize(glm::vec3(0.15, 0.15, 0.15));
 	e->addComponent<LifeTimeComponent>(lifetime);
@@ -362,8 +366,8 @@ Entity::SPtr EntityFactory::CreateProjectile(
 		e->addComponent<NetworkSenderComponent>(Netcode::EntityType::PROJECTILE_ENTITY, netCompId);
 	} else {
 		e->addComponent<OnlineOwnerComponent>(ownersNetId);
-		e->addComponent<NetworkReceiverComponent>(netCompId, Netcode::EntityType::PROJECTILE_ENTITY);
 	}
+	e->addComponent<NetworkReceiverComponent>(netCompId, Netcode::EntityType::PROJECTILE_ENTITY);
 	
 
 	MovementComponent* movement = e->addComponent<MovementComponent>();

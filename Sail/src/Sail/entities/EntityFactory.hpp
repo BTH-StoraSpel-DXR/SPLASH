@@ -28,7 +28,7 @@ namespace EntityFactory {
 	
 	Entity::SPtr CreateBot(Model* boundingBoxModel, Model* characterModel, const glm::vec3& pos, Model* lightModel, size_t lightIndex, NodeSystem* ns);
 	Entity::SPtr CreateStaticMapObject(const std::string& name, Model * model, Model* boundingBoxModel, const glm::vec3& pos = glm::vec3(0,0,0), const glm::vec3& rot = glm::vec3(0,0,0), const glm::vec3& scale = glm::vec3(1,1,1));
-	Entity::SPtr CreateProjectile(
+	Entity::SPtr CreateProjectile(Entity::SPtr projectileEntity,
 		const glm::vec3& pos, const glm::vec3& velosity,
 		bool hasLocalOwner = false, Netcode::ComponentID ownersNetId = 0,
 		Netcode::ComponentID netCompId = 99999, float lifetime = 4);

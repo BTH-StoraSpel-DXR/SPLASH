@@ -173,8 +173,11 @@ void NetworkReceiverSystem::setLocalRotation(const Netcode::ComponentID id, cons
 void NetworkReceiverSystem::spawnProjectile(const ProjectileInfo& info) {
 	const bool wasRequestedByMe = (Netcode::getComponentOwner(info.ownerID) == m_playerID);
 
+	auto e = ECS::Instance()->createEntity("projectile");
+	instantAddEntity(e.get());
+
 	// Also play the sound
-	EntityFactory::CreateProjectile(info.position, info.velocity, wasRequestedByMe, info.ownerID, info.projectileID);
+	EntityFactory::CreateProjectile(e, info.position, info.velocity, wasRequestedByMe, info.ownerID, info.projectileID);
 }
 
 void NetworkReceiverSystem::waterHitPlayer(const Netcode::ComponentID id, const Netcode::PlayerID senderId) {

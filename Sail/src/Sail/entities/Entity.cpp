@@ -68,6 +68,19 @@ void Entity::queueDestruction() {
 	m_ecs->queueDestructionOfEntity(this);
 }
 
+void Entity::removeComponent(ComponentTypeID id) {
+	const ComponentTypeBitID bid = GetBIDofID(id);
+
+	if ((m_componentTypes & bid).any()) {
+		m_components[id].reset();
+
+		// Set the component type bit to 0 if it was 1
+		m_componentTypes ^= bid;
+
+		// Remove this entity from systems which required the removed component
+		removeFromSystems();
+	}
+}
 
 // TODO: should only be able to be called on entities with m_destructionQueued == true
 void Entity::removeAllComponents() {
