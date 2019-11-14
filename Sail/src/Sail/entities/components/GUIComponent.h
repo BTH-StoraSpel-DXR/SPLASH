@@ -1,17 +1,20 @@
 #pragma once
 #include "Component.h"
 
-
-
 class GUIComponent : public Component<GUIComponent> {
 public:
-	GUIComponent(Model* model) : m_model(model) { }
+	GUIComponent(Model** model) : m_ppCurrentModel(model) { }
 	~GUIComponent() { }
 
-	Model* getModel() {
-		return m_model;
+	Model** getCurrentModel() {
+		return m_ppCurrentModel;
+	}
+	void setCurrentModel(Model** model) {
+		m_ppCurrentModel = model;
 	}
 private:
-	Model* m_model;
+	// GUIComponent does not 'own' the model, just a pointer to it.
+	Model** m_ppCurrentModel = nullptr;	
 
+	
 };

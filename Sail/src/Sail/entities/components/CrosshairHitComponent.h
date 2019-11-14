@@ -6,9 +6,11 @@
 
 class CrosshairHitComponent : public Component<CrosshairHitComponent> {
 public:
-	CrosshairHitComponent(float durationOfAlteredCrosshair_, Model* alteredCrosshairModel) : 
+	CrosshairHitComponent() { SAIL_LOG_WARNING("Initialized CrosshairHitComponent incorrectly."); }
+	CrosshairHitComponent(float durationOfAlteredCrosshair_, Model* normalModel, Model* alteredModel) : 
 		durationOfAlteredCrosshair(durationOfAlteredCrosshair_),
-		alteredModel(alteredCrosshairModel)
+		normalModel(normalModel),
+		alteredModel(alteredModel)
 	{
 
 	}
@@ -24,7 +26,7 @@ public:
 		ImGui::Checkbox(tempString.c_str(), &recentlyHitSomeone);
 	}
 #endif
-
+	Model* normalModel = nullptr;
 	Model* alteredModel = nullptr;			 // Is supposed to be set upon constructing this component
 	bool recentlyHitSomeone = false;
 	float passedTimeSinceAlteration = 0.0f;

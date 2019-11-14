@@ -398,7 +398,7 @@ Entity::SPtr EntityFactory::CreateScreenSpaceText(const std::string& text, glm::
 	for (int i = 0; i < GUIModel->getNumberOfMeshes(); i++) {
 		GUIModel->getMesh(i)->getMaterial()->setAlbedoTexture(GUIText::fontTexture);
 	}
-	GUIEntity->addComponent<GUIComponent>(&Application::getInstance()->getResourceManager().getModel(modelName));
+	GUIEntity->addComponent<GUIComponent>(*&Application::getInstance()->getResourceManager().getModel(modelName));
 	num++;
 
 	return GUIEntity;
@@ -417,34 +417,64 @@ Entity::SPtr EntityFactory::CreateGUIEntity(const std::string& name, const std::
 	}
 	entModel->getMesh(0)->getMaterial()->setAlbedoTexture(texture);
 	Application::getInstance()->getResourceManager().addModel(name + "Model", entModel);
-	ent->addComponent<GUIComponent>(&Application::getInstance()->getResourceManager().getModel(name + "Model"));
+	ent->addComponent<GUIComponent>(
+		Application::getInstance()->getResourceManager().getModel(name + "Model"))
+	);
 
 	return ent;
 }
 
-Entity::SPtr EntityFactory::CreateCrosshair(const std::string& name, const std::string& texture, glm::vec2 origin, glm::vec2 size) {
-	// Create GUI Entity with the 'texture' input parameter as the normal crosshair
-	Entity::SPtr entity = CreateGUIEntity(
-		name,
-		texture,
-		origin,
-		size
+Entity::SPtr EntityFactory::CreateCrosshairEntity(const std::string& name, const std::string& normalTexture, const std::string& alteredTexture, glm::vec2 origin, glm::vec2 size) {
+	Entity::SPtr entity = ECS::Instance()->createEntity(name);
+
+	// Size and location of both normal/altered models
+	ModelFactory::QuadModel::Constraints constraints;
+	constraints.origin = Mesh::vec3(origin.x, origin.y, 0.f);
+	constraints.halfSize = Mesh::vec2(size.x, size.y);
+
+	// Set up normal model
+	{
+		// Model
+		Model* normalModel = ModelFactory::QuadModel::Create(
+			&Application::getInstance()->getResourceManager().getShaderSet<GuiShader>(),
+			constraints
+		);
+		// Texture
+		if (!Application::getInstance()->getResourceManager().hasTexture(normalTexture)) {
+			Application::getInstance()->getResourceManager().loadTexture(normalTexture);
+		}
+		normalModel->getMesh(0)->getMaterial()->setAlbedoTexture(normalTexture);
+		// 
+		Application::getInstance()->getResourceManager().addModel(name + "normalModel", normalModel);
+	}
+	
+	// Set up altered crosshair model
+	{
+		// Model
+		Model* alteredModel = ModelFactory::QuadModel::Create(
+			&Application::getInstance()->getResourceManager().getShaderSet<GuiShader>(),
+			constraints
+		);
+		// Texture
+		if (!Application::getInstance()->getResourceManager().hasTexture(alteredTexture)) {
+			Application::getInstance()->getResourceManager().loadTexture(alteredTexture);
+		}
+		alteredModel->getMesh(0)->getMaterial()->setAlbedoTexture(alteredTexture);
+		//
+		Application::getInstance()->getResourceManager().addModel(name + "alteredModel", alteredModel);
+	}
+	
+	// Add CrosshairHitComponent to entity
+	entity->addComponent<CrosshairHitComponent>(
+		0.5,
+		&Application::getInstance()->getResourceManager().getModel(name + "normalModel"),
+		&Application::getInstance()->getResourceManager().getModel(name + "alteredModel")
 	);
 
-	// Load altered model for the crosshair which activates when hitting another player
-	/* NOT SURE HOW THIS WORKS YET */
-	std::string alteredTexture = "No Altered Texture Yet dude!";
-	ModelFactory::QuadModel::Constraints entConst;
-	entConst.origin = Mesh::vec3(origin.x, origin.y, 0.f);
-	entConst.halfSize = Mesh::vec2(size.x, size.y);
-	auto alteredModel = ModelFactory::QuadModel::Create(&Application::getInstance()->getResourceManager().getShaderSet<GuiShader>(), entConst);
-	if (!Application::getInstance()->getResourceManager().hasTexture(alteredTexture)) {
-		Application::getInstance()->getResourceManager().loadTexture(alteredTexture);
-	}
-	Application::getInstance()->getResourceManager().addModel(name + "onHitModel", alteredModel);
+	// Add GUI Component to entity (and a pointer to the current model)
+	entity->addComponent<GUIComponent>(
+		&entity->getComponent<CrosshairHitComponent>()->normalModel
+	);
 
-
-	entity->addComponent<CrosshairHitComponent>(0.5);
-
-	return Entity::SPtr();
+	return entity;
 }

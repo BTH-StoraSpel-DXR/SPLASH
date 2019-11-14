@@ -38,6 +38,6 @@ void CrosshairHitSystem::alterCrosshair(Entity* e, float dt) {
 	else {
 		// Do the actual change here, moving the crosshair or changing its color etc.
 		GUIComponent* guiC = e->getComponent<GUIComponent>();
-		guiC->
+		guiC->setCurrentModel(&c->alteredModel);
 	}
 }
