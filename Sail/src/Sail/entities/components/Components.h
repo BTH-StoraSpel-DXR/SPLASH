@@ -36,5 +36,6 @@
 #include "TeamComponent.h"
 #include "TransformComponent.h"
 #include "VerticalCylinderComponent.h"
+#include "CrosshairHitComponent.h"
 
 #include "GUIComponent.h"

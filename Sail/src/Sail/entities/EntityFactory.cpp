@@ -14,6 +14,7 @@
 #include "Sail/graphics/geometry/factory/StringModel.h"
 #include "Sail/graphics/geometry/factory/QuadModel.h"
 #include "Sail/entities/components/GUIComponent.h"
+#include "Sail/entities/components/CrosshairHitComponent.h"
 
 void EntityFactory::CreateCandle(Entity::SPtr& candle, const glm::vec3& lightPos, size_t lightIndex) {
 	// Candle has a model and a bounding box
@@ -403,6 +404,8 @@ Entity::SPtr EntityFactory::CreateScreenSpaceText(const std::string& text, glm::
 	return GUIEntity;
 }
 
+
+
 Entity::SPtr EntityFactory::CreateGUIEntity(const std::string& name, const std::string& texture, glm::vec2 origin, glm::vec2 size) {
 	auto ent = ECS::Instance()->createEntity(name);
 	ModelFactory::QuadModel::Constraints entConst;
@@ -417,4 +420,17 @@ Entity::SPtr EntityFactory::CreateGUIEntity(const std::string& name, const std::
 	ent->addComponent<GUIComponent>(&Application::getInstance()->getResourceManager().getModel(name + "Model"));
 
 	return ent;
+}
+
+Entity::SPtr EntityFactory::CreateCrosshair(const std::string& name, const std::string& texture, glm::vec2 origin, glm::vec2 size) {
+	Entity::SPtr entity = CreateGUIEntity(
+		name,
+		texture,
+		origin,
+		size
+	);
+
+	entity->addComponent<CrosshairHitComponent>(0.5);
+
+	return Entity::SPtr();
 }
