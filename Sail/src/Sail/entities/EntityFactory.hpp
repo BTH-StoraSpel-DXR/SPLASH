@@ -20,7 +20,8 @@ namespace EntityFactory {
 		Netcode::ComponentID playerCompID, 
 		Netcode::ComponentID candleCompID, 
 		Netcode::ComponentID gunCompID, 
-		size_t lightIndex, glm::vec3 spawnLocation);
+		size_t lightIndex, glm::vec3 spawnLocation
+	);
 	
 	void CreatePerformancePlayer(Entity::SPtr playerEnt, size_t lightIndex, glm::vec3 spawnLocation);
 	

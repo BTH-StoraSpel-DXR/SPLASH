@@ -2,11 +2,19 @@
 
 #include "Component.h"
 
+
+
 class CrosshairHitComponent : public Component<CrosshairHitComponent> {
 public:
-	CrosshairHitComponent();
-	CrosshairHitComponent(float durationOfAlteredCrosshair);
-	~CrosshairHitComponent();
+	CrosshairHitComponent(float durationOfAlteredCrosshair_, Model* alteredCrosshairModel) : 
+		durationOfAlteredCrosshair(durationOfAlteredCrosshair_),
+		alteredModel(alteredCrosshairModel)
+	{
+
+	}
+	~CrosshairHitComponent() {
+
+	}
 
 #ifdef DEVELOPMENT
 	void imguiRender(Entity** selected) {
@@ -17,7 +25,8 @@ public:
 	}
 #endif
 
+	Model* alteredModel = nullptr;			 // Is supposed to be set upon constructing this component
 	bool recentlyHitSomeone = false;
 	float passedTimeSinceAlteration = 0.0f;
-	float durationOfAlteredCrosshair = 0.5f;	// 0.5 by default unless otherwise set by constructor
+	float durationOfAlteredCrosshair = 0.0f; // Is supposed to be set upon constructing this component
 };

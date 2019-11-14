@@ -423,12 +423,26 @@ Entity::SPtr EntityFactory::CreateGUIEntity(const std::string& name, const std::
 }
 
 Entity::SPtr EntityFactory::CreateCrosshair(const std::string& name, const std::string& texture, glm::vec2 origin, glm::vec2 size) {
+	// Create GUI Entity with the 'texture' input parameter as the normal crosshair
 	Entity::SPtr entity = CreateGUIEntity(
 		name,
 		texture,
 		origin,
 		size
 	);
+
+	// Load altered model for the crosshair which activates when hitting another player
+	/* NOT SURE HOW THIS WORKS YET */
+	std::string alteredTexture = "No Altered Texture Yet dude!";
+	ModelFactory::QuadModel::Constraints entConst;
+	entConst.origin = Mesh::vec3(origin.x, origin.y, 0.f);
+	entConst.halfSize = Mesh::vec2(size.x, size.y);
+	auto alteredModel = ModelFactory::QuadModel::Create(&Application::getInstance()->getResourceManager().getShaderSet<GuiShader>(), entConst);
+	if (!Application::getInstance()->getResourceManager().hasTexture(alteredTexture)) {
+		Application::getInstance()->getResourceManager().loadTexture(alteredTexture);
+	}
+	Application::getInstance()->getResourceManager().addModel(name + "onHitModel", alteredModel);
+
 
 	entity->addComponent<CrosshairHitComponent>(0.5);
 
