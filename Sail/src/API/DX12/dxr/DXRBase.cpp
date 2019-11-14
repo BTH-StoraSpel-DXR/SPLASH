@@ -213,7 +213,7 @@ void DXRBase::updateAccelerationStructures(const std::vector<Renderer::RenderCom
 
 }
 
-void DXRBase::updateSceneData(Camera& cam, LightSetup& lights, const std::vector<Metaball>& metaballs, const D3D12_RAYTRACING_AABB& m_next_metaball_aabb, const glm::vec3& mapSize, const glm::vec3& mapStart, const std::vector<glm::vec3>& teamColors) {
+void DXRBase::updateSceneData(Camera& cam, LightSetup& lights, const std::vector<Metaball>& metaballs, const D3D12_RAYTRACING_AABB& m_next_metaball_aabb, const glm::vec3& mapSize, const glm::vec3& mapStart, const std::vector<glm::vec3>& teamColors, bool doToneMapping) {
 	m_metaballsToRender = (metaballs.size() < MAX_NUM_METABALLS) ? (UINT)metaballs.size() : (UINT)MAX_NUM_METABALLS;
 	updateMetaballpositions(metaballs, m_next_metaball_aabb);
 
@@ -227,6 +227,7 @@ void DXRBase::updateSceneData(Camera& cam, LightSetup& lights, const std::vector
 	newData.projectionToWorld = glm::inverse(cam.getViewProjection());
 	newData.nMetaballs = m_metaballsToRender;
 	newData.nDecals = m_decalsToRender;
+	newData.doTonemapping = doToneMapping;
 	newData.mapSize = mapSize;
 	newData.mapStart = mapStart;
 
@@ -258,9 +259,13 @@ void DXRBase::addWaterAtWorldPosition(const glm::vec3& position) {
 	auto mapStart = -glm::vec3((float)mapSettings["tileSize"].value / 2.0f);
 	static const glm::vec3 arrSize(WATER_GRID_X - 1, WATER_GRID_Y - 1, WATER_GRID_Z - 1);
 
+	// Convert position to index, stored as floats
 	glm::vec3 floatInd = ((position - mapStart) / mapSize) * arrSize;
+	// Convert triple-number index to a single index value
 	int quarterIndex = glm::floor((int)glm::floor(floatInd.x * 4.f) % 4);
+	// Convert triple-number (float) to triple-number (int)
 	glm::i32vec3 ind = floor(floatInd);
+	// Convert to final 1-D index
 	int arrIndex = Utils::to1D(ind, arrSize.x, arrSize.y);
 
 	// Ignore water points that are outside the map
@@ -288,6 +293,34 @@ void DXRBase::addWaterAtWorldPosition(const glm::vec3& position) {
 		m_waterDataCPU[arrIndex] = m_waterDeltas[arrIndex];
 		m_waterChanged = true;
 	}
+}
+
+bool DXRBase::checkWaterAtWorldPosition(const glm::vec3& position) {
+	bool returnValue = false;
+
+	static auto& mapSettings = Application::getInstance()->getSettings().gameSettingsDynamic["map"];
+	auto mapSize = glm::vec3(mapSettings["sizeX"].value, 1.0f, mapSettings["sizeY"].value) * (float)mapSettings["tileSize"].value;
+	auto mapStart = -glm::vec3((float)mapSettings["tileSize"].value / 2.0f);
+	static const glm::vec3 arrSize(WATER_GRID_X - 1, WATER_GRID_Y - 1, WATER_GRID_Z - 1);
+
+	// Convert position to index, stored as floats
+	glm::vec3 floatInd = ((position - mapStart) / mapSize) * arrSize;
+	// Convert triple-number (float) to triple-number (int)
+	glm::i32vec3 ind = floor(floatInd);
+	// Convert to final 1-D index
+	int arrIndex = Utils::to1D(ind, arrSize.x, arrSize.y);
+
+	// Ignore water points that are outside the map
+	if (arrIndex >= 0 && arrIndex <= WATER_ARR_SIZE - 1) {
+		uint8_t up0 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 0);
+		uint8_t up1 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 1);
+		uint8_t up2 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 2);
+		uint8_t up3 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 3);
+
+		returnValue = up0 != 255 || up1 != 255 || up2 != 255 || up3 != 255;
+	}
+
+	return returnValue;
 }
 
 void DXRBase::updateWaterData() {
@@ -342,17 +375,19 @@ void DXRBase::updateMetaballpositions(const std::vector<Metaball>& metaballs, co
 	res->Unmap(0, nullptr);
 }
 
-void DXRBase::dispatch(DX12RenderableTexture* outputTexture, ID3D12GraphicsCommandList4* cmdList) {
+void DXRBase::dispatch(DX12RenderableTexture* outputTexture, DX12RenderableTexture* outputBloomTexture, ID3D12GraphicsCommandList4* cmdList) {
 
 	assert(m_gbufferInputTextures); // Input textures not set!
 	
 	unsigned int frameIndex = m_context->getSwapIndex();
 
-	// Copy output texture srv to beginning of heap
-	outputTexture->transitionStateTo(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	D3D12_CPU_DESCRIPTOR_HANDLE outputTexHandle;
-	outputTexHandle.ptr = m_rtDescriptorHeap->GetCPUDescriptorHandleForHeapStart().ptr + m_heapIncr * frameIndex;
-	m_context->getDevice()->CopyDescriptorsSimple(1, outputTexHandle, outputTexture->getUavCDH(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	auto copyDescriptor = [&](DX12RenderableTexture* texture, D3D12_CPU_DESCRIPTOR_HANDLE* cdh) {
+		// Copy output texture uav to heap
+		texture->transitionStateTo(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		m_context->getDevice()->CopyDescriptorsSimple(1, cdh[frameIndex], texture->getUavCDH(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	};
+	copyDescriptor(outputTexture, m_rtOutputTextureUavCPUHandles);
+	copyDescriptor(outputBloomTexture, m_rtOutputBloomTextureUavCPUHandles);
 
 	//Set constant buffer descriptor heap
 	ID3D12DescriptorHeap* descriptorHeaps[] = { m_rtDescriptorHeap.Get() };
@@ -632,15 +667,22 @@ void DXRBase::createInitialShaderResources(bool remake) {
 		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_rtDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = m_rtDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 
-		// The first two slots in the heap will be used for the output UAV
-		m_rtOutputTextureUavGPUHandles[0] = gpuHandle;
-		cpuHandle.ptr += m_heapIncr;
-		gpuHandle.ptr += m_heapIncr;
-		m_usedDescriptors++;
-		m_rtOutputTextureUavGPUHandles[1] = gpuHandle;
-		cpuHandle.ptr += m_heapIncr;
-		gpuHandle.ptr += m_heapIncr;
-		m_usedDescriptors++;
+		auto storeHandle = [&](D3D12_CPU_DESCRIPTOR_HANDLE* cdh, D3D12_GPU_DESCRIPTOR_HANDLE* gdh) {
+			gdh[0] = gpuHandle;
+			cdh[0] = cpuHandle;
+			cpuHandle.ptr += m_heapIncr;
+			gpuHandle.ptr += m_heapIncr;
+			m_usedDescriptors++;
+			gdh[1] = gpuHandle;
+			cdh[1] = cpuHandle;
+			cpuHandle.ptr += m_heapIncr;
+			gpuHandle.ptr += m_heapIncr;
+			m_usedDescriptors++;
+		};
+
+		// The first slots in the heap will be used for the output UAV
+		storeHandle(m_rtOutputTextureUavCPUHandles, m_rtOutputTextureUavGPUHandles);
+		storeHandle(m_rtOutputBloomTextureUavCPUHandles, m_rtOutputBloomTextureUavGPUHandles);
 
 		// Next slot is used for the brdfLUT
 		m_rtBrdfLUTGPUHandle = gpuHandle;
@@ -850,6 +892,7 @@ void DXRBase::updateShaderTables() {
 		DXRUtils::ShaderTableBuilder tableBuilder(1U, m_rtPipelineState.Get(), 64U);
 		tableBuilder.addShader(m_rayGenName);
 		tableBuilder.addDescriptor(m_rtOutputTextureUavGPUHandles[frameIndex].ptr);
+		tableBuilder.addDescriptor(m_rtOutputBloomTextureUavGPUHandles[frameIndex].ptr);
 		tableBuilder.addDescriptor(m_gbufferStartGPUHandles[frameIndex].ptr);
 		tableBuilder.addDescriptor(m_decalTexGPUHandles.ptr);
 		tableBuilder.addDescriptor(m_rtBrdfLUTGPUHandle.ptr);
@@ -972,6 +1015,7 @@ void DXRBase::createDXRGlobalRootSignature() {
 void DXRBase::createRayGenLocalRootSignature() {
 	m_localSignatureRayGen = std::make_unique<DX12Utils::RootSignature>("RayGenLocal");
 	m_localSignatureRayGen->addDescriptorTable("OutputUAV", D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 0);
+	m_localSignatureRayGen->addDescriptorTable("OutputBloomUAV", D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1);
 	m_localSignatureRayGen->addDescriptorTable("gbufferInputTextures", D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 10, 0U, DX12GBufferRenderer::NUM_GBUFFERS + 1);
 	m_localSignatureRayGen->addDescriptorTable("gbufferInputTextures", D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 10 + DX12GBufferRenderer::NUM_GBUFFERS + 1, 0U, 3U);
 	m_localSignatureRayGen->addDescriptorTable("sys_brdfLUT", D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 5);

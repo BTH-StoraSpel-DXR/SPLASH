@@ -56,7 +56,10 @@ bool InGameMenuState::render(float dt, float alpha) {
 bool InGameMenuState::renderImgui(float dt) {
 	m_inGameMenuWindow.renderWindow();
 	if (m_inGameMenuWindow.showOptions()) {
-		// Render options here
+		
+
+
+
 	}
 
 	return false;

@@ -125,7 +125,7 @@ namespace ShaderComponent {
 		for (UINT i = 0; i < numSwapBuffers; i++) {
 
 			m_bufferUploadHeap[i].Attach(DX12Utils::CreateBuffer(m_context->getDevice(), m_resourceHeapSize[frameIndex], D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, DX12Utils::sUploadHeapProperties));
-			m_bufferUploadHeap[i]->SetName(L"Constant Buffer Upload Resource Heap");
+			m_bufferUploadHeap[i]->SetName(L"Structured Buffer Upload Resource Heap");
 
 			// Map the constant buffer and keep it mapped for the duration of its lifetime
 			D3D12_RANGE readRange{ 0, 0 }; // We do not intend to read from this resource on the CPU. (End is less than or equal to begin)

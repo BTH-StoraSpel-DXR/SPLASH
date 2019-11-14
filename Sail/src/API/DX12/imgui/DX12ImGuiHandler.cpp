@@ -55,6 +55,7 @@ void DX12ImGuiHandler::init() {
 	//ImGui::StyleColorsDark();
 	//ImGui::StyleColorsClassic();
 	applySailStyle();
+	addFonts();
 
 	// When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -73,9 +74,15 @@ void DX12ImGuiHandler::init() {
 
 void DX12ImGuiHandler::begin() {
 	// Start the Dear ImGui frame
+	
 	ImGui_ImplDX12_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
+
+	if (m_showMetrics) {
+		ImGui::ShowMetricsWindow();
+	}
+
 }
 
 void DX12ImGuiHandler::end() {

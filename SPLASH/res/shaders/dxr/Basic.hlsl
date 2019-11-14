@@ -12,7 +12,8 @@ Texture2D<float4> decal_texAlbedo 					: register(t14);
 Texture2D<float4> decal_texNormal 					: register(t15);
 Texture2D<float4> decal_texMetalnessRoughnessAO 	: register(t16);
 
-RWTexture2D<float4> lOutput : register(u0);
+RWTexture2D<float4> lOutput 	 : register(u0);
+RWTexture2D<float4> lOutputBloom : register(u1);
 
 ConstantBuffer<SceneCBuffer> CB_SceneData : register(b0, space0);
 ConstantBuffer<MeshCBuffer> CB_MeshData : register(b1, space0);
@@ -131,20 +132,28 @@ void rayGen() {
 
 	float metaballDepth = dot(normalize(CB_SceneData.cameraDirection), normalize(rayDir) * payload_metaball.closestTvalue);
 
+	float3 outputColor;
 	if (metaballDepth <= linearDepth) {
-		lOutput[launchIndex] = payload_metaball.color;	
+		outputColor = payload_metaball.color.rgb;
 	} else {
-		lOutput[launchIndex] = payload.color;
+		outputColor = payload.color.rgb;
 
-		float4 totDecalColour = 0.0f;
-		for (uint i = 0; i < CB_SceneData.nDecals; i++) {
-			totDecalColour += renderDecal(i, vsPosition.xyz, worldPosition, worldNormal, payload.color);		
-			if (!all(totDecalColour == 0.0f)) {
-				lOutput[launchIndex] = totDecalColour;
-				break;
-			}
-		}
+		// Decals are untested since tonemapping was moved, uncomment at own risk
+		// float4 totDecalColour = 0.0f;
+		// for (uint i = 0; i < CB_SceneData.nDecals; i++) {
+		// 	totDecalColour += renderDecal(i, vsPosition.xyz, worldPosition, worldNormal, payload.color);		
+		// 	if (!all(totDecalColour == 0.0f)) {
+		// 		lOutput[launchIndex] = totDecalColour;
+		// 		break;
+		// 	}
+		// }
 	}
+	// Perform tonemapping if requested
+	// Tonemapping is otherwise done in post processing
+	outputColor = (CB_SceneData.doTonemapping) ? tonemap(outputColor) : outputColor;
+	// Write outputs
+	lOutput[launchIndex] = float4(outputColor, 1.0f);
+	lOutputBloom[launchIndex] = float4((length(outputColor) > 1.0f) ? outputColor : 0.f, 1.0f);
 
 #else
 	// Fully RT

@@ -37,7 +37,7 @@ DX12GBufferRenderer::DX12GBufferRenderer() {
 	auto windowHeight = app->getWindow()->getWindowHeight();
 
 	for (int i = 0; i < NUM_GBUFFERS; i++) {
-		m_gbufferTextures[i] = static_cast<DX12RenderableTexture*>(RenderableTexture::Create(windowWidth, windowHeight, "GBuffer renderer output " + std::to_string(i), (i == 0)));
+		m_gbufferTextures[i] = static_cast<DX12RenderableTexture*>(RenderableTexture::Create(windowWidth, windowHeight, "GBuffer renderer output " + std::to_string(i), Texture::R8G8B8A8, (i == 0)));
 	}
 }
 
@@ -66,7 +66,7 @@ void DX12GBufferRenderer::present(PostProcessPipeline* postProcessPipeline, Rend
 		}
 		if (particleSystem) {
 			// Update particles on compute shader
-			particleSystem->updateOnGPU(m_computeCommand.list.Get());
+			particleSystem->updateOnGPU(m_computeCommand.list.Get(), camera->getPosition());
 		}
 
 		m_computeCommand.list->Close();

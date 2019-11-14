@@ -46,22 +46,38 @@ void GunSystem::update(float dt) {
 				// Determine projectileSpeed based on how long the gun has been firing continuously
 				alterProjectileSpeed(gun);
 
-				// Tell yours and everybody else's NetworkReceiverSystem to spawn the projectile
-				for (int i = 0; i < 2; i++) {
-					NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
-						Netcode::MessageType::SPAWN_PROJECTILE,
-						SAIL_NEW Netcode::MessageSpawnProjectile{
-							gun->position,
-							gun->direction * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity,
-							e->getComponent<NetworkSenderComponent>()->m_id
-						}
-					);
+					Netcode::PlayerID myPlayerID = Netcode::getComponentOwner(e->getComponent<NetworkSenderComponent>()->m_id);
+
+					// Tell yours and everybody else's NetworkReceiverSystem to spawn the projectile
+					for (int i = 0; i < 2; i++) {
+						constexpr float randomSpread = 0.05;
+						const glm::vec3 velocity = gun->direction * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity;
+						glm::vec3 randPos;
+
+						randPos.r = Utils::rnd() * randomSpread * 2 - randomSpread;
+						randPos.g = Utils::rnd() * randomSpread * 2 - randomSpread;
+						randPos.b = Utils::rnd() * randomSpread * 2 - randomSpread;
+
+						randPos += glm::normalize(velocity) * (Utils::rnd() * randomSpread * 2 - randomSpread) * 5.0f;
+
+						// Tell yours and everybody else's NetworkReceiverSystem to spawn the projectile
+						NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
+							Netcode::MessageType::SPAWN_PROJECTILE,
+							SAIL_NEW Netcode::MessageSpawnProjectile{
+								gun->position + randPos,
+								velocity,
+								Netcode::generateUniqueComponentID(myPlayerID), // Generate unique ComponentID here for our own projectiles
+								e->getComponent<NetworkSenderComponent>()->m_id
+							}
+						);
+					}
+					m_gameDataTracker->logWeaponFired();
+					fireGun(e, gun);
 				}
-				m_gameDataTracker->logWeaponFired();
-				fireGun(e, gun);
-			} else { // DO NOT SHOOT (Cooldown between shots)
-				gun->firingContinuously = false;
-			}
+				// DO NOT SHOOT (Cooldown between shots)
+				else {
+					gun->firingContinuously = false;
+				}
 
 			// Overload the gun if necessary
 			if ((gun->gunOverloadvalue += dt) > gun->gunOverloadThreshold) {
@@ -125,7 +141,7 @@ void GunSystem::overloadGun(Entity* e, GunComponent* gun) {
 	gun->gunOverloadvalue = 0;
 	gun->gunOverloadTimer = 0;
 
-	// If we have some sort of cooldown, behave statewise as usual
+	// If we have some sort of cooldown, behave statewise as usual.
 	setGunStateEND(e, gun);
 	gun->firingContinuously = false;	
 }

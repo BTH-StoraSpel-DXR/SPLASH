@@ -71,7 +71,8 @@ void CandleHealthSystem::update(float dt) {
 						SAIL_NEW Netcode::MessagePlayerDied{
 							e->getParent()->getComponent<NetworkReceiverComponent>()->m_id,
 							candle->wasHitByPlayerID
-						}
+						},
+						true
 					);
 
 					// Save the placement for the player who lost
@@ -120,9 +121,11 @@ void CandleHealthSystem::update(float dt) {
 		}
 
 		// COLOR/INTENSITY
-		float cHealth = std::fmaxf(candle->health, 0.f);
-		float tempHealthRatio = (cHealth / MAX_HEALTH);
-		e->getComponent<LightComponent>()->getPointLight().setColor(glm::vec3(tempHealthRatio, tempHealthRatio * 0.7f, tempHealthRatio * 0.4f));
+		float tempHealthRatio = (std::fmaxf(candle->health, 0.f) / MAX_HEALTH);
+
+		LightComponent* lc = e->getComponent<LightComponent>();
+
+		lc->getPointLight().setColor(tempHealthRatio * lc->defaultColor);
 	}
 }
 
@@ -150,7 +153,13 @@ bool CandleHealthSystem::onEvent(const Event& event) {
 
 		// Damage the candle
 		// TODO: Replace 10.0f with game settings damage
-		candle->getComponent<CandleComponent>()->hitWithWater(10.0f, e.senderID);
+		if (e.senderID == Netcode::MESSAGE_SPRINKLER_ID) {
+			candle->getComponent<CandleComponent>()->hitWithWater(1.0f, e.senderID);
+		}
+		else {
+			candle->getComponent<CandleComponent>()->hitWithWater(10.0f, e.senderID);
+
+		}
 	};
 
 	switch (event.type) {

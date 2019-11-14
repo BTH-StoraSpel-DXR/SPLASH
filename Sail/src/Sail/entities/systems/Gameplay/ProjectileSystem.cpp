@@ -9,6 +9,9 @@
 #include "Sail/Application.h"
 #include "API/DX12/renderer/DX12RaytracingRenderer.h"
 
+// The likelihood that a projectile gets destroyed if it collides with at least one other entity this tick.
+constexpr float DESTRUCTION_PROBABILITY = 0.3f;
+
 ProjectileSystem::ProjectileSystem() {
 	// TODO: System owner should check if this is correct
 	registerComponent<ProjectileComponent>(true, true, true);
@@ -28,28 +31,34 @@ ProjectileSystem::~ProjectileSystem() {
 
 void ProjectileSystem::update(float dt) {
 	for (auto& e : entities) {
-		CollisionComponent* collisionComp = e->getComponent<CollisionComponent>();
+		CollisionComponent*  collisionComp = e->getComponent<CollisionComponent>();
+		ProjectileComponent* projComp      = e->getComponent<ProjectileComponent>();
 		auto projectileCollisions = collisionComp->collisions;
-		auto projComp = e->getComponent<ProjectileComponent>();
+		
+		bool collidedThisTick = false;
+
 		for (auto& collision : projectileCollisions) {
+			collidedThisTick = true;
+			
 			// Check if a decal should be created
-			if (glm::length(e->getComponent<MovementComponent>()->oldVelocity) > 0.7f) {
-				// TODO: Replace with some "layer-id" check rather than doing a string check
-				if (collision.entity->getName().substr(0U, 4U) == "Map_" || collision.entity->getName().substr(0U, 7U) == "Clutter") {
-					// Calculate rotation matrix used when placing a decal at the intersection
-					//glm::mat4 rotMat = glm::rotate(glm::identity<glm::mat4>(), Utils::fastrand() * 3.14f, glm::vec3(0.0f, 0.0f, 1.0f));
+			// TODO: Replace name with some "layer-id" check rather than doing a string check
+			if (glm::length(e->getComponent<MovementComponent>()->oldVelocity) > 0.7f
+				&& (collision.entity->getName().substr(0U, 4U) == "Map_" || collision.entity->getName().substr(0U, 7U) == "Clutter")) {
 
-					// Place water point at intersection position
-					Application::getInstance()->getRenderWrapper()->getCurrentRenderer()->submitWaterPoint(collision.intersectionPosition);
+				// Calculate rotation matrix used when placing a decal at the intersection
+				//glm::mat4 rotMat = glm::rotate(glm::identity<glm::mat4>(), Utils::fastrand() * 3.14f, glm::vec3(0.0f, 0.0f, 1.0f));
 
-					projComp->timeSinceLastDecal = 0.f;
-				}
+				// Place water point at intersection position
+				Application::getInstance()->getRenderWrapper()->getCurrentRenderer()->submitWaterPoint(collision.intersectionPosition);
+
+				projComp->timeSinceLastDecal = 0.f;
 			}
 
 			//If projectile collided with a candle and the local player owned the projectile
 			if (collision.entity->hasComponent<CandleComponent>() && e->hasComponent<LocalOwnerComponent>()) {
 				CandleComponent* cc = collision.entity->getComponent<CandleComponent>();
 				
+
 				// If that candle isn't our own
 				if (!(collision.entity->hasComponent<LocalOwnerComponent>() && cc->isCarried) && !cc->wasHitByMeThisTick) {
 					cc->wasHitByMeThisTick = true;
@@ -69,9 +78,12 @@ void ProjectileSystem::update(float dt) {
 				}
 			}
 
-			if (Utils::rnd() < 0.5) {
-				e->queueDestruction();
-			}
+		}
+
+		// The projectile owner is responsible for destroying their own projectiles
+		if (collidedThisTick && !e->isAboutToBeDestroyed() && e->hasComponent<LocalOwnerComponent>() && Utils::rnd() < DESTRUCTION_PROBABILITY) {
+			e->getComponent<NetworkSenderComponent>()->addMessageType(Netcode::MessageType::DESTROY_ENTITY);
+			e->queueDestruction();
 		}
 
 		projComp->timeSinceLastDecal += dt;

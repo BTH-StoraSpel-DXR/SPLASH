@@ -4,11 +4,11 @@
 #include "Sail/api/Window.h"
 #include "../DX12Utils.h"
 
-RenderableTexture* RenderableTexture::Create(unsigned int width, unsigned int height, const std::string& name, bool createDepthStencilView, bool createOnlyDSV) {
-	return SAIL_NEW DX12RenderableTexture(1, width, height, createDepthStencilView, createOnlyDSV, 0U, 0U, name);
+RenderableTexture* RenderableTexture::Create(unsigned int width, unsigned int height, const std::string& name, Texture::FORMAT format, bool createDepthStencilView, bool createOnlyDSV) {
+	return SAIL_NEW DX12RenderableTexture(1, width, height, format, createDepthStencilView, createOnlyDSV, 0U, 0U, name);
 }
 
-DX12RenderableTexture::DX12RenderableTexture(UINT aaSamples, unsigned int width, unsigned int height, bool createDepthStencilView, bool createOnlyDSV, UINT bindFlags, UINT cpuAccessFlags, const std::string& name)
+DX12RenderableTexture::DX12RenderableTexture(UINT aaSamples, unsigned int width, unsigned int height, Texture::FORMAT format, bool createDepthStencilView, bool createOnlyDSV, UINT bindFlags, UINT cpuAccessFlags, const std::string& name)
 	: m_width(width)
 	, m_height(height)
 	, m_cpuRtvDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, Application::getInstance()->getAPI<DX12API>()->getNumGPUBuffers())
@@ -17,6 +17,8 @@ DX12RenderableTexture::DX12RenderableTexture(UINT aaSamples, unsigned int width,
 {
 	isRenderableTex = true;
 	context = Application::getInstance()->getAPI<DX12API>();
+
+	m_format = convertFormat(format);
 
 	const auto& numSwapBuffers = context->getNumGPUBuffers();
 	m_rtvHeapCDHs.resize(numSwapBuffers);
@@ -69,11 +71,19 @@ void DX12RenderableTexture::clear(const glm::vec4& color, void* cmdList) {
 	}
 }
 
+void DX12RenderableTexture::changeFormat(Texture::FORMAT newFormat) {
+	auto newDxgiFormat = convertFormat(newFormat);
+	if (m_format == newDxgiFormat) {
+		return;
+	}
+	m_format = newDxgiFormat;
+	createTextures();
+}
+
 void DX12RenderableTexture::resize(int width, int height) {
 	if (width == m_width && height == m_height) {
 		return;
 	}
-
 	m_width = width;
 	m_height = height;
 	createTextures();
@@ -103,11 +113,39 @@ D3D12_CPU_DESCRIPTOR_HANDLE DX12RenderableTexture::getDsvCDH(int frameIndex) con
 	return m_dsvHeapCDHs[i];
 }
 
-void DX12RenderableTexture::createTextures() {
+DXGI_FORMAT DX12RenderableTexture::convertFormat(Texture::FORMAT format) const {
+	DXGI_FORMAT dxgiFormat;
+	switch (format) {
+	case Texture::R8:
+		dxgiFormat = DXGI_FORMAT_R8_UNORM;
+		break;
+	case Texture::R8G8:
+		dxgiFormat = DXGI_FORMAT_R8G8_UNORM;
+		break;
+	case Texture::R8G8B8A8:
+		dxgiFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+		break;
+	case Texture::R16_FLOAT:
+		dxgiFormat = DXGI_FORMAT_R16_FLOAT;
+		break;
+	case Texture::R16G16_FLOAT:
+		dxgiFormat = DXGI_FORMAT_R16G16_FLOAT;
+		break;
+	case Texture::R16G16B16A16_FLOAT:
+		dxgiFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		break;
+	default:
+		dxgiFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+		break;
+	}
+	return dxgiFormat;
+}
 
+void DX12RenderableTexture::createTextures() {	
+	context->waitForGPU();
 	for (unsigned int i = 0; i < context->getNumGPUBuffers(); i++) {
 		D3D12_RESOURCE_DESC textureDesc = {};
-		textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		textureDesc.Format = m_format;
 		textureDesc.Width = m_width;
 		textureDesc.Height = m_height;
 		textureDesc.DepthOrArraySize = 1;

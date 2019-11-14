@@ -18,7 +18,7 @@ void RendererWrapper::initialize() {
 
 	m_postProcessPipeline = std::make_shared<PostProcessPipeline>();
 
-	m_doPostProcessing = false;
+	m_doPostProcessing = true;
 }
 
 /*
@@ -53,6 +53,10 @@ Renderer* RendererWrapper::getCurrentRenderer() {
 
 PostProcessPipeline* RendererWrapper::getPostProcessPipeline() {
 	return m_postProcessPipeline.get();
+}
+
+bool RendererWrapper::checkIfOnWater(const glm::vec3& worldPos) const {
+	return m_rendererRaytrace->checkIfOnWater(worldPos);
 }
 
 bool RendererWrapper::onEvent(const Event& event) {

@@ -96,6 +96,8 @@ void shade(float3 worldPosition, float3 worldNormal, float3 albedo, float emissi
 	// Ray direction for first ray when cast from GBuffer must be calculated using camera position
 	float3 rayDir = (calledFromClosestHit) ? WorldRayDirection() : worldPosition - CB_SceneData.cameraPosition;
 
+	float originalAo = ao;
+
 #ifdef WATER_ON_WALLS
 	// =================================================
 	//  Render pixel as water if close to a water point
@@ -165,7 +167,7 @@ void shade(float3 worldPosition, float3 worldNormal, float3 albedo, float emissi
 		// Shade as water
 
 		metalness = lerp(metalness, 1.0f, 			waterOpacity);
-		roughness = lerp(roughness, 0.01f, 			waterOpacity);
+		roughness = lerp(roughness, 0.0f, 			waterOpacity);
 		ao 		  = lerp(ao, 		0.5f, 			waterOpacity);
 		albedo 	  = lerp(albedo, 	albedo * 0.8f,  waterOpacity);
 
@@ -177,7 +179,7 @@ void shade(float3 worldPosition, float3 worldNormal, float3 albedo, float emissi
 		// ao = 0.5f;
 	}
 #endif
-	payload.color = pbrShade(worldPosition, worldNormal, -rayDir, albedo, emissivness, metalness, roughness, ao, payload);
+	payload.color = pbrShade(worldPosition, worldNormal, -rayDir, albedo, emissivness, metalness, roughness, ao, originalAo, payload);
 	// payload.color = float4(worldNormal * 0.5f + 0.5f, 1.0f);
 	// payload.color = phongShade(worldPosition, worldNormal, albedo);
 }

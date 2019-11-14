@@ -29,6 +29,8 @@
 #include "light/LightListSystem.h"
 #include "light/SpotLightSystem.h"
 
+#include "network/receivers/KillCamReceiverSystem.h"
+
 #include "network/receivers/NetworkReceiverSystem.h"
 #include "network/receivers/NetworkReceiverSystemClient.h"
 #include "network/receivers/NetworkReceiverSystemHost.h"

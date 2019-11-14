@@ -115,10 +115,10 @@ protected:
 		std::unique_ptr<ShaderComponent::Sampler> sampler;
 	};
 	struct ShaderRenderableTexture {
-		ShaderRenderableTexture(ShaderResource res)
+		ShaderRenderableTexture(ShaderResource res, Texture::FORMAT format)
 			: res(res)
 		{
-			renderableTexture = std::unique_ptr<RenderableTexture>(RenderableTexture::Create(320, 180, "Renderable Texture owned by a ShaderPipeline"));
+			renderableTexture = std::unique_ptr<RenderableTexture>(RenderableTexture::Create(320, 180, "Renderable Texture owned by a ShaderPipeline", format));
 		}
 		ShaderResource res;
 		std::unique_ptr<RenderableTexture> renderableTexture;

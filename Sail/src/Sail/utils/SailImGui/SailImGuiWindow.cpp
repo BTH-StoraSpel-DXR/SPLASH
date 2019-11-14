@@ -24,6 +24,10 @@ void SailImGuiWindow::showWindow(bool show) {
 	m_isWindowOpen = show;
 }
 
+void SailImGuiWindow::setPosition(const ImVec2& pos) {
+	m_position = pos;
+}
+
 float SailImGuiWindow::EaseInOut(float time, float startValue, float endValue, float duration) {
 	time /= duration / 2.f;
 	if (time < 1.f) return endValue / 2.f * time * time + startValue;

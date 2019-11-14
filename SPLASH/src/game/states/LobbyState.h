@@ -3,6 +3,7 @@
 #include "Sail.h"
 #include <string>
 #include <list>
+#include "Sail/utils/SailImGui/OptionsWindow.h"
 
 struct Player;
 class NWrapper;
@@ -38,6 +39,7 @@ protected:
 	Application* m_app = nullptr;
 	Input* m_input = nullptr;
 	NWrapper* m_network = nullptr;
+	SettingStorage* m_settings;
 	char* m_currentmessage = nullptr;
 	int* m_settingBotCount = nullptr;
 
@@ -52,8 +54,9 @@ protected:
 	virtual bool onEvent(const Event& event) override;
 
 private:
-	std::unique_ptr<ImGuiHandler> m_imGuiHandler;
-
+	ImGuiHandler* m_imGuiHandler;
+	OptionsWindow m_optionsWindow;
+	bool m_ready;
 	// LobbyAudio
 	Entity* m_lobbyAudio = nullptr;
 
@@ -70,10 +73,18 @@ private:
 	bool m_settingsChanged;
 	float m_timeSinceLastUpdate;
 
+	ImGuiWindowFlags m_standaloneButtonflags;
+
+
+
 	unsigned int m_outerPadding;
 	unsigned int m_screenWidth;
 	unsigned int m_screenHeight;
 	unsigned int m_textHeight;
+
+	bool m_renderGameSettings;
+	bool m_renderApplicationSettings;
+
 
 	virtual bool onMyTextInput(const TextInputEvent& event) = 0;
 	bool onRecievedText(const NetworkChatEvent& event);
@@ -81,8 +92,7 @@ private:
 	bool onPlayerDisconnected(const NetworkDisconnectEvent& event);
 
 	void renderPlayerList();
-	void renderStartButton();
-	void renderQuitButton();
-	void renderSettings();
+	void renderGameSettings();		// Currently empty
 	void renderChat();
+	void renderMenu();
 };

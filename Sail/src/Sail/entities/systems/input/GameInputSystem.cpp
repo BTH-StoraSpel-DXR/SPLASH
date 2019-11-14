@@ -12,6 +12,7 @@
 #include "Sail/entities/components/AudioComponent.h"
 #include "../src/Network/NWrapperSingleton.h"
 #include "Sail/entities/systems/Gameplay/LevelSystem/LevelSystem.h"
+#include "../Sail/src/API/DX12/renderer/DX12RaytracingRenderer.h"
 
 #include "Sail/TimeSettings.h"
 
@@ -39,6 +40,10 @@ GameInputSystem::GameInputSystem() : BaseComponentSystem() {
 	m_roll = 0.f;
 
 	m_gameDataTracker = &GameDataTracker::getInstance();
+
+	for (int i = 0; i < 5; i++) {
+		m_playerPosHolder[i] = { 0,0,0 };
+	}
 }
 
 GameInputSystem::~GameInputSystem() {
@@ -115,6 +120,20 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 			auto movement = e->getComponent<MovementComponent>();
 			auto speedLimit = e->getComponent<SpeedLimitComponent>();
 			auto audioComp = e->getComponent<AudioComponent>();
+			auto transformComp = e->getComponent<TransformComponent>()->getTranslation();
+
+			m_playerPosHolder[0] = { transformComp.x, 0, transformComp.z};
+			m_playerPosHolder[1] = { transformComp.x + DETECTION_STEP_SIZE, 0, transformComp.z + DETECTION_STEP_SIZE };
+			m_playerPosHolder[2] = { transformComp.x + DETECTION_STEP_SIZE, 0, transformComp.z - DETECTION_STEP_SIZE };
+			m_playerPosHolder[3] = { transformComp.x - DETECTION_STEP_SIZE, 0, transformComp.z + DETECTION_STEP_SIZE };
+			m_playerPosHolder[4] = { transformComp.x - DETECTION_STEP_SIZE, 0, transformComp.z - DETECTION_STEP_SIZE };
+			
+			// Check for nearby water
+			for (int i = 0; i < 5; i++) {
+				if (m_isOnWaterHolder = Application::getInstance()->getRenderWrapper()->checkIfOnWater(m_playerPosHolder[i])) {
+					break;
+				}
+			}
 
 			// Get player movement inputs
 			Movement playerMovement = getPlayerMovementInput(e);
@@ -127,7 +146,7 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 				}
 			}
 
-			if ( Input::WasKeyJustPressed(KeyBinds::LIGHT_CANDLE) ) {
+			if ( Input::IsKeyPressed(KeyBinds::LIGHT_CANDLE) ) {
 				for ( auto child : e->getChildEntities() ) {
 					if ( child->hasComponent<CandleComponent>() ) {
 						auto candle = child->getComponent<CandleComponent>();
@@ -208,6 +227,8 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 			movement->relVel.z = glm::dot(movement->velocity, right);
 			movement->relVel.y = glm::dot(movement->velocity, glm::vec3(0.f, 1.f, 0.f));
 
+			m_soundSwitchTimer += dt;
+
 			// Prevent division by zero
 			if ( playerMovement.forwardMovement != 0.0f || playerMovement.rightMovement != 0.0f ) {
 
@@ -225,32 +246,68 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 							);
 
 							tempStopAll = true;
+
 							tempMetal = false;
+							tempWaterMetal = false;
 							tempTile = false;
+							tempWaterTile = false;
+							m_soundSwitchTimer = 0.0f;
 						}
 					}
 				}
 				// AUDIO TESTING (playing a looping running sound)
-				else if ( m_runSoundTimer > m_onGroundThreshold) {
+				else if (tempStopAll || (m_soundSwitchTimer > m_changeThreshold)) {
+					m_soundSwitchTimer = 0.0f;
 					// CORRIDOR
 					if (m_mapPointer->getAreaType(e->getComponent<TransformComponent>()->getTranslation().x, e->getComponent<TransformComponent>()->getTranslation().z) == 0) {
 						
+						if (m_isOnWaterHolder && !tempWaterMetal) {
+							NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
+								Netcode::MessageType::RUNNING_WATER_METAL_START,
+								SAIL_NEW Netcode::MessageRunningWaterMetalStart{ e->getComponent<NetworkSenderComponent>()->m_id }
+							);
+
+							tempWaterMetal = true;
+
+							tempStopAll = false;
+							tempMetal = false;
+							tempTile = false;
+							tempWaterTile = false;
+						}
+
 						// If-statement and relevant bools are to avoid sending unnecessary amount of messages/data
-						if (!tempMetal) {
+						else if (!m_isOnWaterHolder && !tempMetal) {
 							NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
 								Netcode::MessageType::RUNNING_METAL_START,
 								SAIL_NEW Netcode::MessageRunningMetalStart{ e->getComponent<NetworkSenderComponent>()->m_id }
 							);
 
-							tempStopAll = false;
 							tempMetal = true;
+
+							tempStopAll = false;
+							tempWaterMetal = false;
 							tempTile = false;
+							tempWaterTile = false;
 						}
 					}
 					// ROOM
 					else /*(AreaType > 0)*/ {
 						// If-statement and relevant bools are to avoid sending unnecessary amount of messages/data
-						if (!tempTile) {
+						if (m_isOnWaterHolder && !tempWaterTile) {
+							NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
+								Netcode::MessageType::RUNNING_WATER_TILE_START,
+								SAIL_NEW Netcode::MessageRunningWaterTileStart{ e->getComponent<NetworkSenderComponent>()->m_id }
+							);
+
+							tempStopAll = false;
+							tempMetal = false;
+							tempWaterMetal = false;
+							tempTile = false;
+
+							tempWaterTile = true;
+						}
+
+						else if (!m_isOnWaterHolder && !tempTile) {
 							NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
 								Netcode::MessageType::RUNNING_TILE_START,
 								SAIL_NEW Netcode::MessageRunningTileStart{ e->getComponent<NetworkSenderComponent>()->m_id }
@@ -258,13 +315,13 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 
 							tempStopAll = false;
 							tempMetal = false;
+							tempWaterMetal = false;
+							tempWaterTile = false;
+
 							tempTile = true;
 						}
 					}
-				} else {
-
-					m_runSoundTimer += dt;
-				}
+				} 
 
 				movement->accelerationToAdd =
 					glm::normalize(right * playerMovement.rightMovement + forward * playerMovement.forwardMovement * playerMovement.speedModifier)
@@ -283,10 +340,12 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 					);
 
 					tempStopAll = true;
+
 					tempMetal = false;
+					tempWaterMetal = false;
 					tempTile = false;
+					tempWaterTile = false;
 				}
-				m_runSoundTimer = 0.0f;
 			}
 		}
 	}

@@ -4,6 +4,15 @@
 #include "Sail/entities/systems/Gameplay/LevelSystem/LevelSystem.h"
 #include "Sail/utils/Storage/SettingStorage.h"
 
+class Octree;
+
+struct Sprinkler {
+	int roomID;
+	glm::vec3 pos;
+	glm::vec2 size;
+	bool active = false;
+};
+
 class SprinklerSystem final : public BaseComponentSystem {
 public:
 	SprinklerSystem();
@@ -13,21 +22,18 @@ public:
 	void stop() override;
 	const std::vector<int>& getActiveRooms() const;
 	void enableSprinklers();
+	void setOctree(Octree* octree);
 
 private:
-	bool m_enableNewSprinklers = true;
+	bool m_addNewSprinklers = true;
 	bool m_enableSprinklers = false;
 	float m_endGameTimer = 0.f;
-#ifdef _DEBUG
-	float m_endGameStartLimit = 15.f;
-#else
-	float m_endGameStartLimit = 60.f;
-#endif
+	float m_endGameStartLimit;
 
 	SettingStorage* m_settings;
 	LevelSystem* m_map;
-	float m_endGameTimeIncrement = m_endGameStartLimit / 3.0f;
-	float m_sprinklerDelayTime = 10.f;
+	Octree* m_octree;
+	float m_endGameTimeIncrement;
 	int m_endGameMapIncrement = 0;
 	int m_xMinIncrement = 0;
 	int m_xMaxIncrement = 0;
@@ -36,7 +42,8 @@ private:
 	int m_mapSide = 0;
 	std::vector<int> m_activeRooms;
 	std::vector<int> m_activeSprinklers;
+	std::vector<int> m_roomsToBeActivated;
+	std::vector<Sprinkler> m_sprinklers;
 
-	void addToActiveRooms(int room);
-
+	void addSprinkler(int x, int y);
 };

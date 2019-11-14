@@ -106,6 +106,10 @@ void AudioSystem::initialize() {
 #pragma region MISCELLANEOUS
 	m_audioEngine->loadSound("miscellaneous/re_ignition_candle.wav");
 	m_audioEngine->loadSound("miscellaneous/guitar.wav");
+	m_audioEngine->loadSound("miscellaneous/sprinkler_start1.wav");
+	m_audioEngine->loadSound("miscellaneous/sprinkler_start2.wav");
+	m_audioEngine->loadSound("miscellaneous/sprinkler.wav");
+	m_audioEngine->loadSound("miscellaneous/alarm.wav");
 #pragma endregion
 }
 

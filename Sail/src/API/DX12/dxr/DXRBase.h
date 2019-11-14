@@ -31,11 +31,12 @@ public:
 	void setGBufferInputs(DX12RenderableTexture** inputs);
 
 	void updateAccelerationStructures(const std::vector<Renderer::RenderCommand>& sceneGeometry, ID3D12GraphicsCommandList4* cmdList);
-	void updateSceneData(Camera& cam, LightSetup& lights, const std::vector<Metaball>& metaballs, const D3D12_RAYTRACING_AABB& m_next_metaball_aabb, const glm::vec3& mapSize, const glm::vec3& mapStart, const std::vector<glm::vec3>& teamColors);
+	void updateSceneData(Camera& cam, LightSetup& lights, const std::vector<Metaball>& metaballs, const D3D12_RAYTRACING_AABB& m_next_metaball_aabb, const glm::vec3& mapSize, const glm::vec3& mapStart, const std::vector<glm::vec3>& teamColors, bool doToneMapping = true);
 	void updateDecalData(DXRShaderCommon::DecalData* decals, size_t size);
 	void addWaterAtWorldPosition(const glm::vec3& position);
+	bool checkWaterAtWorldPosition(const glm::vec3& position);
 	void updateWaterData();
-	void dispatch(DX12RenderableTexture* outputTexture, ID3D12GraphicsCommandList4* cmdList);
+	void dispatch(DX12RenderableTexture* outputTexture, DX12RenderableTexture* outputBloomTexture, ID3D12GraphicsCommandList4* cmdList);
 
 	void resetWater();
 	void reloadShaders();
@@ -130,7 +131,12 @@ private:
 	wComPtr<ID3D12DescriptorHeap> m_rtDescriptorHeap = {};
 	D3D12_CPU_DESCRIPTOR_HANDLE m_rtHeapCPUHandle[2];
 	D3D12_GPU_DESCRIPTOR_HANDLE m_rtHeapGPUHandle[2];
+
+	D3D12_CPU_DESCRIPTOR_HANDLE m_rtOutputTextureUavCPUHandles[2];
 	D3D12_GPU_DESCRIPTOR_HANDLE m_rtOutputTextureUavGPUHandles[2];
+	D3D12_CPU_DESCRIPTOR_HANDLE m_rtOutputBloomTextureUavCPUHandles[2];
+	D3D12_GPU_DESCRIPTOR_HANDLE m_rtOutputBloomTextureUavGPUHandles[2];
+
 	D3D12_GPU_DESCRIPTOR_HANDLE m_rtBrdfLUTGPUHandle;
 	std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> m_gbufferStartGPUHandles;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_decalTexGPUHandles;

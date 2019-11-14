@@ -91,7 +91,7 @@ struct SceneCBuffer {
 	float4x4 viewToWorld;
 	float4x4 clipToView;
 	float3 cameraPosition;
-	float padding1;
+	bool doTonemapping;
 	float3 cameraDirection;
 	uint nMetaballs;
     uint nDecals;

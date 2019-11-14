@@ -93,14 +93,17 @@ int AudioEngine::beginSound(const std::string& filename, Audio::EffectType effec
 		createXAPOsubMixVoice(&m_sound[indexValue].xAPOsubMixVoice, m_sound[indexValue].xapo);
 	}
 	else {
-		// ... or reset it,
+		// Reset; preparing for re-creation
 		m_sound[indexValue].sourceVoice->Stop();
 		m_sound[indexValue].sourceVoice->FlushSourceBuffers();
 		m_sound[indexValue].sourceVoice->Discontinuity();
-		// ... and fill it up.
-		hr = m_sound[indexValue].sourceVoice->SubmitSourceBuffer(
-			Application::getInstance()->getResourceManager().getAudioData(m_sound[indexValue].filename).getSoundBuffer()
-		);
+
+		// Destroy to source voice to reset settings completely
+		m_sound[indexValue].sourceVoice->DestroyVoice();
+		m_sound[indexValue].sourceVoice = nullptr;
+
+		// Create the source voice
+		hr = m_xAudio2->CreateSourceVoice(&m_sound[indexValue].sourceVoice, (WAVEFORMATEX*)Application::getInstance()->getResourceManager().getAudioData(filename).getFormat());
 	}
 
 	bool useFilter = false;

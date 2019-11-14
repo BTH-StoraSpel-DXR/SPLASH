@@ -9,7 +9,9 @@ public:
 	class PostProcessInput : public Shader::ComputeShaderInput {
 	public:
 		Texture* inputTexture = nullptr;
+		Texture* inputTextureTwo = nullptr;
 		RenderableTexture* inputRenderableTexture = nullptr;
+		RenderableTexture* inputRenderableTextureTwo = nullptr;
 	};
 	class PostProcessOutput : public Shader::ComputeShaderOutput {
 	public:
@@ -22,38 +24,39 @@ public:
 	~PostProcessPipeline();
 
 	template <typename T>
-	unsigned int add(float resolutionScale = 1.0f) {
-		Application* app = Application::getInstance();
-
+	void add(const std::string& name, float resolutionScale = 1.0f, float textureSizeDifference = 1.f) {
 		// Create a new stage instance with the given scale
-		m_pipelineStages.emplace_back(std::make_unique<T>(), resolutionScale);
-
-		// Return the index of the inserted stage
-		return (unsigned int)m_pipelineStages.size() - 1U;
+		m_stages.insert({name, StageData(std::make_unique<T>(), resolutionScale, textureSizeDifference)});
 	}
-	void clear();
 
-	RenderableTexture* run(Texture* baseTexture, void* cmdList = nullptr);
 	RenderableTexture* run(RenderableTexture* baseTexture, void* cmdList = nullptr);
+
+	void setBloomInput(RenderableTexture* bloomTexture);
 
 	virtual bool onEvent(const Event& event) override;
 
 private:
-	bool onResize(const WindowResizeEvent& event);
-	RenderableTexture* runInternal(PostProcessInput& input, void* cmdList);
-
-private:
 	struct StageData {
-		StageData(std::unique_ptr<Shader> shader, float resolutionScale)
+		StageData() {
+			resolutionScale = 1.f;
+		}
+		StageData(std::unique_ptr<Shader> shader, float resolutionScale, const float textureSizeDifference)
 			: shader(std::move(shader))
 			, resolutionScale(resolutionScale)
+			, textureSizeDifference(textureSizeDifference)
 		{}
 		std::unique_ptr<Shader> shader;
 		float resolutionScale;
+		float textureSizeDifference;
 	};
 
-	std::vector<StageData> m_pipelineStages;
+	bool onResize(const WindowResizeEvent& event);
+	PostProcessPipeline::PostProcessOutput* runStage(PostProcessInput& input, StageData& stage, void* cmdList);
+
+private:
+	std::map<std::string, StageData> m_stages;
 
 	std::unique_ptr<ComputeShaderDispatcher> m_dispatcher;
 
+	RenderableTexture* m_bloomTexture;
 };

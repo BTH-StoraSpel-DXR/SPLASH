@@ -36,7 +36,7 @@ float GeometrySmith(float3 N, float3 V, float3 L, float roughness) {
     return ggx1 * ggx2;
 }
 
-float4 pbrShade(float3 worldPosition, float3 worldNormal, float3 invViewDir, float3 albedo, float emissivness, float metalness, float roughness, float ao, inout RayPayload payload) {
+float4 pbrShade(float3 worldPosition, float3 worldNormal, float3 invViewDir, float3 albedo, float emissivness, float metalness, float roughness, float ao, float originalAo, inout RayPayload payload) {
     float3 N = normalize(worldNormal); 
     float3 V = normalize(invViewDir);
 
@@ -45,9 +45,11 @@ float4 pbrShade(float3 worldPosition, float3 worldNormal, float3 invViewDir, flo
 
     // Reflectance equation
     float3 Lo = 0.0f;
-
+	// Add emissive materials
 	Lo += albedo * 2.2 * emissivness;
-		
+	
+	float shadowAmount = 0.f;
+	uint numLights = 0;
 	{
 
 		for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
@@ -62,8 +64,10 @@ float4 pbrShade(float3 worldPosition, float3 worldNormal, float3 invViewDir, flo
 			float3 H = normalize(V + L);
 			float distance = length(p.position - worldPosition);
 
+			numLights++;
 			// Dont do any shading if in shadow
 			if (Utils::rayHitAnything(worldPosition, L, distance)) {
+				shadowAmount++;
 				continue;
 			}
 
@@ -111,8 +115,10 @@ float4 pbrShade(float3 worldPosition, float3 worldNormal, float3 invViewDir, flo
 				continue;
 			}
 
+			numLights++;
 			// Dont do any shading if in shadow
 			if (Utils::rayHitAnything(worldPosition, L, distance)) {
+				shadowAmount++;
 				continue;
 			}
 
@@ -143,6 +149,11 @@ float4 pbrShade(float3 worldPosition, float3 worldNormal, float3 invViewDir, flo
 		}
 	}
 
+	// Lerp AO depending on shadow
+	// This fixes water being visible in darkness
+	shadowAmount /= numLights;
+	shadowAmount = 1 - (shadowAmount * shadowAmount);
+	ao = lerp(originalAo, ao, shadowAmount);
 
     // Use this when we have cube maps for irradiance, pre filtered reflections and brdfLUT
     float3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0f), F0, roughness);
@@ -190,10 +201,17 @@ float4 pbrShade(float3 worldPosition, float3 worldNormal, float3 invViewDir, flo
     // Add the (improvised) ambient term to get the final color of the pixel
     float3 color = ambient + Lo;
 
-    // Gamma correction
-    color = color / (color + 1.0f);
-    // Tone mapping using the Reinhard operator
-    color = pow(color, 1.0f / 2.2f);
-
     return float4(color, 1.0f);
+}
+
+float3 tonemap(float3 color) {
+	// Gamma correction
+    float3 output = color / (color + 1.0f);
+    // Tone mapping using the Reinhard operator
+    output = pow(output, 1.0f / 2.2f);
+	return output;
+}
+
+float getBrightness(float3 color) {
+    return dot(color, float3(0.2126f, 0.7152f, 0.0722f));
 }

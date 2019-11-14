@@ -187,7 +187,7 @@ void DX12ShaderPipeline::setTexture2D(const std::string& name, Texture* texture,
 void DX12ShaderPipeline::setDXTexture2D(DX12ATexture* dxTexture, ID3D12GraphicsCommandList4* dxCmdList) {
 	// Copy texture resource view to the gpu heap
 	if (csBlob) {
-		dxTexture->transitionStateTo(dxCmdList, D3D12_RESOURCE_STATE_GENERIC_READ);
+		dxTexture->transitionStateTo(dxCmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 		// Use compute heap
 		m_context->getDevice()->CopyDescriptorsSimple(1, m_context->getComputeGPUDescriptorHeap()->getNextCPUDescriptorHandle(), dxTexture->getSrvCDH(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	} else {

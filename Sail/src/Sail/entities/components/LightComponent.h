@@ -6,7 +6,7 @@
 class LightComponent : public Component<LightComponent> {
 public:
 	//create point light
-	LightComponent(PointLight pl){
+	LightComponent(PointLight pl) : defaultColor(pl.getColor()) {
 		m_pointLight.setAttenuation(pl.getAttenuation().constant,pl.getAttenuation().linear,pl.getAttenuation().quadratic);
 		m_pointLight.setColor(pl.getColor());
 		m_pointLight.setPosition(pl.getPosition());
@@ -70,6 +70,7 @@ public:
 #endif
 
 
+	glm::vec3 defaultColor = { 1.0f, 1.0f, 1.0f };
 private:
 	PointLight m_pointLight;
 

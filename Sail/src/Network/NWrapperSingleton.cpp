@@ -182,10 +182,6 @@ void NWrapperSingleton::queueGameStateNetworkSenderEvent(Netcode::MessageType ty
 	NetworkSenderEvent* e = SAIL_NEW NetworkSenderEvent;
 	e->type = type;
 
-#ifdef DEVELOPMENT
-	e->REDUNDANT_TYPE = type;
-#endif
-
 	e->data = data;
 	e->alsoSendToSelf = alsoSendToSelf;
 

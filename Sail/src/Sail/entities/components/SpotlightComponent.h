@@ -4,12 +4,14 @@
 
 class SpotLightSystem;
 
+
 class SpotlightComponent final : public Component<SpotlightComponent> {
 public:
 	SpotlightComponent(){}
 	~SpotlightComponent() {}
 
 	bool isOn;
+	float alarmTimer = 0.f;
 	int roomID;
 	SpotLight light; // Describes the light source when not rotated or moved
 

@@ -6,6 +6,9 @@
 #include "Sail/ai/states/AttackingState.h"
 #include "Sail/graphics/shader/compute/AnimationUpdateComputeShader.h"
 #include "Sail/graphics/shader/compute/ParticleComputeShader.h"
+#include "Sail/graphics/shader/postprocess/BlendShader.h"
+#include "Sail/graphics/shader/postprocess/GaussianBlurHorizontal.h"
+#include "Sail/graphics/shader/postprocess/GaussianBlurVertical.h"
 #include "Sail/TimeSettings.h"
 #include "Sail/utils/GameDataTracker.h"
 #include "Sail/events/EventDispatcher.h"
@@ -77,18 +80,6 @@ GameState::GameState(StateStack& stack)
 	initSystems(playerID);
 
 	// Textures needs to be loaded before they can be used
-	// TODO: automatically load textures when needed so the following can be removed
-	m_app->getResourceManager().loadTexture("sponza/textures/spnza_bricks_a_ddn.tga");
-	m_app->getResourceManager().loadTexture("sponza/textures/spnza_bricks_a_diff.tga");
-	m_app->getResourceManager().loadTexture("sponza/textures/spnza_bricks_a_spec.tga");
-	m_app->getResourceManager().loadTexture("sponza/textures/arenaBasicTexture.tga");
-	m_app->getResourceManager().loadTexture("sponza/textures/barrierBasicTexture.tga");
-	m_app->getResourceManager().loadTexture("sponza/textures/containerBasicTexture.tga");
-	m_app->getResourceManager().loadTexture("sponza/textures/rampBasicTexture.tga");
-	m_app->getResourceManager().loadTexture("sponza/textures/candleBasicTexture.tga");
-	m_app->getResourceManager().loadTexture("sponza/textures/character1texture.tga");
-
-
 	Application::getInstance()->getResourceManager().loadTexture("pbr/Character/CharacterTex.tga");
 	Application::getInstance()->getResourceManager().loadTexture("pbr/Character/CharacterMRAO.tga");
 	Application::getInstance()->getResourceManager().loadTexture("pbr/Character/CharacterNM.tga");
@@ -148,8 +139,13 @@ GameState::GameState(StateStack& stack)
 	int id = static_cast<int>(playerID);
 	glm::vec3 spawnLocation = glm::vec3(0.f);
 	for (int i = -1; i < id; i++) {
+
 		spawnLocation = m_componentSystems.levelSystem->getSpawnPoint();
 	}
+
+	SAIL_LOG(std::to_string(spawnLocation.x));
+	SAIL_LOG(std::to_string(spawnLocation.y));
+	SAIL_LOG(std::to_string(spawnLocation.z));
 
 	m_player = EntityFactory::CreateMyPlayer(playerID, m_currLightIndex++, spawnLocation).get();
 
@@ -309,6 +305,9 @@ bool GameState::processInput(float dt) {
 	// Reload shaders
 	if (Input::WasKeyJustPressed(KeyBinds::RELOAD_SHADER)) {
 		m_app->getAPI<DX12API>()->waitForGPU();
+		m_app->getResourceManager().reloadShader<BlendShader>();
+		m_app->getResourceManager().reloadShader<GaussianBlurHorizontal>();
+		m_app->getResourceManager().reloadShader<GaussianBlurVertical>();
 		m_app->getResourceManager().reloadShader<AnimationUpdateComputeShader>();
 		m_app->getResourceManager().reloadShader<ParticleComputeShader>();
 		m_app->getResourceManager().reloadShader<GBufferOutShader>();
@@ -432,8 +431,13 @@ void GameState::initSystems(const unsigned char playerID) {
 	} else {
 		m_componentSystems.networkReceiverSystem = ECS::Instance()->createSystem<NetworkReceiverSystemClient>();
 	}
+	m_componentSystems.killCamReceiverSystem = ECS::Instance()->createSystem<KillCamReceiverSystem>();
+
+	m_componentSystems.killCamReceiverSystem->init(playerID, m_componentSystems.networkSenderSystem);
 	m_componentSystems.networkReceiverSystem->init(playerID, m_componentSystems.networkSenderSystem);
-	m_componentSystems.networkSenderSystem->init(playerID, m_componentSystems.networkReceiverSystem);
+	m_componentSystems.networkSenderSystem->init(playerID, m_componentSystems.networkReceiverSystem, m_componentSystems.killCamReceiverSystem);
+
+
 
 	// Create system for handling and updating sounds
 	m_componentSystems.audioSystem = ECS::Instance()->createSystem<AudioSystem>();
@@ -444,6 +448,7 @@ void GameState::initSystems(const unsigned char playerID) {
 	m_componentSystems.particleSystem = ECS::Instance()->createSystem<ParticleSystem>();
 
 	m_componentSystems.sprinklerSystem = ECS::Instance()->createSystem<SprinklerSystem>();
+	m_componentSystems.sprinklerSystem->setOctree(m_octree);
 
 	m_componentSystems.sprintingSystem = ECS::Instance()->createSystem<SprintingSystem>();
 }
@@ -531,6 +536,7 @@ bool GameState::onResize(const WindowResizeEvent& event) {
 
 bool GameState::onNetworkSerializedPackageEvent(const NetworkSerializedPackageEvent& event) {
 	m_componentSystems.networkReceiverSystem->handleIncomingData(event.serializedData);
+	m_componentSystems.killCamReceiverSystem->handleIncomingData(event.serializedData);
 	return true;
 }
 
@@ -589,7 +595,12 @@ bool GameState::fixedUpdate(float dt) {
 	}
 #endif
 
+	
 	updatePerTickComponentSystems(dt);
+
+	if (m_isInKillCamMode) {
+		updateKillCamComponentSystems(dt);
+	}
 
 	return true;
 }
@@ -664,9 +675,27 @@ bool GameState::renderImguiDebug(float dt) {
 void GameState::shutDownGameState() {
 	// Show mouse cursor if hidden
 	Input::HideCursor(false);
-
 	ECS::Instance()->stopAllSystems();
 	ECS::Instance()->destroyAllEntities();
+}
+
+
+// TODO: Add more systems here that only deal with replay entities/components
+void GameState::updateKillCamComponentSystems(float dt) {
+	
+	// TODO: Prepare transform update for interpolation etc.
+
+	m_componentSystems.killCamReceiverSystem->processReplayData(dt);
+	
+
+	// TODO: run relevant systems in parallel
+	//runSystem(dt, m_componentSystems.killCamReceiverSystem);
+
+
+	// Wait for all systems to finish executing
+	for (auto& fut : m_runningSystemJobs) {
+		fut.get();
+	}
 }
 
 // HERE BE DRAGONS
@@ -684,7 +713,8 @@ void GameState::updatePerTickComponentSystems(float dt) {
 	// Update entities with info from the network and from ourself
 	// DON'T MOVE, should happen at the start of each tick
 	m_componentSystems.networkReceiverSystem->update(dt);
-	
+	m_componentSystems.killCamReceiverSystem->update(dt); // This just increments the killcam's ringbuffer.
+
 	m_componentSystems.movementSystem->update(dt);
 	m_componentSystems.speedLimitSystem->update();
 	m_componentSystems.collisionSystem->update(dt);
@@ -749,7 +779,11 @@ void GameState::updatePerFrameComponentSystems(float dt, float alpha) {
 	m_componentSystems.entityRemovalSystem->update();
 }
 
+#define DISABLE_RUNSYSTEM_MT
 void GameState::runSystem(float dt, BaseComponentSystem* toRun) {
+#ifdef DISABLE_RUNSYSTEM_MT
+	toRun->update(dt);
+#else
 	bool started = false;
 	while (!started) {
 		// First check if the system can be run
@@ -777,7 +811,7 @@ void GameState::runSystem(float dt, BaseComponentSystem* toRun) {
 
 					int toRemoveIndex = -1;
 					for (int j = 0; j < m_runningSystems.size(); j++) {
-						// Currently just compares memory adresses (if they point to the same location they're the same object)
+						// Currently just compares memory addresses (if they point to the same location they're the same object)
 						if (m_runningSystems[j] == doneSys)
 							toRemoveIndex = j;
 					}
@@ -792,6 +826,7 @@ void GameState::runSystem(float dt, BaseComponentSystem* toRun) {
 			}
 		}
 	}
+#endif
 }
 
 const std::string GameState::teleportToMap() {

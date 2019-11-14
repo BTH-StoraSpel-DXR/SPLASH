@@ -20,7 +20,7 @@ public:
 		~Setting();
 
 		void setSelected(const unsigned int selection);
-
+		const Option& getSelected();
 		unsigned int selected;
 		std::vector<Option> options;
 	};
@@ -54,8 +54,8 @@ public:
 	bool loadFromFile(const std::string& filename);
 	bool saveToFile(const std::string& filename);
 
-	std::string serialize(const std::map<std::string, std::map<std::string, Setting>>& stat, const std::map<std::string, std::map<std::string, DynamicSetting>>& dynamic);
-	bool deSerialize(const std::string& msg, std::map<std::string, std::map<std::string, Setting>>& stat, std::map<std::string, std::map<std::string, DynamicSetting>>& dynamic);
+	std::string serialize(const std::unordered_map<std::string, std::unordered_map<std::string, Setting>>& stat, const std::unordered_map<std::string, std::unordered_map<std::string, DynamicSetting>>& dynamic);
+	bool deSerialize(const std::string& msg, std::unordered_map<std::string, std::unordered_map<std::string, Setting>>& stat, std::unordered_map<std::string, std::unordered_map<std::string, DynamicSetting>>& dynamic);
 
 
 
@@ -63,12 +63,12 @@ public:
 	// settings[area][setting].selected == current selected setting; 
 	// settings[area][setting].options[selected].value == value of selected setting; 
 
-	std::map<std::string, std::map<std::string, Setting>> applicationSettingsStatic;
-	std::map<std::string, std::map<std::string, DynamicSetting>> applicationSettingsDynamic;
+	std::unordered_map<std::string, std::unordered_map<std::string, Setting>> applicationSettingsStatic;
+	std::unordered_map<std::string, std::unordered_map<std::string, DynamicSetting>> applicationSettingsDynamic;
 
 
-	std::map<std::string, std::map<std::string, Setting>> gameSettingsStatic;
-	std::map<std::string, std::map<std::string, DynamicSetting>> gameSettingsDynamic;
+	std::unordered_map<std::string, std::unordered_map<std::string, Setting>> gameSettingsStatic;
+	std::unordered_map<std::string, std::unordered_map<std::string, DynamicSetting>> gameSettingsDynamic;
 
 
 private:
@@ -84,5 +84,6 @@ private:
 
 	void createGameDefaultStructure();
 	void createGameDefaultMap();
+	void createGameModeDefault();
 
 };

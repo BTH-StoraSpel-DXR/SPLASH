@@ -29,6 +29,7 @@
 #include "PlayerComponent.h"
 #include "ProjectileComponent.h"
 #include "RealTimeComponent.h"
+#include "ReplayComponent.h"
 #include "SpectatorComponent.h"
 #include "SpeedLimitComponent.h"
 #include "SprintingComponent.h"

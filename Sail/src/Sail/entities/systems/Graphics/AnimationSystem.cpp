@@ -386,7 +386,7 @@ void AnimationSystem::initDebugAnimations() {
 	unsigned int animationCount = stack->getAnimationCount();
 	for (unsigned int i = 0; i < animationCount; i++) {
 		auto animationEntity2 = ECS::Instance()->createEntity("Doc" + std::to_string(i));
-		EntityFactory::CreateGenericPlayer(animationEntity2, i, glm::vec3(-2.0f + i * 1.2f, 0, -2));
+		EntityFactory::CreateGenericPlayer(animationEntity2, i, glm::vec3(-2.0f + i * 1.2f, 0, -2),0);
 
 		AnimationComponent* ac = animationEntity2->getComponent<AnimationComponent>();
 		ac->setAnimation(i);

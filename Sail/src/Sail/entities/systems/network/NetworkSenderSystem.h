@@ -12,7 +12,9 @@
 class Entity;
 class MessageType;
 class NetworkReceiverSystem;
+class KillCamReceiverSystem;
 struct NetworkSenderEvent;
+
 
 class NetworkSenderSystem : public BaseComponentSystem {
 public:
@@ -22,15 +24,10 @@ public:
 	void update();
 	virtual void stop() override;
 
-	void init(Netcode::PlayerID playerID, NetworkReceiverSystem* receiverSystem);
+	void init(Netcode::PlayerID playerID, NetworkReceiverSystem* receiverSystem, KillCamReceiverSystem* killCamSystem);
 	
 	void queueEvent(NetworkSenderEvent* event);
-	void pushDataToBuffer(std::string data);
-	
-	// TODO: Is this used?
-	const std::vector<Entity*>& getEntities() const;
-
-	void addEntityToListONLYFORNETWORKRECIEVER(Entity* e);
+	void pushDataToBuffer(const std::string& data);
 
 #ifdef DEVELOPMENT
 	void imguiPrint(Entity** selectedEntity = nullptr) {
@@ -49,6 +46,7 @@ private:
 	std::atomic<size_t> m_nrOfEventsToSendToSelf = 0; // atomic is probably not needed
 
 	NetworkReceiverSystem* m_receiverSystem = nullptr;
+	KillCamReceiverSystem* m_killCamSystem = nullptr;
 
 	/*
 	 * The host will copy incoming packages to this queue and then send them all out in update()

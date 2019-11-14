@@ -20,10 +20,12 @@ public:
 	{}
 
 	/*
-	  This function should only be used by the host to create pass-through sender components.
+	  This should only be used if you've generated a unique component ID previously but haven't created the entity yet.
+	  Currently this is only used for the creation of projectiles since their component ID are sent over the network
+	  before they are created by the local player.
 	*/
-	NetworkSenderComponent(Netcode::EntityType entityType, Netcode::ComponentID objectID, Netcode::MessageType msgType) :
-		m_id(objectID), m_entityType(entityType), m_dataTypes{msgType}
+	NetworkSenderComponent(Netcode::EntityType entityType, Netcode::ComponentID objectID) :
+		m_id(objectID), m_entityType(entityType)
 	{}
 
 	~NetworkSenderComponent() {}

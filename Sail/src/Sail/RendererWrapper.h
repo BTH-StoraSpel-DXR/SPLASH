@@ -19,6 +19,7 @@ public:
 	Renderer* getCurrentRenderer();
 	Renderer* getScreenSpaceRenderer();
 	PostProcessPipeline* getPostProcessPipeline();
+	bool checkIfOnWater(const glm::vec3& worldPos) const;
 	bool onEvent(const Event& event) override;
 
 private:

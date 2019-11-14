@@ -2,6 +2,7 @@
 #include "NetworkSenderSystem.h"
 
 #include "receivers/NetworkReceiverSystem.h"
+#include "receivers/KillCamReceiverSystem.h"
 
 #include "Sail/entities/components/NetworkSenderComponent.h"
 #include "Sail/entities/components/OnlineOwnerComponent.h"
@@ -36,9 +37,10 @@ NetworkSenderSystem::~NetworkSenderSystem() {
 	}
 }
 
-void NetworkSenderSystem::init(Netcode::PlayerID playerID, NetworkReceiverSystem* receiverSystem) {
+void NetworkSenderSystem::init(Netcode::PlayerID playerID, NetworkReceiverSystem* receiverSystem, KillCamReceiverSystem* killCamSystem) {
 	m_playerID = playerID;
 	m_receiverSystem = receiverSystem;
+	m_killCamSystem = killCamSystem;
 }
 
 /*
@@ -92,12 +94,27 @@ void NetworkSenderSystem::update() {
 	sendToOthers(m_playerID);
 	sendToSelf(Netcode::MESSAGE_FROM_SELF_ID);
 
+
+	// See how many SenderComponents have information to send
+	size_t nonEmptySenderComponents = 0;
+	for (auto e : entities) {
+		if (!e->getComponent<NetworkSenderComponent>()->m_dataTypes.empty()) {
+			nonEmptySenderComponents++;
+		}
+	}
+
 	// Write nrOfEntities
-	sendToOthers(entities.size());
+	sendToOthers(nonEmptySenderComponents);
 	sendToSelf(size_t{0}); // SenderComponent messages should not be sent to ourself
 
 	for (auto e : entities) {
 		NetworkSenderComponent* nsc = e->getComponent<NetworkSenderComponent>();
+		
+		// If a SenderComponent doesn't have any active messages don't send any of its information
+		if (nsc->m_dataTypes.empty()) {
+			continue;
+		}
+
 		sendToOthers(nsc->m_id);                // ComponentID    
 		sendToOthers(nsc->m_entityType);        // Entity type
 		sendToOthers(nsc->m_dataTypes.size());  // NrOfMessages
@@ -136,6 +153,10 @@ void NetworkSenderSystem::update() {
 	std::string binaryDataToSendToOthers = osToOthers.str();
 	if (NWrapperSingleton::getInstance().isHost()) {
 		NWrapperSingleton::getInstance().getNetworkWrapper()->sendSerializedDataAllClients(binaryDataToSendToOthers);
+
+		// Clients get their packets sent back to them since the host just forwards them to all clients.
+		// So only the host needs to send this to themselves here since it's the only way the host's packets can be saved from.
+		m_killCamSystem->handleIncomingData(binaryDataToSendToOthers);
 	} else {
 		NWrapperSingleton::getInstance().getNetworkWrapper()->sendSerializedDataToHost(binaryDataToSendToOthers);
 	}
@@ -184,13 +205,9 @@ void NetworkSenderSystem::queueEvent(NetworkSenderEvent* type) {
 
 // ONLY DO FOR THE HOST
 // Push incoming data strings to the back of a FIFO list which will be forwarded to all other players
-void NetworkSenderSystem::pushDataToBuffer(std::string data) {
-	std::scoped_lock lock(m_forwardBufferLock);
+void NetworkSenderSystem::pushDataToBuffer(const std::string& data) {
+	std::lock_guard<std::mutex> lock(m_forwardBufferLock);
 	m_HOSTONLY_dataToForward.push(data);
-}
-
-const std::vector<Entity*>& NetworkSenderSystem::getEntities() const {
-	return entities;
 }
 
 // TODO: Test this to see if it's actually needed or not
@@ -226,11 +243,6 @@ void NetworkSenderSystem::stop() {
 			NWrapperSingleton::getInstance().getNetworkWrapper()->sendSerializedDataToHost(binaryData);
 		}
 	}
-}
-
-// No longer used, remove?
-void NetworkSenderSystem::addEntityToListONLYFORNETWORKRECIEVER(Entity* e) {
-	instantAddEntity(e);
 }
 
 void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageType, Entity* e, Netcode::OutArchive& ar) {
@@ -270,6 +282,11 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 	{
 		TransformComponent* t = e->getComponent<TransformComponent>();
 		ArchiveHelpers::saveVec3(ar, t->getRotations());
+	}
+	break;
+	case Netcode::MessageType::DESTROY_ENTITY:
+	{
+		e->getComponent<NetworkSenderComponent>()->removeAllMessageTypes();
 	}
 	break;
 	case Netcode::MessageType::SHOOT_START:
@@ -315,10 +332,6 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 
 void NetworkSenderSystem::writeEventToArchive(NetworkSenderEvent* event, Netcode::OutArchive& ar) {
 	ar(event->type); // Send the event-type
-#ifdef DEVELOPMENT
-	ar(event->REDUNDANT_TYPE);
-#endif
-
 
 	// NOTE: Please keep this switch in alphabetical order (at least for the first word)
 	switch (event->type) {
@@ -440,6 +453,18 @@ void NetworkSenderSystem::writeEventToArchive(NetworkSenderEvent* event, Netcode
 		ar(data->runningPlayer); // Send
 	}
 	break;
+	case Netcode::MessageType::RUNNING_WATER_METAL_START:
+	{
+		Netcode::MessageRunningWaterMetalStart* data = static_cast<Netcode::MessageRunningWaterMetalStart*>(event->data);
+		ar(data->runningPlayer);
+	}
+	break;
+	case Netcode::MessageType::RUNNING_WATER_TILE_START:
+	{
+		Netcode::MessageRunningWaterTileStart* data = static_cast<Netcode::MessageRunningWaterTileStart*>(event->data);
+		ar(data->runningPlayer);
+	}
+	break;
 	case Netcode::MessageType::RUNNING_STOP_SOUND:
 	{
 		Netcode::MessageRunningStopSound* data = static_cast<Netcode::MessageRunningStopSound*>(event->data);
@@ -460,6 +485,7 @@ void NetworkSenderSystem::writeEventToArchive(NetworkSenderEvent* event, Netcode
 
 		ArchiveHelpers::saveVec3(ar, data->translation);
 		ArchiveHelpers::saveVec3(ar, data->velocity);
+		ar(data->projectileComponentID);
 		ar(data->ownerPlayerComponentID);
 	}
 	break;

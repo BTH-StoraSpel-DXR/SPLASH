@@ -19,7 +19,7 @@ MenuState::MenuState(StateStack& stack)
 	m_input = Input::GetInstance();
 	m_network = &NWrapperSingleton::getInstance();
 	m_app = Application::getInstance();
-
+	m_imGuiHandler = m_app->getImGuiHandler();
 	std::string name = loadPlayerName("res/data/localplayer.settings");
 	m_network->setPlayerName(name.c_str());
 	
@@ -63,6 +63,29 @@ bool MenuState::renderImgui(float dt) {
 	
 	//Keep
 	//ImGui::ShowDemoWindow();
+
+	static std::string font = "Beb20";
+	ImGui::PushFont(m_imGuiHandler->getFont(font));
+
+	if (ImGui::Begin("IMGUISETTINGS")) {
+		if (ImGui::BeginCombo("##FONTS", &font.front())) {
+			for (auto const& [key, val] : m_imGuiHandler->getFontMap()) {
+				ImGui::PushFont(val);
+
+				if(ImGui::Selectable(key.c_str(), font == key)) {
+					font = key;
+				}
+				ImGui::PopFont();
+			}
+			ImGui::EndCombo();
+		}
+	}
+	ImGui::End();
+
+	ImGui::PopFont();
+	
+	ImGui::PushFont(m_imGuiHandler->getFont(font));
+
 
 	static char buf[101] = "";
 	// Host
@@ -250,6 +273,10 @@ bool MenuState::renderImgui(float dt) {
 		ImGui::ProgressBar(m_app->getResourceManager().numberOfTextures()/64.0f, ImVec2(0.0f, 0.0f));
 	}
 	ImGui::End();
+
+	ImGui::PopFont();
+
+
 	return false;
 }
 

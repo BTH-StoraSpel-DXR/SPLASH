@@ -27,10 +27,9 @@ DX12ForwardRenderer::DX12ForwardRenderer() {
 		m_context->initCommand(m_command[i], D3D12_COMMAND_LIST_TYPE_DIRECT, name.c_str());
 	}
 
-
 	auto windowWidth = app->getWindow()->getWindowWidth();
 	auto windowHeight = app->getWindow()->getWindowHeight();
-	m_outputTexture = std::unique_ptr<DX12RenderableTexture>(static_cast<DX12RenderableTexture*>(RenderableTexture::Create(windowWidth, windowHeight, "Forward renderer output renderable texture", true)));
+	m_outputTexture = std::unique_ptr<DX12RenderableTexture>(static_cast<DX12RenderableTexture*>(RenderableTexture::Create(windowWidth, windowHeight, "Forward renderer output renderable texture", Texture::R8G8B8A8, true)));
 	m_outputTexture->renameBuffer("Forward renderer output renderable texture");
 }
 
