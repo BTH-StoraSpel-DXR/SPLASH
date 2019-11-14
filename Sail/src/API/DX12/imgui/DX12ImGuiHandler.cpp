@@ -44,18 +44,17 @@ void DX12ImGuiHandler::init() {
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
-	//io.ConfigViewportsNoAutoMerge = true;
-	//io.ConfigViewportsNoTaskBarIcon = true;
-	//io.ConfigViewportsNoDefaultParent = true;
-	//io.ConfigDockingTabBarOnSingleWindows = true;
-	//io.ConfigDockingTransparentPayload = true;
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+	/*io.ConfigViewportsNoAutoMerge = true;
+	io.ConfigViewportsNoTaskBarIcon = true;
+	io.ConfigViewportsNoDefaultParent = true;
+	io.ConfigDockingTabBarOnSingleWindows = true;
+	io.ConfigDockingTransparentPayload = true;*/
 
 	// Setup Dear ImGui style
 	//ImGui::StyleColorsDark();
 	//ImGui::StyleColorsClassic();
 	applySailStyle();
-	addFonts();
 
 	// When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -66,10 +65,14 @@ void DX12ImGuiHandler::init() {
 
 	// Setup Platform/Renderer bindings
 	ImGui_ImplWin32_Init((void*)*window->getHwnd());
-	ImGui_ImplDX12_Init(m_context->getDevice(), DX12API::NUM_SWAP_BUFFERS,
+	ImGui_ImplDX12_Init(m_context->getDevice(),
+		4,
 		DXGI_FORMAT_R8G8B8A8_UNORM,
+		m_descHeap->get(),
 		m_descHeap->getCPUDescriptorHandleForIndex(0),
 		m_descHeap->getGPUDescriptorHandleForIndex(0));
+
+	addFonts();
 }
 
 void DX12ImGuiHandler::begin() {
@@ -115,5 +118,5 @@ void DX12ImGuiHandler::end() {
 		ImGui::UpdatePlatformWindows();
 		ImGui::RenderPlatformWindowsDefault();
 	}
-	
+
 }

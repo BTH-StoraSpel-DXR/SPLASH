@@ -7,6 +7,7 @@
 #include "Win32Input.h"
 #include <dxgi.h>
 #include <wrl.h>
+#include <examples/imgui_impl_dx12.h>
 
 namespace {
 	// Used to forward messages to user defined proc function
@@ -130,10 +131,14 @@ LRESULT Win32Window::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
 		break;
 	case WM_SIZE:
 	{
-		if (wParam == SIZE_MINIMIZED) {
+		if (wParam != SIZE_MINIMIZED){
+			ImGui_ImplDX12_InvalidateDeviceObjects();
+			ImGui_ImplDX12_CreateDeviceObjects();
+		} else {
 			isWindowMinimized = true;
 			m_resized = true;
-		} else if (wParam == SIZE_MAXIMIZED || wParam == SIZE_RESTORED) {
+		}
+		if (wParam == SIZE_MAXIMIZED || wParam == SIZE_RESTORED) {
 			int width = LOWORD(lParam);
 			int height = HIWORD(lParam);
 			if (width != windowWidth || height != windowHeight) {
