@@ -41,8 +41,10 @@ void CandleThrowingSystem::update(float dt) {
 			}
 		}
 
-		if (torchE != nullptr) {
-			if (torchE->getComponent<CandleComponent>()->isLit) {
+		if (torchE) {
+			CandleComponent* cc = torchE->getComponent<CandleComponent>();
+
+			if (cc->isLit) {
 				if (throwC->isDropping) {
 					throwC->dropTimer += dt;
 					if (throwC->dropTimer > DROP_ANIMATION_LENGTH) {
