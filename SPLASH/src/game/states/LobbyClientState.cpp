@@ -10,7 +10,6 @@ LobbyClientState::LobbyClientState(StateStack& stack)
 	m_wasDropped(false) {
 
 	EventDispatcher::Instance().subscribe(Event::Type::NETWORK_DROPPED, this);
-	EventDispatcher::Instance().subscribe(Event::Type::NETWORK_START_GAME, this);
 	EventDispatcher::Instance().subscribe(Event::Type::SETTINGS_UPDATED, this);
 }
 
@@ -21,7 +20,6 @@ LobbyClientState::~LobbyClientState() {
 	}
 
 	EventDispatcher::Instance().unsubscribe(Event::Type::NETWORK_DROPPED, this);
-	EventDispatcher::Instance().unsubscribe(Event::Type::NETWORK_START_GAME, this);
 	EventDispatcher::Instance().unsubscribe(Event::Type::SETTINGS_UPDATED, this);
 }
 
@@ -30,7 +28,6 @@ bool LobbyClientState::onEvent(const Event& event) {
 
 	switch (event.type) {
 	case Event::Type::NETWORK_DROPPED:		onDropped((const NetworkDroppedEvent&)event); break;
-	case Event::Type::NETWORK_START_GAME:	onStartGame((const NetworkStartGameEvent&)event); break;
 	case Event::Type::SETTINGS_UPDATED:		onSettingsChanged((const SettingsUpdatedEvent&)event); break;
 	default: break;
 	}
@@ -60,16 +57,6 @@ bool LobbyClientState::onDropped(const NetworkDroppedEvent& event) {
 
 	// Reset network so that user can choose host/client again.
 	m_wasDropped = true;
-
-	return true;
-}
-
-bool LobbyClientState::onStartGame(const NetworkStartGameEvent& event) {
-	// Queue changes to the stack while maintaining the connection
-
-	m_app->getStateStorage().setLobbyToGameData(LobbyToGameData(*m_settingBotCount));
-	this->requestStackClear();
-	this->requestStackPush(States::Game);
 
 	return true;
 }

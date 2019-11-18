@@ -2,6 +2,7 @@
 #include "pch.h"
 #include "ReceiverBase.h"
 #include "Sail/entities/Entity.h"
+#include "Sail/entities/components/SanityComponent.h"
 
 #include "Sail/utils/GameDataTracker.h"
 #include "Sail/utils/Utils.h"
@@ -63,7 +64,7 @@ const std::vector<Entity*>& ReceiverBase::getEntities() const { return entities;
 	--------------------------------------------------
 
 */
-void ReceiverBase::processData(float dt, std::queue<std::string>& data) {
+void ReceiverBase::processData(float dt, std::queue<std::string>& data, const bool ignoreFromSelf) {
 	// TODO: Remove a bunch of stuff from here
 	size_t nrOfSenderComponents    = 0;
 	size_t nrOfMessagesInComponent = 0;
@@ -77,6 +78,7 @@ void ReceiverBase::processData(float dt, std::queue<std::string>& data) {
 	// Commonly used types within messages/events:
 	glm::vec3 vector;
 	glm::quat quaternion;
+	float lowPassFrequency = -1;
 
 
 	// Process all messages in the buffer
@@ -88,7 +90,7 @@ void ReceiverBase::processData(float dt, std::queue<std::string>& data) {
 
 		// If the packet was originally sent over the network from ourself 
 		// then don't process it and go to the next packet
-		if (senderID == m_playerID) { data.pop(); continue; }
+		if (ignoreFromSelf && senderID == m_playerID) { data.pop(); continue; }
 
 		// If the message was sent internally to ourself then correct the senderID
 		if (senderID == Netcode::MESSAGE_FROM_SELF_ID) { senderID = m_playerID; }
@@ -149,32 +151,32 @@ void ReceiverBase::processData(float dt, std::queue<std::string>& data) {
 				break;
 				case Netcode::MessageType::SHOOT_START:
 				{
-					ShotFiredInfo info;
+					ar(lowPassFrequency);
 
-					ArchiveHelpers::loadVec3(ar, info.gunPosition);
-					ArchiveHelpers::loadVec3(ar, info.gunVelocity);
 
-					shootStart(compID, info);
+					shootStart(compID, lowPassFrequency);
 				}
 				break;
 				case Netcode::MessageType::SHOOT_LOOP:
 				{
-					ShotFiredInfo info;
+					ar(lowPassFrequency);
 
-					ArchiveHelpers::loadVec3(ar, info.gunPosition);
-					ArchiveHelpers::loadVec3(ar, info.gunVelocity);
 
-					shootLoop(compID, info);
+					shootStart(compID, lowPassFrequency);
 				}
 				break;
 				case Netcode::MessageType::SHOOT_END:
 				{
-					ShotFiredInfo info;
+					ar(lowPassFrequency);
 
-					ArchiveHelpers::loadVec3(ar, info.gunPosition);
-					ArchiveHelpers::loadVec3(ar, info.gunVelocity);
-
-					shootEnd(compID, info);
+					shootEnd(compID, lowPassFrequency);
+				}
+				break;
+				case Netcode::MessageType::UPDATE_SANITY:
+				{
+					float sanity;
+					ar(sanity);
+					EventDispatcher::Instance().emit(UpdateSanityEvent(compID, sanity));
 				}
 				break;
 				default:
@@ -198,7 +200,6 @@ void ReceiverBase::processData(float dt, std::queue<std::string>& data) {
 #if defined(DEVELOPMENT) && defined(_LOG_TO_FILE)
 			out << "Event: " << Netcode::MessageNames[(int)(eventType)-1] << "\n";
 #endif
-
 
 			// NOTE: Please keep this switch in alphabetical order (at least for the first word)
 			switch (messageType) {
@@ -228,6 +229,18 @@ void ReceiverBase::processData(float dt, std::queue<std::string>& data) {
 			case Netcode::MessageType::ENABLE_SPRINKLERS:
 			{
 				enableSprinklers();
+			}
+			break;
+			case Netcode::MessageType::START_THROWING:
+			{
+				ar(compID);
+				throwingStartSound(compID);
+			}
+			break;
+			case Netcode::MessageType::STOP_THROWING:
+			{
+				ar(compID);
+				throwingEndSound(compID);
 			}
 			break;
 			case Netcode::MessageType::ENDGAME_STATS:

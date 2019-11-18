@@ -16,6 +16,7 @@ struct ParticleInput{
 	uint numPrevParticles;
 	uint maxOutputVertices;
 	float frameTime;
+	float particleSize;
 };
 
 cbuffer CSInputBuffer : register(b0) {
@@ -36,6 +37,7 @@ struct ParticlePhysics {
 	float3 velocity;
 	float3 acceleration;
 	float3 position;
+	float size;
 };
 
 RWStructuredBuffer<ParticlePhysics> CSPhysicsBuffer: register(u11) : SAIL_IGNORE;
@@ -89,12 +91,17 @@ void updateVertices(int particleIndex) {
 	float3 billboardRight = normalize(cross(particleCam, float3(0.f, 1.0f, 0.f)));
 	float3 billboardUp = normalize(cross(billboardRight, particleCam));
 	
-	CSOutputBuffer[v0Index].position = CSPhysicsBuffer[particleIndex].position - 0.1f * billboardRight + 0.1f * billboardUp;
-	CSOutputBuffer[v0Index + 1].position = CSPhysicsBuffer[particleIndex].position - 0.1f * billboardRight - 0.1f * billboardUp;
-	CSOutputBuffer[v0Index + 2].position = CSPhysicsBuffer[particleIndex].position + 0.1f * billboardRight + 0.1f * billboardUp;
-	CSOutputBuffer[v0Index + 3].position = CSPhysicsBuffer[particleIndex].position + 0.1f * billboardRight + 0.1f * billboardUp;
-	CSOutputBuffer[v0Index + 4].position = CSPhysicsBuffer[particleIndex].position - 0.1f * billboardRight - 0.1f * billboardUp;
-	CSOutputBuffer[v0Index + 5].position = CSPhysicsBuffer[particleIndex].position + 0.1f * billboardRight - 0.1f * billboardUp;
+	CSOutputBuffer[v0Index].position = CSPhysicsBuffer[particleIndex].position - CSPhysicsBuffer[particleIndex].size * billboardRight + CSPhysicsBuffer[particleIndex].size * billboardUp;
+	CSOutputBuffer[v0Index + 1].position = CSPhysicsBuffer[particleIndex].position - CSPhysicsBuffer[particleIndex].size * billboardRight - CSPhysicsBuffer[particleIndex].size * billboardUp;
+	CSOutputBuffer[v0Index + 2].position = CSPhysicsBuffer[particleIndex].position + CSPhysicsBuffer[particleIndex].size * billboardRight + CSPhysicsBuffer[particleIndex].size * billboardUp;
+	CSOutputBuffer[v0Index + 3].position = CSPhysicsBuffer[particleIndex].position + CSPhysicsBuffer[particleIndex].size * billboardRight + CSPhysicsBuffer[particleIndex].size * billboardUp;
+	CSOutputBuffer[v0Index + 4].position = CSPhysicsBuffer[particleIndex].position - CSPhysicsBuffer[particleIndex].size * billboardRight - CSPhysicsBuffer[particleIndex].size * billboardUp;
+	CSOutputBuffer[v0Index + 5].position = CSPhysicsBuffer[particleIndex].position + CSPhysicsBuffer[particleIndex].size * billboardRight - CSPhysicsBuffer[particleIndex].size * billboardUp;
+	
+	// for (uint i = 0; i < 6; i++) {
+	// 	CSOutputBuffer[v0Index + i].normal = normalize(-particleCam);
+	// }
+	
 }
 
 void updatePhysics(int particleIndex, float dt) {
@@ -181,6 +188,7 @@ void CSMain(ComputeShaderInput IN) {
 		CSPhysicsBuffer[inputBuffer.numPrevParticles - inputBuffer.numToRemove + i].acceleration = inputBuffer.particles[i].acceleration;
 		CSPhysicsBuffer[inputBuffer.numPrevParticles - inputBuffer.numToRemove + i].velocity = inputBuffer.particles[i].velocity;
 		CSPhysicsBuffer[inputBuffer.numPrevParticles - inputBuffer.numToRemove + i].position = inputBuffer.particles[i].position;
+		CSPhysicsBuffer[inputBuffer.numPrevParticles - inputBuffer.numToRemove + i].size = inputBuffer.particleSize;
 		
 		createParticle(v0, v1, v2, v3, inputBuffer.numPrevParticles - inputBuffer.numToRemove + i);
 		

@@ -18,6 +18,10 @@ ShaderPipeline::ShaderPipeline(const std::string& filename)
 	, filename(filename)
 	, wireframe(false)
 	, cullMode(GraphicsAPI::Culling::NO_CULLING)
+	, numRenderTargets(1)
+	, enableDepth(true)
+	, enableDepthWrite(true)
+	, blendMode(GraphicsAPI::NO_BLENDING)
 {
 	inputLayout = std::unique_ptr<InputLayout>(InputLayout::Create());
 }
@@ -339,6 +343,22 @@ void ShaderPipeline::setCullMode(GraphicsAPI::Culling newCullMode) {
 	cullMode = newCullMode;
 }
 
+void ShaderPipeline::setNumRenderTargets(unsigned int numRenderTargets) {
+	this->numRenderTargets = numRenderTargets;
+}
+
+void ShaderPipeline::enableDepthStencil(bool enable) {
+	this->enableDepth = enable;
+}
+
+void ShaderPipeline::enableDepthWriting(bool enable) {
+	this->enableDepthWrite = enable;
+}
+
+void ShaderPipeline::setBlending(GraphicsAPI::Blending blendMode) {
+	this->blendMode = blendMode;
+}
+
 InputLayout& ShaderPipeline::getInputLayout() {
 	return *inputLayout.get();
 }
@@ -419,7 +439,7 @@ UINT ShaderPipeline::getSizeOfType(const std::string& typeName) const {
 	if (typeName == "DeferredDirLightData") { return 32; }
 	if (typeName == "Vertex") { return 4 * 14; }
 	if (typeName == "VertConnections") { return 4 + 4*5 + 4*5; }
-	if (typeName == "ParticleInput") { return (12 * 312 + 312 + 8) * 4; }
+	if (typeName == "ParticleInput") { return (12 * 312 + 312 + 9) * 4; }
 
 	SAIL_LOG_ERROR("Found shader variable type with unknown size (" + typeName + ")");
 	return 0;

@@ -106,6 +106,8 @@ int AudioEngine::beginSound(const std::string& filename, Audio::EffectType effec
 		hr = m_xAudio2->CreateSourceVoice(&m_sound[indexValue].sourceVoice, (WAVEFORMATEX*)Application::getInstance()->getResourceManager().getAudioData(filename).getFormat());
 	}
 
+	m_sound[indexValue].xAPOsubMixVoice->SetVolume(volume);
+
 	bool useFilter = false;
 	if (effectType == Audio::EffectType::PROJECTILE_LOWPASS) {
 		useFilter = true;
@@ -348,6 +350,7 @@ soundStruct* AudioEngine::getStream(int index)
 void AudioEngine::setSoundVolume(int index, float value) {
 	if (this->checkSoundIndex(index)) {
 		m_sound[index].sourceVoice->SetVolume(value);
+		m_sound[index].xAPOsubMixVoice->SetVolume(value);
 	}
 }
 
@@ -358,11 +361,11 @@ void AudioEngine::setStreamVolume(int index, float value) {
 }
 
 void AudioEngine::updateProjectileLowPass(float frequency, int indexToSource) {
-	// Create new lowpass filter with updated frequency
+	// Create new lowpass filter with updated frequency.
 	XAUDIO2_FILTER_PARAMETERS lowPassFilter = createLowPassFilter(frequency);
 
 	if (FAILED(m_sound[indexToSource].sourceVoice->SetOutputFilterParameters(
-		m_xAPOSubmixVoice_toMaster,
+		m_sound[indexToSource].xAPOsubMixVoice,
 		&lowPassFilter
 	))) {
 		Logger::Error("Failed to update a projectile's low pass filter");
@@ -638,7 +641,7 @@ void AudioEngine::streamSoundInternal(const std::string& filename, int myIndex, 
 			if (isPositionalAudio && SUCCEEDED(hr)) {
 				XAUDIO2_VOICE_SENDS sends = {};
 				XAUDIO2_SEND_DESCRIPTOR sendDesc = {};
-				sendDesc.pOutputVoice = m_streamingSubmixVoice;
+				sendDesc.pOutputVoice = m_stream[myIndex].xAPOsubMixVoice;
 				sends.SendCount = 1;
 				sends.pSends = &sendDesc;
 				hr = m_stream[myIndex].sourceVoice->SetOutputVoices(&sends);

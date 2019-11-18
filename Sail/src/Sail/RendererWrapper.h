@@ -17,6 +17,7 @@ public:
 	void togglePostProcessing(const bool flag);
 	bool& getDoPostProcessing();
 	Renderer* getCurrentRenderer();
+	Renderer* getParticleRenderer();
 	Renderer* getScreenSpaceRenderer();
 	PostProcessPipeline* getPostProcessPipeline();
 	bool checkIfOnWater(const glm::vec3& worldPos) const;
@@ -28,6 +29,7 @@ private:
 	std::unique_ptr<Renderer> m_rendererRaster;
 	std::unique_ptr<Renderer> m_rendererRaytrace;
 	std::unique_ptr<Renderer> m_rendererScreenSpace;
+	std::unique_ptr<Renderer> m_rendererParticles;
 	Renderer* m_currentRenderer;
 	std::shared_ptr<PostProcessPipeline> m_postProcessPipeline;
 

@@ -10,7 +10,6 @@
 #include "../SPLASH/src/game/events/NetworkWelcomeEvent.h"
 #include "../SPLASH/src/game/events/NetworkNameEvent.h"
 #include "../SPLASH/src/game/events/NetworkDroppedEvent.h"
-#include "../SPLASH/src/game/events/NetworkStartGameEvent.h"
 #include "../SPLASH/src/game/events/SettingsEvent.h"
 
 class LobbyClientState final : public LobbyState {
@@ -18,7 +17,7 @@ public:
 	LobbyClientState(StateStack& stack);
 	~LobbyClientState();
 
-	bool onEvent(const Event& event) override;
+	virtual bool onEvent(const Event& event) override;
 
 private:
 
@@ -26,6 +25,5 @@ private:
 	bool onMyTextInput(const TextInputEvent& event);
 	bool onRecievedText(const NetworkChatEvent& event);
 	bool onDropped(const NetworkDroppedEvent& event);
-	bool onStartGame(const NetworkStartGameEvent& event);
 	bool onSettingsChanged(const SettingsUpdatedEvent& event);
 };

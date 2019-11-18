@@ -39,6 +39,10 @@ public:
 	virtual void setClippingPlane(const glm::vec4& clippingPlane) {};
 	virtual void setWireframe(bool wireframeState);
 	virtual void setCullMode(GraphicsAPI::Culling newCullMode);
+	virtual void setNumRenderTargets(unsigned int numRenderTargets);
+	virtual void enableDepthStencil(bool enable);
+	virtual void enableDepthWriting(bool enable);
+	virtual void setBlending(GraphicsAPI::Blending blendMode);
 
 	bool isComputeShader() const;
 	InputLayout& getInputLayout();
@@ -64,8 +68,12 @@ protected:
 	std::unique_ptr<InputLayout> inputLayout;
 	std::string filename;
 
-	bool wireframe; //Only used in DX12ShaderPipeline. TODO: Implement for other API:s
-	GraphicsAPI::Culling cullMode; //Only used in DX12ShaderPipeline. TODO: Implement for other API:s
+	bool wireframe;
+	GraphicsAPI::Culling cullMode;
+	unsigned int numRenderTargets;
+	bool enableDepth;
+	bool enableDepthWrite;
+	GraphicsAPI::Blending blendMode;
 
 	void* vsBlob; // Used for the input layout
 	void* gsBlob;

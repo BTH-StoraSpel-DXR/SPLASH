@@ -103,7 +103,7 @@ void shade(float3 worldPosition, float3 worldNormal, float3 albedo, float emissi
 	//  Render pixel as water if close to a water point
 	// =================================================
 
-	static const float3 arrSize = int3(WATER_GRID_X, WATER_GRID_Y, WATER_GRID_Z) - 1;
+	static const float3 arrSize = int3(WATER_GRID_X, WATER_GRID_Y, WATER_GRID_Z);
 	static const float cutoff = 0.2f;
 
 	float3 cellWorldSize = CB_SceneData.mapSize / arrSize;
@@ -137,8 +137,8 @@ void shade(float3 worldPosition, float3 worldNormal, float3 albedo, float emissi
 				[unroll]
 				for (uint index = start; index <= end; index++) {
 					uint up = Utils::unpackQuarterFloat(packedR, index);
-					if (up < 255) {
-						half r = (255.h - up) * 0.00392156863h; // That last wierd one is 1 / 255
+					if (up > 0) {
+						half r = up * 0.00392156863h; // That last wierd one is 1 / 255
 						// r = 1.0f;
 						float3 waterPointWorldPos = (float3(x*4+index,y,z) + 0.5f) * cellWorldSize + CB_SceneData.mapStart;
 

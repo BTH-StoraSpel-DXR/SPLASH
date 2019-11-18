@@ -25,25 +25,24 @@ SplashScreenState::~SplashScreenState() {
 
 
 bool SplashScreenState::processInput(float dt) {
-	return false;
+	return true;
 }
 
 bool SplashScreenState::update(float dt, float alpha) {
-	return false;
+	return true;
 }
 
 bool SplashScreenState::render(float dt, float alpha) {
-	return false;
+	return true;
 }
 
 bool SplashScreenState::renderImgui(float dt) {
-	return false;
+	return true;
 }
 
-bool SplashScreenState::onEvent(Event& event) {
-	return false;
+bool SplashScreenState::onEvent(const Event& event) {
+	return true;
 }
-
 
 bool SplashScreenState::loadModels(Application* app) {
 	ResourceManager* rm = &app->getResourceManager();
@@ -54,16 +53,12 @@ bool SplashScreenState::loadModels(Application* app) {
 	rm->loadModel("Doc.fbx");
 	rm->loadModel("Torch.fbx");
 	rm->loadModel("candleExported.fbx");
-	rm->loadModel("Tiles/tileFlat.fbx");
-	rm->loadModel("Tiles/RoomWall.fbx"); 
-	rm->loadModel("Tiles/tileDoor.fbx"); 
+	rm->loadModel("Tiles/RoomWall.fbx");
 	rm->loadModel("Tiles/RoomDoor.fbx");
 	rm->loadModel("Tiles/CorridorDoor.fbx");
 	rm->loadModel("Tiles/CorridorWall.fbx"); 
 	rm->loadModel("Tiles/RoomCeiling.fbx");
-	rm->loadModel("Tiles/CorridorFloor.fbx");
 	rm->loadModel("Tiles/RoomFloor.fbx");
-	rm->loadModel("Tiles/CorridorCeiling.fbx");
 	rm->loadModel("Tiles/CorridorCorner.fbx");
 	rm->loadModel("Tiles/RoomCorner.fbx"); 
 	rm->loadModel("Clutter/Table.fbx");
@@ -71,7 +66,6 @@ bool SplashScreenState::loadModels(Application* app) {
 	rm->loadModel("Clutter/MediumBox.fbx");
 	rm->loadModel("Clutter/SquareBox.fbx");
 	rm->loadModel("Clutter/Books1.fbx");
-	rm->loadModel("Clutter/Books2.fbx");
 	rm->loadModel("Clutter/Screen.fbx");
 	rm->loadModel("Clutter/Notepad.fbx");
 	rm->loadModel("Clutter/Saftblandare.fbx");
@@ -79,6 +73,8 @@ bool SplashScreenState::loadModels(Application* app) {
 	rm->loadModel("boundingBox.fbx", &rm->getShaderSet<WireframeShader>());
 	rm->loadModel("cubeWidth1.fbx");
 	rm->loadModel("Clutter/Microscope.fbx");
+	rm->loadModel("Clutter/CloningVats.fbx");
+	rm->loadModel("Clutter/ControlStation.fbx");
 
 
 	//LEAVE THIS FOR A MULTITHREADED FUTURE
@@ -126,6 +122,10 @@ bool SplashScreenState::loadTextures(Application* app) {
 	rm->loadTexture("pbr/Tiles/RoomWallMRAO.tga");
 	rm->loadTexture("pbr/Tiles/RoomWallNM.tga");
 	rm->loadTexture("pbr/Tiles/RoomWallAlbedo.tga");
+
+	rm->loadTexture("pbr/Tiles/RS_MRAo.tga");
+	rm->loadTexture("pbr/Tiles/RS_NM.tga");
+	rm->loadTexture("pbr/Tiles/RS_Albedo.tga");
 
 	rm->loadTexture("pbr/Tiles/RD_MRAo.tga");
 	rm->loadTexture("pbr/Tiles/RD_NM.tga");
@@ -199,6 +199,15 @@ bool SplashScreenState::loadTextures(Application* app) {
 	rm->loadTexture("pbr/Clutter/Microscope_Albedo.tga");
 	rm->loadTexture("pbr/Clutter/Microscope_MRAO.tga");
 	rm->loadTexture("pbr/Clutter/Microscope_NM.tga");
+	
+	rm->loadTexture("pbr/Clutter/CloningVats_Albedo.tga");
+	rm->loadTexture("pbr/Clutter/CloningVats_MRAO.tga");
+	rm->loadTexture("pbr/Clutter/CloningVats_NM.tga");
 
-	return false;
+	rm->loadTexture("pbr/Clutter/ControlStation_Albedo.tga");
+	rm->loadTexture("pbr/Clutter/ControlStation_MRAO.tga");
+	rm->loadTexture("pbr/Clutter/ControlStation_NM.tga");
+
+
+	return true;
 }

@@ -9,13 +9,11 @@
 #include "../libraries/imgui/imgui.h"
 #include "Sail/events/EventDispatcher.h"
 
-EndGameState::EndGameState(StateStack& stack) : State(stack) {
-	EventDispatcher::Instance().subscribe(Event::Type::NETWORK_BACK_TO_LOBBY, this);
-}
+EndGameState::EndGameState(StateStack& stack) : State(stack) {}
 
 EndGameState::~EndGameState() {
 	ECS::Instance()->stopAllSystems();
-	EventDispatcher::Instance().unsubscribe(Event::Type::NETWORK_BACK_TO_LOBBY, this);
+	GameDataTracker::getInstance().resetData();
 }
 
 bool EndGameState::processInput(float dt) {
@@ -49,7 +47,10 @@ bool EndGameState::renderImgui(float dt) {
 		ImGui::SetWindowSize({ 102,100 });
 		if (NWrapperSingleton::getInstance().isHost()) {
 			if (ImGui::Button("Lobby")) {
-				onReturnToLobby(NetworkBackToLobby{});
+
+				NWrapperSingleton::getInstance().getNetworkWrapper()->setClientState(States::JoinLobby);
+				this->requestStackPop();
+				this->requestStackPush(States::HostLobby);
 
 				ImGui::End();
 				return true;
@@ -81,29 +82,8 @@ bool EndGameState::renderImgui(float dt) {
 }
 
 bool EndGameState::onEvent(const Event& event) {
-	switch (event.type) {
-	case Event::Type::NETWORK_BACK_TO_LOBBY: onReturnToLobby((const NetworkBackToLobby&)event); break;
-	default: break;
-	}
+	State::onEvent(event);
 
 	return true;
 }
-
-bool EndGameState::onReturnToLobby(const NetworkBackToLobby& event) {
-	// If host, propagate to other clients
-	if (NWrapperSingleton::getInstance().isHost()) {
-		// Send it all clients
-		NWrapperSingleton::getInstance().getNetworkWrapper()->sendMsgAllClients("z");
-		this->requestStackPop();
-		this->requestStackPush(States::HostLobby);
-	}
-	else {
-		this->requestStackPop();
-		this->requestStackPush(States::JoinLobby);
-	}
-	GameDataTracker::getInstance().resetData();
-	
-	return true;
-}
-
 

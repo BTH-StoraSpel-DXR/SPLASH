@@ -151,7 +151,7 @@ float4 pbrShade(float3 worldPosition, float3 worldNormal, float3 invViewDir, flo
 
 	// Lerp AO depending on shadow
 	// This fixes water being visible in darkness
-	shadowAmount /= numLights;
+	shadowAmount /= max(numLights, 1);
 	shadowAmount = 1 - (shadowAmount * shadowAmount);
 	ao = lerp(originalAo, ao, shadowAmount);
 
@@ -173,16 +173,13 @@ float4 pbrShade(float3 worldPosition, float3 worldNormal, float3 invViewDir, flo
 
     float3 ambient = 0.f;
     if (payload.recursionDepth < 2) {
-		// Ray direction for first ray when cast from GBuffer must be calculated using camera position
-		// float3 rayDir = (calledFromClosestHit) ? WorldRayDirection() : worldPosition - CB_SceneData.cameraPosition;
-
 		// Trace reflection ray
         RayDesc ray;
         ray.Origin = worldPosition;
         ray.Direction = R;
         ray.TMin = 0.0001;
         ray.TMax = 1000;
-		TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 0, 0, 0, ray, payload);
+		TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, INSTACE_MASK_DEFAULT | INSTACE_MASK_METABALLS, 0, 0, 0, ray, payload);
         float3 prefilteredColor = payload.color.rgb;
         // float3 prefilteredColor = 0.5f;
 

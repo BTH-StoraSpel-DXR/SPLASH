@@ -3,14 +3,18 @@
 
 #include "Sail/Application.h"
 #include "Sail/graphics/shader/dxr/GBufferOutShader.h"
+#include "Sail/graphics/shader/dxr/GBufferOutShaderNoDepth.h"
 #include "API/DX12/DX12VertexBuffer.h"
 #include "API/DX12/DX12Utils.h"
 #include "Sail/graphics/shader/compute/ParticleComputeShader.h"
 #include "API/DX12/resources/DescriptorHeap.h"
 
 ParticleEmitterComponent::ParticleEmitterComponent() {
+	size = 0.2f;
+	offset = { 0.f, 0.f, 0.f };
 	position = { 0.f, 0.f, 0.f };
 	spread = { 0.f, 0.f, 0.f };
+	constantVelocity = { 0.f, 0.f, 0.f };
 	velocity = { 0.f, 0.f, 0.f };
 	acceleration = { 0.f, 0.f, 0.f };
 	lifeTime = 1.0f;
@@ -34,9 +38,8 @@ void ParticleEmitterComponent::init() {
 
 	m_outputVertexBufferSize = 6 * 1700;
 
-	Application::getInstance()->getResourceManager().loadTexture("pbr/WaterGun/Watergun_Albedo.tga");
-	m_model = std::make_unique<Model>(m_outputVertexBufferSize, &gbufferShader);
-	m_model->getMesh(0)->getMaterial()->setAlbedoTexture("pbr/WaterGun/Watergun_Albedo.tga");
+	auto& noDepthShader = Application::getInstance()->getResourceManager().getShaderSet<GBufferOutShaderNoDepth>();
+	m_model = std::make_unique<Model>(m_outputVertexBufferSize, &noDepthShader);
 
 	m_outputVertexBuffer = static_cast<DX12VertexBuffer*>(&m_model->getMesh(0)->getVertexBuffer());
 
@@ -105,6 +108,7 @@ void ParticleEmitterComponent::spawnParticles(int particlesToSpawn) {
 		//Add particle to spawn list
 		for (unsigned int i = 0; i < DX12API::NUM_GPU_BUFFERS; i++) {
 			m_cpuOutput[i].newParticles.emplace_back();
+			m_cpuOutput[i].newParticles.back().pos = position + (randVec + glm::vec3(0.0f, 1.0f, 0.0f)) * 0.02f ;
 			m_cpuOutput[i].newParticles.back().spread = spread * randVec;
 			m_cpuOutput[i].newParticles.back().spawnTime = time;
 		}
@@ -150,6 +154,7 @@ void ParticleEmitterComponent::updateOnGPU(ID3D12GraphicsCommandList4* cmdList, 
 		m_inputData.maxOutputVertices = m_outputVertexBufferSize;
 		float elapsedTime = m_timer.getTimeSince<float>(m_startTime) - m_cpuOutput[context->getSwapIndex()].lastFrameTime;
 		m_inputData.frameTime = elapsedTime;
+		m_inputData.size = size;
 
 		//Update timer for this buffer
 		m_cpuOutput[context->getSwapIndex()].lastFrameTime += elapsedTime;
@@ -177,7 +182,7 @@ void ParticleEmitterComponent::updateOnGPU(ID3D12GraphicsCommandList4* cmdList, 
 		m_inputData.numParticles = numPart;
 		for (unsigned int i = 0; i < numPart; i++) {
 			const NewParticleInfo* newParticle_i = &m_cpuOutput[context->getSwapIndex()].newParticles[i];
-			m_inputData.particles[i].position = position;
+			m_inputData.particles[i].position = newParticle_i->pos;
 			m_inputData.particles[i].velocity = velocity + newParticle_i->spread;
 			m_inputData.particles[i].acceleration = acceleration;
 			m_inputData.particles[i].spawnTime = m_cpuOutput[context->getSwapIndex()].lastFrameTime - newParticle_i->spawnTime;
@@ -229,7 +234,7 @@ void ParticleEmitterComponent::updateOnGPU(ID3D12GraphicsCommandList4* cmdList, 
 }
 
 void ParticleEmitterComponent::submit() const {
-	Renderer* renderer = Application::getInstance()->getRenderWrapper()->getCurrentRenderer();
+	Renderer* renderer = Application::getInstance()->getRenderWrapper()->getParticleRenderer();
 	Renderer::RenderFlag flags = Renderer::MESH_DYNAMIC;
 	flags |= Renderer::IS_VISIBLE_ON_SCREEN;
 
@@ -237,8 +242,11 @@ void ParticleEmitterComponent::submit() const {
 		m_model.get(),
 		glm::identity<glm::mat4>(),
 		flags,
-		0
+		1
 	);
 }
 
-
+void ParticleEmitterComponent::setTexture(std::string textureName) {
+	Application::getInstance()->getResourceManager().loadTexture(textureName);
+	m_model->getMesh(0)->getMaterial()->setAlbedoTexture(textureName);
+}

@@ -8,6 +8,8 @@
 #include "../shader/DX12StructuredBuffer.h"
 #include "API/DX12/resources/DX12RenderableTexture.h"
 
+#include <bitset>
+
 // Include defines shared with dxr shaders
 #include "Sail/../../SPLASH/res/shaders/dxr/Common_hlsl_cpp.hlsl"
 
@@ -37,6 +39,7 @@ public:
 	bool checkWaterAtWorldPosition(const glm::vec3& position);
 	void updateWaterData();
 	void dispatch(DX12RenderableTexture* outputTexture, DX12RenderableTexture* outputBloomTexture, ID3D12GraphicsCommandList4* cmdList);
+	void simulateWater(float dt);
 
 	void resetWater();
 	void reloadShaders();
@@ -68,6 +71,7 @@ private:
 	struct PerInstance {
 		glm::mat3x4 transform;
 		char teamColorIndex;
+		bool castShadows;
 	};
 
 	struct InstanceList {
@@ -173,6 +177,10 @@ private:
 	std::unique_ptr<ShaderComponent::DX12StructuredBuffer> m_waterStructuredBuffer;
 	std::unordered_map<unsigned int, unsigned int> m_waterDeltas; // Changed water voxels over the last 2 frames
 	unsigned int m_waterDataCPU[WATER_ARR_SIZE];
+	bool m_updateWater[WATER_ARR_SIZE];
 	bool m_waterChanged;
 
+	int m_currWaterZChunk;
+	int m_maxWaterZChunk;
+	int m_waterZChunkSize;
 };

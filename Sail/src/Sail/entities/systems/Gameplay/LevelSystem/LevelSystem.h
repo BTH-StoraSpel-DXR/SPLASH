@@ -30,6 +30,7 @@ enum TileModel {
 	ROOM_DOOR,
 	ROOM_CEILING,
 	ROOM_CORNER,
+	ROOM_SERVER,
 	CORRIDOR_FLOOR,
 	CORRIDOR_WALL,
 	CORRIDOR_DOOR,
@@ -49,6 +50,8 @@ enum ClutterModel {
 	SCREEN,
 	NOTEPAD,
 	MICROSCOPE,
+	CLONINGVATS,
+	CONTROLSTATION,
 	NUMBOFCLUTTER
 };
 
@@ -106,6 +109,7 @@ private:
 	std::queue<Clutter>largeClutter;
 	std::queue<Clutter>mediumClutter;
 	std::queue<Clutter>smallClutter;
+	std::queue<Clutter>specialClutter;
 	int randomizeTileId(std::vector<int>* tiles);
 	void findPossibleTiles(std::vector<int>* mapPointer,int posx, int posy);
 	void splitChunk();

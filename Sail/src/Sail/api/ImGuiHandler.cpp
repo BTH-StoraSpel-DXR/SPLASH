@@ -9,6 +9,7 @@ void ImGuiHandler::applySailStyle() {
 	style.WindowRounding = 0.0f;
 	style.ChildRounding = 0.0f;
 	style.FrameRounding = 3.0f;
+	style.FramePadding.y = 0.0f;
 	style.PopupRounding = 1.0f;
 	style.ScrollbarRounding = 3.0f;
 	style.GrabRounding = 3.0f;
@@ -85,10 +86,11 @@ void ImGuiHandler::addFonts() {
 
 
 	m_fonts["Beb20"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 20);
-	m_fonts["Beb10"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 10);
-	m_fonts["Beb15"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 15);
 	m_fonts["Beb30"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 30);
+	m_fonts["Beb40"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 40);
 	m_fonts["Beb50"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 50);
+	m_fonts["Beb60"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 60);
+	m_fonts["Beb70"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 70);
 	m_fonts["Rob15"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "Roboto.ttf").c_str(), 15);
 	m_fonts["Rob30"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "Roboto.ttf").c_str(), 30);
 	m_fonts["Rob50"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "Roboto.ttf").c_str(), 50);

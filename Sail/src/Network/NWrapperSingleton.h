@@ -42,7 +42,7 @@ public:
 
 	void resetPlayerList();
 	bool playerJoined(const Player& player, bool dispatchEvent = true);
-	bool playerLeft(Netcode::PlayerID& id, bool dispatchEvent = true);
+	bool playerLeft(Netcode::PlayerID& id, bool dispatchEvent = true, PlayerLeftReason reason = PlayerLeftReason::CONNECTION_LOST);
 
 	Player& getMyPlayer();
 	Player* getPlayer(const Netcode::PlayerID id);

@@ -20,8 +20,9 @@ public:
 	KillCamReceiverSystem();
 	virtual ~KillCamReceiverSystem();
 
+	void prepareUpdate();
 	void handleIncomingData(const std::string& data) override;
-	void update            (float dt)          override;
+	void update            (float dt)                override;
 
 	void processReplayData(float dt);
 
@@ -54,14 +55,16 @@ private:
 	// AUDIO
 	void playerJumped (const Netcode::ComponentID id)                            override;
 	void playerLanded (const Netcode::ComponentID id)                            override;
-	void shootStart   (const Netcode::ComponentID id, const ShotFiredInfo& info) override;
-	void shootLoop    (const Netcode::ComponentID id, const ShotFiredInfo& info) override;
-	void shootEnd     (const Netcode::ComponentID id, const ShotFiredInfo& info) override;
+	void shootStart   (const Netcode::ComponentID id, float frequency)			 override;
+	void shootLoop    (const Netcode::ComponentID id, float frequency)			 override;
+	void shootEnd     (const Netcode::ComponentID id, float frequency)			 override;
 	void runningMetalStart     (const Netcode::ComponentID id)                   override;
 	void runningWaterMetalStart(const Netcode::ComponentID id)                   override;
 	void runningTileStart      (const Netcode::ComponentID id)                   override;
 	void runningWaterTileStart (const Netcode::ComponentID id)                   override;
 	void runningStopSound      (const Netcode::ComponentID id)                   override;
+	void throwingStartSound	   (const Netcode::ComponentID id)					 override;
+	void throwingEndSound	   (const Netcode::ComponentID id)					 override;
 
 	// HOST ONLY
 	void endMatch()                         override; // Start end timer for host

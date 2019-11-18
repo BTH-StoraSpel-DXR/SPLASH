@@ -131,8 +131,8 @@ void DX12RaytracingRenderer::present(PostProcessPipeline* postProcessPipeline, R
 	if (camera && lightSetup) {
 		auto& mapSettings = Application::getInstance()->getSettings().gameSettingsDynamic["map"];
 
-		auto mapSize = glm::vec3(mapSettings["sizeX"].value, 1.0f, mapSettings["sizeY"].value) * (float)mapSettings["tileSize"].value;
-		auto mapStart = -glm::vec3((float)mapSettings["tileSize"].value / 2.0f);
+		auto mapSize = glm::vec3(mapSettings["sizeX"].value, 0.8f, mapSettings["sizeY"].value) * (float)mapSettings["tileSize"].value;
+		auto mapStart = -glm::vec3((float)mapSettings["tileSize"].value / 2.0f, 0.f, (float)mapSettings["tileSize"].value / 2.0f);
 		m_dxr.updateSceneData(*camera, *lightSetup, m_metaballs, m_nextMetaballAabb, mapSize, mapStart, teamColors, (postProcessPipeline) ? false : true);
 	}
 
@@ -196,13 +196,14 @@ bool DX12RaytracingRenderer::onEvent(const Event& event) {
 	return true;
 }
 
-void DX12RaytracingRenderer::submit(Mesh* mesh, const glm::mat4& modelMatrix, RenderFlag flags, int teamColorID) {
+void DX12RaytracingRenderer::submit(Mesh* mesh, const glm::mat4& modelMatrix, RenderFlag flags, int teamColorID, bool castShadows) {
 	RenderCommand cmd;
 	cmd.type = RENDER_COMMAND_TYPE_MODEL;
 	cmd.model.mesh = mesh;
 	cmd.transform = glm::transpose(modelMatrix);
 	cmd.flags = flags;
 	cmd.teamColorID = teamColorID;
+	cmd.castShadows = castShadows;
 	// Resize to match numSwapBuffers (specific to dx12)
 	cmd.hasUpdatedSinceLastRender.resize(m_context->getNumGPUBuffers(), false);
 	commandQueue.push_back(cmd);

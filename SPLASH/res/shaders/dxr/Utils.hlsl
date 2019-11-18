@@ -26,7 +26,7 @@ namespace Utils {
 
         ShadowRayPayload shadowPayload;
 		shadowPayload.isHit = true; // Assume hit, miss shader will set to false
-		TraceRay(gRtScene, RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 1 /*NULL hit group*/, 0, 1 /*Shadow miss shader*/, rayDesc, shadowPayload);
+		TraceRay(gRtScene, RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | RAY_FLAG_CULL_BACK_FACING_TRIANGLES, INSTACE_MASK_CAST_SHADOWS, 1 /*NULL hit group*/, 0, 1 /*Shadow miss shader*/, rayDesc, shadowPayload);
 
 		return shadowPayload.isHit;
     }

@@ -34,7 +34,8 @@ private:
 	void processKeyboardInput(const float& dt);
 	void processMouseInput(const float& dt);
 
-	void putDownCandle(Entity* entity);
+	// For both carrying and throwing
+	void toggleCandleCarry(Entity* entity);
 	Movement getPlayerMovementInput(Entity* entity);
 	
 	CameraController* m_cam = nullptr;

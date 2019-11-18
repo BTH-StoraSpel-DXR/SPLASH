@@ -7,7 +7,7 @@
 #include <xaudio2.h>
 #include <xaudio2fx.h>
 
-class XAUDIO2FX_REVERB_PARAMETERS;
+struct XAUDIO2FX_REVERB_PARAMETERS;
 
 namespace Audio {
 	enum SoundType {
@@ -19,6 +19,12 @@ namespace Audio {
 		SHOOT_LOOP,
 		SHOOT_END,
 		RELOAD,
+		HEART_BEAT_FIRST,
+		HEART_BEAT_SECOND,
+		INSANITY_AMBIANCE,
+		INSANITY_BREATHING,
+		INSANITY_VIOLIN,
+		INSANITY_SCREAM,
 		WATER_IMPACT_ENVIRONMENT,
 		WATER_IMPACT_ENEMY_CANDLE,
 		WATER_IMPACT_MY_CANDLE,
@@ -27,6 +33,8 @@ namespace Audio {
 		LANDING_GROUND,
 		DEATH,
 		KILLING_BLOW,
+		START_THROWING,
+		STOP_THROWING,
 		SPRINKLER_START,
 		SPRINKLER_WATER,
 		ALARM,
@@ -48,6 +56,7 @@ namespace Audio {
 		bool playOnce = true;
 		float durationElapsed = 0.0f;
 		float currentSoundsLength = 0.0f;
+		float volume = 0.0f;
 		// Cam HEIGHT (y-pos) is 1.6f; useful info for incorporating positonalOffset
 		glm::vec3 positionalOffset = { 0.f, 0.f, 0.f };
 		int soundID = -1;
@@ -64,8 +73,10 @@ namespace Audio {
 	struct StreamRequestInfo {
 		bool startTRUE_stopFALSE;
 		float volume;
+		float prevVolume;
 		bool isPositionalAudio;
 		bool isLooping;
+		int streamIndex;
 	};
 }
 

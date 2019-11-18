@@ -17,12 +17,13 @@
 // -----------------------------------------------------------------------------------------------------------------------------------------
 // | I.e.                                                                                                                                  |
 // | void onEvent(const Event& event) {                                                                                                    |
-// |     switch(e.type) {                                                                                                                  |
+// |     switch(event.type) {                                                                                                                  |
 // |     case CREATED_POSITION:                                                                                                            |
 // |         onCreatedPosition((const CreatedPositionEvent&)event);  // Use pos in this function here                                      |
 // |         break;                                                                                                                        |
 // |     }                                                                                                                                 |
-// | }                                                                                                                                     |
+// | }   
+// |
 // =========================================================================================================================================
 // | Receivers can only receive events of a type they're subscribed to                                                     |
 // | Receivers can be subscribed to an event without having a case for it, or vice versa, but preferrably not              |
@@ -30,7 +31,7 @@
 // -------------------------------------------------------------------------------------------------------------------------
 // | A receiver can either subscribe itself (this), or have another class do it. The same applies with unsubscribing       |
 // -------------------------------------------------------------------------------------------------------------------------
-// | I.e. EventDispatcher::Get()->Subscribe(Event::Type::CREATED_POSITION, &positionManager);                              |
+// | I.e. 	EventDispatcher::Instance().subscribe(Event::Type::INSANITY_SYSTEM_UPDATE_INSANITY, this);                     |
 // =========================================================================================================================
 // | It is recommended, but not always necessary, for a class to unsubscribe itself from all events when it's destroyed |
 // | Otherwise the dispatcher might attempt to call onEvent() on a destroyed object                                     |

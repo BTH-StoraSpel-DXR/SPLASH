@@ -7,7 +7,7 @@
 class AudioComponent;
 class AudioEngine;
 class Camera;
-class XAUDIO2FX_REVERB_PARAMETERS;
+struct XAUDIO2FX_REVERB_PARAMETERS;
 
 class AudioSystem final : public BaseComponentSystem, public EventReceiver {
 public:
@@ -27,15 +27,9 @@ public:
 private:
 	std::list<std::pair<std::string, Audio::StreamRequestInfo>>::iterator m_i;
 	std::list<std::pair<std::string, Audio::StreamRequestInfo>>::iterator m_toBeDeleted;
-	std::list<std::pair<std::string, std::pair<int, bool>>>::iterator m_j;
-	std::list<std::pair<std::string, std::pair<int, bool>>>::iterator m_k;
-	std::list<std::pair<std::string, std::pair<int, bool>>>::iterator m_streamToBeDeleted;
-
-	std::string m_filename = "";
-	float m_volume = 1.0f;
-	bool m_isPositionalAudio;
-	bool m_isLooping;
-	int m_streamIndex = 0;
+	std::list<std::pair<std::string, Audio::StreamRequestInfo>>::iterator m_j;
+	std::list<std::pair<std::string, Audio::StreamRequestInfo>>::iterator m_k;
+	std::list<std::pair<std::string, Audio::StreamRequestInfo>>::iterator m_streamToBeDeleted;
 
 	bool m_hasOutputDevices = true;
 
@@ -45,6 +39,7 @@ private:
 	void startPlayingRequestedStream(Entity* e, AudioComponent* audioC);
 	void stopPlayingRequestedStream(Entity* e, AudioComponent* audioC);
 	void updateStreamPosition(Entity* e, Camera& cam, float alpha);
+	void updateStreamVolume();
 
 	void updateProjectileLowPass(Audio::SoundInfo_General* general);
 

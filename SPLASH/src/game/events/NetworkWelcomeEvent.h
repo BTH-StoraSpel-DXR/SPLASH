@@ -1,13 +1,14 @@
 #pragma once
-#include <list>
+
 #include "Sail/events/Event.h"
-#include "../states/LobbyState.h"
+#include "Network/NWrapper.h"
 
 struct NetworkWelcomeEvent : public Event {
-	NetworkWelcomeEvent(const std::list<Player>& players) 
+	NetworkWelcomeEvent(const Player _player)
 		: Event(Event::Type::NETWORK_WELCOME)
-		, playerList(players) { }
+		, player(_player) {
+	}
 	~NetworkWelcomeEvent() = default;
 
-	const std::list<Player> playerList;
+	const Player player;
 };

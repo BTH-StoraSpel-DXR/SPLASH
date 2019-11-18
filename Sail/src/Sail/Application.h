@@ -19,6 +19,8 @@
 
 #include <future>
 
+class Camera;
+
 // Forward declarations
 namespace ctpl {
 	class thread_pool;
@@ -76,12 +78,15 @@ public:
 		return m_threadPool->push(f);
 	}
 
+	virtual void setCurrentCamera(Camera* camera);
+
 	static std::string getPlatformName();
 	static Application* getInstance();
 	ImGuiHandler* const getImGuiHandler();
 	ResourceManager& getResourceManager();
 	ConsoleCommands& getConsole();
 	SettingStorage& getSettings();
+	Camera* getCurrentCamera() const;
 
 	MemoryManager& getMemoryManager();
 	RendererWrapper* getRenderWrapper();
@@ -104,6 +109,7 @@ private:
 	MemoryManager m_memoryManager;
 	StateStorage m_stateStorage;
 	SettingStorage m_settingStorage;
+	Camera* m_cameraRef;
 
 	// Timer
 	Timer m_timer;

@@ -90,4 +90,6 @@ void NetworkReceiverSystemHost::mergeHostsStats() {
 		gdt->getStatisticsGlobal().jumpsMade = gdt->getStatisticsLocal().jumpsMade;
 		gdt->getStatisticsGlobal().jumpsMadeID = id;
 	}
+
+	endMatch();
 }

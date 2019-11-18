@@ -74,12 +74,17 @@ bool KillFeedWindow::onEvent(const Event& event) {
 		std::string deadPlayer = NWrapperSingleton::getInstance().getPlayer(idOfDeadPlayer)->name;
 
 		std::string ShooterPlayer;
+		std::string deathType;
 		if (e.shooterID == Netcode::MESSAGE_SPRINKLER_ID) {
 			ShooterPlayer = "The sprinklers";
+			deathType = "sprayed down";
+		} else if (e.shooterID == Netcode::MESSAGE_INSANITY_ID) {
+			ShooterPlayer = "Insanity";
+			deathType = "devoured";
 		} else {
 			ShooterPlayer = NWrapperSingleton::getInstance().getPlayer(e.shooterID)->name;
+			deathType = "sprayed down";
 		}
-		std::string deathType = "sprayed down";
 
 		SAIL_LOG(ShooterPlayer + " " + deathType + " " + deadPlayer);
 

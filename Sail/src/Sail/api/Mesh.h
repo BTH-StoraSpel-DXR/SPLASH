@@ -68,6 +68,8 @@ public:
 
 	virtual void draw(const Renderer& renderer, void* cmdList = nullptr) = 0;
 
+	// In bytes
+	float getSize();
 	const Data& getMeshData();
 
 	PBRMaterial* getMaterial();

@@ -4,20 +4,20 @@
 #include "..//..//components/Components.h"
 #include "..//..//Entity.h"
 
-MetaballSubmitSystem::MetaballSubmitSystem() {
+template <typename T>
+MetaballSubmitSystem<T>::MetaballSubmitSystem() {
 	registerComponent<MetaballComponent>(true, false, false);	// Data is not read, but the component is required for this system anyway
-	registerComponent<TransformComponent>(true, true, false);
+	registerComponent<T>(true, true, false);
 	registerComponent<CullingComponent>(false, true, false);
 }
 
-MetaballSubmitSystem::~MetaballSubmitSystem() {
-}
 
-void MetaballSubmitSystem::submitAll(const float alpha) {
+template <typename T>
+void MetaballSubmitSystem<T>::submitAll(const float alpha) {
 	Renderer* renderer = Application::getInstance()->getRenderWrapper()->getCurrentRenderer();
 
 	for (auto& e : entities) {
-		TransformComponent* transform = e->getComponent<TransformComponent>();
+		T* transform = e->getComponent<T>();
 		CullingComponent* culling = e->getComponent<CullingComponent>();
 
 		Renderer::RenderFlag flags = Renderer::MESH_STATIC;
@@ -28,3 +28,6 @@ void MetaballSubmitSystem::submitAll(const float alpha) {
 		renderer->submitMetaball(Renderer::RENDER_COMMAND_TYPE_NON_MODEL_METABALL, nullptr, transform->getInterpolatedTranslation(alpha), flags);
 	}
 }
+
+template class MetaballSubmitSystem<TransformComponent>;
+template class MetaballSubmitSystem<ReplayTransformComponent>;

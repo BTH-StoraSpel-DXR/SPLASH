@@ -16,9 +16,6 @@ ShaderPipeline* ShaderPipeline::Create(const std::string& filename) {
 
 DX12ShaderPipeline::DX12ShaderPipeline(const std::string& filename)
 	: ShaderPipeline(filename) 
-	, m_numRenderTargets(1)
-	, m_enableDepth(true)
-	, m_enableBlending(false)
 {
 	m_context = Application::getInstance()->getAPI<DX12API>();
 
@@ -121,8 +118,8 @@ void* DX12ShaderPipeline::compileShader(const std::string& source, const std::st
 	ID3DBlob* pShaders = nullptr;
 	ID3DBlob* errorBlob = nullptr;
 	UINT flags = 0;
+	flags |= D3DCOMPILE_DEBUG; // TODO: move back into define below
 #if defined( DEBUG ) || defined( _DEBUG )
-	flags |= D3DCOMPILE_DEBUG;
 	flags |= D3DCOMPILE_SKIP_OPTIMIZATION;
 	flags |= D3DCOMPILE_ALL_RESOURCES_BOUND;
 #endif
@@ -199,31 +196,37 @@ void DX12ShaderPipeline::setDXTexture2D(DX12ATexture* dxTexture, ID3D12GraphicsC
 
 unsigned int DX12ShaderPipeline::setMaterial(PBRMaterial* material, void* cmdList) {
 	const PBRMaterial::PBRSettings& ps = material->getPBRSettings();
-	int nTextures = 0;
-	DX12Texture* textures[3];
+	int nTextures = 3;
+	DX12Texture* textures[3] = {nullptr};
 	if (ps.hasAlbedoTexture) {
-		textures[nTextures] = static_cast<DX12Texture*>(material->getTexture(nTextures));
-		nTextures++;
+		textures[0] = static_cast<DX12Texture*>(material->getTexture(0));
 	}
 	if (ps.hasNormalTexture) {
-		textures[nTextures] = static_cast<DX12Texture*>(material->getTexture(nTextures));
-		nTextures++;
+		textures[1] = static_cast<DX12Texture*>(material->getTexture(1));
 	}
 	if (ps.hasMetalnessRoughnessAOTexture) {
-		textures[nTextures] = static_cast<DX12Texture*>(material->getTexture(nTextures));
-		nTextures++;
+		textures[2] = static_cast<DX12Texture*>(material->getTexture(2));
+	}
+
+	// Quick fix to reduce heap usage
+	if (!ps.hasMetalnessRoughnessAOTexture && !ps.hasNormalTexture) {
+		nTextures = 1;
+	} else if (!ps.hasMetalnessRoughnessAOTexture) {
+		nTextures = 2;
 	}
 
 	unsigned int indexStart = m_context->getMainGPUDescriptorHeap()->getAndStepIndex(nTextures);
 	D3D12_CPU_DESCRIPTOR_HANDLE handle = m_context->getMainGPUDescriptorHeap()->getCPUDescriptorHandleForIndex(indexStart);
 
 	for (int i = 0; i < nTextures; i++) {
-		if (!textures[i]->hasBeenInitialized()) {
-			textures[i]->initBuffers(static_cast<ID3D12GraphicsCommandList4*>(cmdList), i);
-		}
+		if (textures[i]) {
+			if (!textures[i]->hasBeenInitialized()) {
+				textures[i]->initBuffers(static_cast<ID3D12GraphicsCommandList4*>(cmdList), i);
+			}
 
-		textures[i]->transitionStateTo(static_cast<ID3D12GraphicsCommandList4*>(cmdList), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		m_context->getDevice()->CopyDescriptorsSimple(1, handle, textures[i]->getSrvCDH(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+			textures[i]->transitionStateTo(static_cast<ID3D12GraphicsCommandList4*>(cmdList), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+			m_context->getDevice()->CopyDescriptorsSimple(1, handle, textures[i]->getSrvCDH(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		}
 		handle.ptr += m_context->getMainGPUDescriptorHeap()->getDescriptorIncrementSize();
 	}
 
@@ -257,18 +260,6 @@ bool DX12ShaderPipeline::trySetCBufferVar_new(const std::string& name, const voi
 		}
 	}
 	return false;
-}
-
-void DX12ShaderPipeline::setNumRenderTargets(unsigned int numRenderTargets) { 
-	m_numRenderTargets = numRenderTargets;
-}
-
-void DX12ShaderPipeline::enableDepthStencil(bool enable) {
-	m_enableDepth = enable;
-}
-
-void DX12ShaderPipeline::enableAlphaBlending(bool enable) {
-	m_enableBlending = enable;
 }
 
 void DX12ShaderPipeline::compile() {
@@ -312,10 +303,10 @@ void DX12ShaderPipeline::createGraphicsPipelineState() {
 	}
 
 	// Specify render target and depthstencil usage
-	for (unsigned int i = 0; i < m_numRenderTargets; i++) {
+	for (unsigned int i = 0; i < numRenderTargets; i++) {
 		gpsd.RTVFormats[i] = DXGI_FORMAT_R8G8B8A8_UNORM;
 	}
-	gpsd.NumRenderTargets = m_numRenderTargets;
+	gpsd.NumRenderTargets = numRenderTargets;
 
 	gpsd.SampleDesc.Count = 1;
 	gpsd.SampleDesc.Quality = 0;
@@ -339,39 +330,59 @@ void DX12ShaderPipeline::createGraphicsPipelineState() {
 		gpsd.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
 	}
 
-	//Specify blend descriptions.
+	// Specify blend descriptions.
 	D3D12_RENDER_TARGET_BLEND_DESC defaultRTdesc;
-	if (m_enableBlending) {
-		defaultRTdesc = {
-			true, false,
-			D3D12_BLEND_SRC_ALPHA, D3D12_BLEND_ONE, D3D12_BLEND_OP_ADD,
-			D3D12_BLEND_ZERO, D3D12_BLEND_ONE, D3D12_BLEND_OP_ADD,
-			D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL
-		};    
-		defaultRTdesc.BlendEnable = TRUE;
-		defaultRTdesc.SrcBlend = D3D12_BLEND_ONE;
-		defaultRTdesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-		defaultRTdesc.BlendOp = D3D12_BLEND_OP_ADD;
-		defaultRTdesc.SrcBlendAlpha = D3D12_BLEND_ONE;
-		defaultRTdesc.DestBlendAlpha = D3D12_BLEND_ZERO;
-		defaultRTdesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-		defaultRTdesc.RenderTargetWriteMask = 0x0f;
-	} else {
-		defaultRTdesc = {
+	defaultRTdesc = {
 			false, false,
 			D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
 			D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
 			D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL
+	};
+
+	D3D12_RENDER_TARGET_BLEND_DESC customRTBlendDesc = defaultRTdesc;
+	if (blendMode == GraphicsAPI::ALPHA) {
+		customRTBlendDesc = {
+			true, false,
+			D3D12_BLEND_SRC_ALPHA, D3D12_BLEND_ONE, D3D12_BLEND_OP_ADD,
+			D3D12_BLEND_ZERO, D3D12_BLEND_ONE, D3D12_BLEND_OP_ADD,
+			D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL
 		};
+		customRTBlendDesc.BlendEnable = TRUE;
+		customRTBlendDesc.SrcBlend = D3D12_BLEND_ONE;
+		customRTBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+		customRTBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+		customRTBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+		customRTBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+		customRTBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+		customRTBlendDesc.RenderTargetWriteMask = 0x0f;
+	} else if (blendMode == GraphicsAPI::ADDITIVE) {
+		customRTBlendDesc = {
+			true, false,
+			D3D12_BLEND_SRC_ALPHA, D3D12_BLEND_ONE, D3D12_BLEND_OP_ADD,
+			D3D12_BLEND_ZERO, D3D12_BLEND_ONE, D3D12_BLEND_OP_ADD,
+			D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL
+		};
+		customRTBlendDesc.BlendEnable = TRUE;
+		customRTBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+		customRTBlendDesc.DestBlend = D3D12_BLEND_ONE;
+		customRTBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+		customRTBlendDesc.SrcBlendAlpha = D3D12_BLEND_SRC_ALPHA;
+		customRTBlendDesc.DestBlendAlpha = D3D12_BLEND_ONE;
+		customRTBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+		customRTBlendDesc.RenderTargetWriteMask = 0x0f;
 	}
-	for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++) {
+
+	for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; i++) { // TODO: change 1 to variable
 		gpsd.BlendState.RenderTarget[i] = defaultRTdesc;
 	}
+	
+	gpsd.BlendState.IndependentBlendEnable = true;
+	gpsd.BlendState.RenderTarget[0] = customRTBlendDesc;
 
 	// Specify depth stencil state descriptor.
 	D3D12_DEPTH_STENCIL_DESC dsDesc{};
-	dsDesc.DepthEnable = m_enableDepth;
-	dsDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	dsDesc.DepthEnable = enableDepth;
+	dsDesc.DepthWriteMask = (enableDepthWrite) ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
 	dsDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
 	dsDesc.StencilEnable = FALSE;
 	dsDesc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;

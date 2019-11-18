@@ -23,7 +23,7 @@ public:
 	// Renders imgui
 	bool renderImgui(float dt);
 	// Sends events to the state
-	bool onEvent(Event& event);
+	virtual bool onEvent(const Event& event) override;
 
 private:
 	bool loadModels(Application* app);

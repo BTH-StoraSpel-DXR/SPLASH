@@ -103,7 +103,7 @@ bool NWrapperSingleton::playerJoined(const Player& player, bool dispatchEvent) {
 	return false;
 }
 
-bool NWrapperSingleton::playerLeft(Netcode::PlayerID& id, bool dispatchEvent) {
+bool NWrapperSingleton::playerLeft(Netcode::PlayerID& id, bool dispatchEvent, PlayerLeftReason reason) {
 	// Linear search to get target 'player' struct, then erase that from the list
 	Player* toBeRemoved = nullptr;
 	int pos = 0;
@@ -111,7 +111,7 @@ bool NWrapperSingleton::playerLeft(Netcode::PlayerID& id, bool dispatchEvent) {
 		if (playerIt.id == id) {
 			toBeRemoved = &playerIt;
 			if (dispatchEvent) {
-				EventDispatcher::Instance().emit(NetworkDisconnectEvent(playerIt));
+				EventDispatcher::Instance().emit(NetworkDisconnectEvent(playerIt, reason));
 			}
 			m_players.remove(*toBeRemoved);
 

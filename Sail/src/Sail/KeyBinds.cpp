@@ -32,7 +32,7 @@ namespace KeyBinds {
 	int REMOVE_OLDEST_LIGHT;
 	int LIGHT_CANDLE_1;
 	int LIGHT_CANDLE_2;
-	int TOGGLE_CANDLE_HELD;
+	int THROW_CHARGE;
 	int DISABLE_CURSOR;
 	int TOGGLE_SPHERE;
 	int TOGGLE_SUN;
@@ -60,6 +60,10 @@ namespace KeyBinds {
 
 	// Debugging
 	int SPECTATOR_DEBUG;
+
+//#ifdef DEVELOPMENT
+	int START_KILLCAM;
+//#endif
 }
 
 void KeyBinds::init() {
@@ -73,7 +77,7 @@ void KeyBinds::init() {
 	MOVE_DOWN          = SAIL_KEY_CONTROL;
 	SPRINT             = SAIL_KEY_SHIFT;
 	SHOOT              = SAIL_MOUSE_LEFT_BUTTON;
-	TOGGLE_CANDLE_HELD = SAIL_KEY_F;
+	THROW_CHARGE	   = SAIL_KEY_F;
 	SPRAY              = SAIL_KEY_L;
 	LIGHT_CANDLE       = SAIL_KEY_J;
 	SHOW_IN_GAME_MENU  = SAIL_KEY_ESCAPE;
@@ -118,4 +122,8 @@ void KeyBinds::init() {
 
 	// Debugging
 	SPECTATOR_DEBUG = SAIL_KEY_M;
+
+//#ifdef DEVELOPMENT
+	START_KILLCAM = SAIL_KEY_K;
+//#endif
 }

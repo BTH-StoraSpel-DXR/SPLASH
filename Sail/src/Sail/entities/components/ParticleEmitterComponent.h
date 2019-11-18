@@ -17,8 +17,11 @@ public:
 	ParticleEmitterComponent();
 	~ParticleEmitterComponent();
 
+	float size;
+	glm::vec3 offset;
 	glm::vec3 position;
 	glm::vec3 spread;
+	glm::vec3 constantVelocity;
 	glm::vec3 velocity;
 	glm::vec3 acceleration;
 	float lifeTime;
@@ -37,6 +40,8 @@ public:
 	void updateOnGPU(ID3D12GraphicsCommandList4* cmdList, const glm::vec3& cameraPos);
 
 	void submit() const;
+
+	void setTexture(std::string textureName);
 
 private:
 	std::unique_ptr<ComputeShaderDispatcher> m_dispatcher;
@@ -59,6 +64,7 @@ private:
 
 
 	struct NewParticleInfo {
+		glm::vec3 pos;
 		glm::vec3 spread;
 		float spawnTime;
 	};
@@ -92,6 +98,7 @@ private:
 		unsigned int previousNrOfParticles;
 		unsigned int maxOutputVertices;
 		float frameTime;
+		float size;
 	};
 
 	ComputeInput m_inputData;

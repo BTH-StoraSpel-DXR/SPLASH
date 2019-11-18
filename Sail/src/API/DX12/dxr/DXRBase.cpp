@@ -61,11 +61,15 @@ DXRBase::DXRBase(const std::string& shaderFilename, DX12RenderableTexture** inpu
 	unsigned int numElements = WATER_ARR_SIZE;
 	unsigned int waterDataSize = sizeof(unsigned int) * numElements;
 	unsigned int* initData = new unsigned int[WATER_ARR_SIZE];
-	memset(initData, UINT_MAX, waterDataSize);
-	memset(m_waterDataCPU, UINT_MAX, waterDataSize);
+	memset(initData, 0, waterDataSize);
+	memset(m_waterDataCPU, 0, waterDataSize);
+	memset(m_updateWater, 0, sizeof(bool) * numElements);
 	m_waterStructuredBuffer = std::make_unique<ShaderComponent::DX12StructuredBuffer>(initData, numElements, sizeof(unsigned int));
 	delete initData;
 
+	m_currWaterZChunk = 0;
+	m_maxWaterZChunk = 5;
+	m_waterZChunkSize = WATER_GRID_Z / m_maxWaterZChunk;
 }
 
 DXRBase::~DXRBase() {
@@ -147,7 +151,7 @@ void DXRBase::updateAccelerationStructures(const std::vector<Renderer::RenderCom
 					createBLAS(renderCommand, flagFastTrace, cmdList);
 				} else {
 					// Mesh already has a BLAS - add transform to instance list
-					searchResult->second.instanceList.emplace_back(PerInstance{(glm::mat3x4)renderCommand.transform, (char)renderCommand.teamColorID });
+					searchResult->second.instanceList.emplace_back(PerInstance{(glm::mat3x4)renderCommand.transform, (char)renderCommand.teamColorID , renderCommand.castShadows});
 				}
 			}
 
@@ -179,7 +183,7 @@ void DXRBase::updateAccelerationStructures(const std::vector<Renderer::RenderCom
 					createBLAS(renderCommand, flags, cmdList, &searchResult->second.blas);
 				}
 				// Add transform to instance list
-				searchResult->second.instanceList.emplace_back(PerInstance{ (glm::mat3x4)renderCommand.transform, (char)renderCommand.teamColorID });
+				searchResult->second.instanceList.emplace_back(PerInstance{ (glm::mat3x4)renderCommand.transform, (char)renderCommand.teamColorID , renderCommand.castShadows});
 			}
 
 			totalNumInstances++;
@@ -255,9 +259,9 @@ void DXRBase::updateDecalData(DXRShaderCommon::DecalData* decals, size_t size) {
 
 void DXRBase::addWaterAtWorldPosition(const glm::vec3& position) {
 	static auto& mapSettings = Application::getInstance()->getSettings().gameSettingsDynamic["map"];
-	auto mapSize = glm::vec3(mapSettings["sizeX"].value, 1.0f, mapSettings["sizeY"].value) * (float)mapSettings["tileSize"].value;
-	auto mapStart = -glm::vec3((float)mapSettings["tileSize"].value / 2.0f);
-	static const glm::vec3 arrSize(WATER_GRID_X - 1, WATER_GRID_Y - 1, WATER_GRID_Z - 1);
+	auto mapSize = glm::vec3(mapSettings["sizeX"].value, 0.8f, mapSettings["sizeY"].value) * (float)mapSettings["tileSize"].value;
+	auto mapStart = -glm::vec3((float)mapSettings["tileSize"].value / 2.0f, 0.f, (float)mapSettings["tileSize"].value / 2.0f);
+	static const glm::vec3 arrSize(WATER_GRID_X, WATER_GRID_Y, WATER_GRID_Z);
 
 	// Convert position to index, stored as floats
 	glm::vec3 floatInd = ((position - mapStart) / mapSize) * arrSize;
@@ -270,6 +274,8 @@ void DXRBase::addWaterAtWorldPosition(const glm::vec3& position) {
 
 	// Ignore water points that are outside the map
 	if (arrIndex >= 0 && arrIndex <= WATER_ARR_SIZE - 1) {
+		// Make sure to update this water
+		m_updateWater[arrIndex] = true;
 		uint8_t up0 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 0);
 		uint8_t up1 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 1);
 		uint8_t up2 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 2);
@@ -277,16 +283,16 @@ void DXRBase::addWaterAtWorldPosition(const glm::vec3& position) {
 
 		switch (quarterIndex) {
 		case 0:
-			m_waterDeltas[arrIndex] = Utils::packQuarterFloat(0, up1, up2, up3);
+			m_waterDeltas[arrIndex] = Utils::packQuarterFloat(std::min(255U, up0 + std::rand() % 50U + 50U), up1, up2, up3);
 			break;
 		case 1:
-			m_waterDeltas[arrIndex] = Utils::packQuarterFloat(up0, 0, up2, up3);
+			m_waterDeltas[arrIndex] = Utils::packQuarterFloat(up0, std::min(255U, up1 + std::rand() % 50U + 50U), up2, up3);
 			break;
 		case 2:
-			m_waterDeltas[arrIndex] = Utils::packQuarterFloat(up0, up1, 0, up3);
+			m_waterDeltas[arrIndex] = Utils::packQuarterFloat(up0, up1, std::min(255U, up2 + std::rand() % 50U + 50U), up3);
 			break;
 		case 3:
-			m_waterDeltas[arrIndex] = Utils::packQuarterFloat(up0, up1, up2, 0);
+			m_waterDeltas[arrIndex] = Utils::packQuarterFloat(up0, up1, up2, std::min(255U, up3 + std::rand() % 50U + 50U));
 			break;
 		}
 
@@ -299,9 +305,9 @@ bool DXRBase::checkWaterAtWorldPosition(const glm::vec3& position) {
 	bool returnValue = false;
 
 	static auto& mapSettings = Application::getInstance()->getSettings().gameSettingsDynamic["map"];
-	auto mapSize = glm::vec3(mapSettings["sizeX"].value, 1.0f, mapSettings["sizeY"].value) * (float)mapSettings["tileSize"].value;
-	auto mapStart = -glm::vec3((float)mapSettings["tileSize"].value / 2.0f);
-	static const glm::vec3 arrSize(WATER_GRID_X - 1, WATER_GRID_Y - 1, WATER_GRID_Z - 1);
+	auto mapSize = glm::vec3(mapSettings["sizeX"].value, 0.8f, mapSettings["sizeY"].value) * (float)mapSettings["tileSize"].value;
+	auto mapStart = -glm::vec3((float)mapSettings["tileSize"].value / 2.0f, 0.f, (float)mapSettings["tileSize"].value / 2.0f);
+	static const glm::vec3 arrSize(WATER_GRID_X, WATER_GRID_Y, WATER_GRID_Z);
 
 	// Convert position to index, stored as floats
 	glm::vec3 floatInd = ((position - mapStart) / mapSize) * arrSize;
@@ -312,18 +318,17 @@ bool DXRBase::checkWaterAtWorldPosition(const glm::vec3& position) {
 
 	// Ignore water points that are outside the map
 	if (arrIndex >= 0 && arrIndex <= WATER_ARR_SIZE - 1) {
-		uint8_t up0 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 0);
-		uint8_t up1 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 1);
-		uint8_t up2 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 2);
-		uint8_t up3 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 3);
-
-		returnValue = up0 != 255 || up1 != 255 || up2 != 255 || up3 != 255;
+		returnValue = m_waterDataCPU[arrIndex] != 0;
 	}
 
 	return returnValue;
 }
 
 void DXRBase::updateWaterData() {
+	if (Application::getInstance()->getSettings().applicationSettingsStatic["graphics"]["water simulation"].getSelected().value) {
+		simulateWater(Application::getInstance()->getDelta());
+	}
+
 	for (auto& pair : m_waterDeltas) {
 		unsigned int offset = sizeof(float) * pair.first;
 		unsigned int& data = pair.second;
@@ -335,6 +340,56 @@ void DXRBase::updateWaterData() {
 		m_waterDeltas.clear();
 	}
 	m_waterChanged = false;
+}
+
+void DXRBase::simulateWater(float dt) {
+	for (unsigned int z = 0; z < WATER_GRID_Z; z++) {
+		for (unsigned int y = 1; y < WATER_GRID_Y; y++) {
+			for (unsigned int x = 0; x < WATER_GRID_X; x++) {
+				auto arrIndex = Utils::to1D(glm::i32vec3(x, y, z), WATER_GRID_X, WATER_GRID_Y);
+				if (m_updateWater[arrIndex]) {
+					auto arrIndexBelow = arrIndex - WATER_GRID_X;
+
+					bool change = false;
+					uint32_t vals[8];
+					bool keepUpdating = false;
+					for (unsigned int quarterIndex = 0; quarterIndex < 4; quarterIndex++) {
+						int quarterVal = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], quarterIndex);
+						uint32_t belowQuarterVal = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndexBelow], quarterIndex);
+
+						// Below
+						int deltaVal = 0;
+
+						deltaVal = static_cast<int>(7.f * ((float)(quarterVal) / 255.f) + 1.f);
+
+						if (quarterVal < 21) {
+							deltaVal = quarterVal;
+						}
+						quarterVal -= deltaVal;
+						if (quarterVal > 0) {
+							keepUpdating = true;
+						}
+						vals[quarterIndex] = static_cast<uint32_t>(quarterVal);
+						belowQuarterVal += deltaVal;
+						if (belowQuarterVal > 100U) {
+							m_updateWater[arrIndexBelow] = true;
+						}
+						vals[quarterIndex + 4] = std::min(belowQuarterVal, 255U);
+					}
+
+					if (!keepUpdating) {
+						m_updateWater[arrIndex] = false;
+					}
+
+					m_waterDeltas[arrIndex] = Utils::packQuarterFloat(vals[0], vals[1], vals[2], vals[3]);
+					m_waterDeltas[arrIndexBelow] = Utils::packQuarterFloat(vals[4], vals[5], vals[6], vals[7]);
+					m_waterDataCPU[arrIndex] = m_waterDeltas[arrIndex];
+					m_waterDataCPU[arrIndexBelow] = m_waterDeltas[arrIndexBelow];
+					m_waterChanged = true;
+				}
+			}
+		}
+	}
 }
 
 void DXRBase::updateMetaballpositions(const std::vector<Metaball>& metaballs, const D3D12_RAYTRACING_AABB& m_next_metaball_aabb) {
@@ -433,7 +488,7 @@ void DXRBase::dispatch(DX12RenderableTexture* outputTexture, DX12RenderableTextu
 void DXRBase::resetWater() {
 	// TODO: make faster by updates the whole buffer at once
 	for (unsigned int i = 0; i < WATER_ARR_SIZE; i++) {
-		m_waterDataCPU[i] = m_waterDeltas[i] = UINT_MAX;
+		m_waterDataCPU[i] = m_waterDeltas[i] = 0;
 	}
 	m_waterChanged = true;
 }
@@ -508,7 +563,7 @@ void DXRBase::createTLAS(unsigned int numInstanceDescriptors, ID3D12GraphicsComm
 		for (auto& instance : instanceList.instanceList) {
 			if (it.first == nullptr) {
 				pInstanceDesc->InstanceID = instanceID_metaballs++;	// exposed to the shader via InstanceID() - currently same for all instances of same material
-				pInstanceDesc->InstanceMask = 0x01;
+				pInstanceDesc->InstanceMask = INSTACE_MASK_METABALLS;
 			} else {
 #ifdef DEVELOPMENT
 				if (blasIndex >= 1 << 10) {
@@ -516,7 +571,8 @@ void DXRBase::createTLAS(unsigned int numInstanceDescriptors, ID3D12GraphicsComm
 				}
 #endif
 				pInstanceDesc->InstanceID = blasIndex | (instance.teamColorIndex << 10);
-				pInstanceDesc->InstanceMask = 0xFF &~ 0x01;
+				UINT shadowMask = (instance.castShadows) ? INSTACE_MASK_CAST_SHADOWS : 0;
+				pInstanceDesc->InstanceMask = INSTACE_MASK_DEFAULT | shadowMask;
 			}
 			pInstanceDesc->InstanceContributionToHitGroupIndex = blasIndex * 2;	// offset inside the shader-table. Unique for every instance since each geometry has different vertexbuffer/indexbuffer/textures
 																				// * 2 since every other entry in the SBT is for shadow rays (NULL hit group)
@@ -559,7 +615,7 @@ void DXRBase::createBLAS(const Renderer::RenderCommand& renderCommand, D3D12_RAY
 	bool performInplaceUpdate = (sourceBufferForUpdate) ? true : false;
 
 	InstanceList instance;
-	instance.instanceList.emplace_back(PerInstance{ renderCommand.transform , (char)renderCommand.teamColorID});
+	instance.instanceList.emplace_back(PerInstance{ renderCommand.transform , (char)renderCommand.teamColorID, renderCommand.castShadows});
 	AccelerationStructureBuffers& bottomBuffer = instance.blas;
 	if (performInplaceUpdate) {
 		bottomBuffer = *sourceBufferForUpdate;

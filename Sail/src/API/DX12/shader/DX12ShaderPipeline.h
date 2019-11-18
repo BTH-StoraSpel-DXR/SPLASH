@@ -28,10 +28,6 @@ public:
 	void setCBufferVar_new(const std::string& name, const void* data, UINT size, int meshIndex);
 	bool trySetCBufferVar_new(const std::string& name, const void* data, UINT size, int meshIndex);
 
-	void setNumRenderTargets(unsigned int numRenderTargets);
-	void enableDepthStencil(bool enable);
-	void enableAlphaBlending(bool enable);
-
 private:
 	void createGraphicsPipelineState();
 	void createComputePipelineState();
@@ -45,7 +41,4 @@ private:
 
 	static std::unique_ptr<DXILShaderCompiler> m_dxilCompiler; // Class Singleton
 	wComPtr<ID3D12PipelineState> m_pipelineState;
-	unsigned int m_numRenderTargets;
-	bool m_enableDepth;
-	bool m_enableBlending;
 };

@@ -26,11 +26,13 @@ void PlayerInfoWindow::renderWindow() {
 		header = "Dir: " + Utils::toStr(m_cam->getDirection());
 		ImGui::Text(header.c_str());
 
-		header = "Vel: " + Utils::toStr(m_player->getComponent<MovementComponent>()->velocity);
-		ImGui::Text(header.c_str());
+		if (m_player->getComponent<MovementComponent>()) {
+			header = "Vel: " + Utils::toStr(m_player->getComponent<MovementComponent>()->velocity);
+			ImGui::Text(header.c_str());
 
-		header = "relative Vel: " + Utils::toStr(m_player->getComponent<MovementComponent>()->relVel);
-		ImGui::Text(header.c_str());
+			header = "relative Vel: " + Utils::toStr(m_player->getComponent<MovementComponent>()->relVel);
+			ImGui::Text(header.c_str());
+		}
 	}
 	ImGui::End();
 }

@@ -13,6 +13,8 @@ class AudioComponent;
 struct NetworkChatEvent;
 struct NetworkJoinedEvent;
 struct NetworkDisconnectEvent;
+struct NetworkPlayerChangedTeam;
+struct NetworkPlayerRequestedTeamChange;
 
 struct Message {
 	Netcode::PlayerID senderID;
@@ -42,7 +44,6 @@ protected:
 	SettingStorage* m_settings;
 	char* m_currentmessage = nullptr;
 	int* m_settingBotCount = nullptr;
-
 	std::list<std::string> m_messages;
 
 	// Front-End Functions
@@ -74,9 +75,10 @@ private:
 	float m_timeSinceLastUpdate;
 
 	ImGuiWindowFlags m_standaloneButtonflags;
+	ImGuiWindowFlags m_backgroundOnlyflags;
 
 
-
+	int m_windowToRender;
 	unsigned int m_outerPadding;
 	unsigned int m_screenWidth;
 	unsigned int m_screenHeight;
@@ -86,10 +88,22 @@ private:
 	bool m_renderApplicationSettings;
 
 
+
+	float m_menuWidth;
+	ImVec2 m_minSize;
+	ImVec2 m_maxSize;
+	ImVec2 m_size;
+	ImVec2 m_pos;
+	float m_percentage;
+	bool m_usePercentage;
+
+
 	virtual bool onMyTextInput(const TextInputEvent& event) = 0;
 	bool onRecievedText(const NetworkChatEvent& event);
 	bool onPlayerJoined(const NetworkJoinedEvent& event);
 	bool onPlayerDisconnected(const NetworkDisconnectEvent& event);
+	bool onPlayerTeamRequest(const NetworkPlayerRequestedTeamChange& event);
+	bool onPlayerTeamChanged(const NetworkPlayerChangedTeam& event);
 
 	void renderPlayerList();
 	void renderGameSettings();		// Currently empty

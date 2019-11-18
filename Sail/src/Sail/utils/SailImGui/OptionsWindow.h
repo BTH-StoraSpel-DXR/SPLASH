@@ -10,6 +10,7 @@ public:
 	~OptionsWindow();
 
 	virtual void renderWindow() override;
+	bool renderGameOptions();
 
 private:
 	Application* m_app;

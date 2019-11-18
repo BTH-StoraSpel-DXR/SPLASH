@@ -118,17 +118,18 @@ void DX12VertexBuffer::resetHasBeenUpdated() {
 }
 
 bool DX12VertexBuffer::init(ID3D12GraphicsCommandList4* cmdList) {
-	auto frameIndex = m_context->getSwapIndex();
-	if (m_hasBeenInitialized[frameIndex]) {
-		return false;
-	}
+	for (unsigned int i = 0; i < m_context->getNumGPUBuffers(); i++) {
+		if (m_hasBeenInitialized[i]) {
+			continue;
+		}
 
-	// Copy the data from the uploadBuffer to the defaultBuffer
-	cmdList->CopyBufferRegion(m_defaultVertexBuffers[frameIndex].Get(), 0, m_uploadVertexBuffers[frameIndex].Get(), 0, m_byteSize);
-	// Transition to usage state
-	DX12Utils::SetResourceTransitionBarrier(cmdList, m_defaultVertexBuffers[frameIndex].Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	DX12Utils::SetResourceUAVBarrier(cmdList, m_defaultVertexBuffers[frameIndex].Get());
-	m_hasBeenInitialized[frameIndex] = true;
+		// Copy the data from the uploadBuffer to the defaultBuffer
+		cmdList->CopyBufferRegion(m_defaultVertexBuffers[i].Get(), 0, m_uploadVertexBuffers[i].Get(), 0, m_byteSize);
+		// Transition to usage state
+		DX12Utils::SetResourceTransitionBarrier(cmdList, m_defaultVertexBuffers[i].Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+		DX12Utils::SetResourceUAVBarrier(cmdList, m_defaultVertexBuffers[i].Get());
+		m_hasBeenInitialized[i] = true;
+	}
 	return true;
 }
 

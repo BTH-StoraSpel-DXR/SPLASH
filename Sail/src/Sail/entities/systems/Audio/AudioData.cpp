@@ -17,25 +17,25 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, -1.6f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "footsteps/footsteps_metal_1.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 0.7f;
 		AllAudioData::m_soundsUnique[Audio::RUN_METAL].push_back(soundUniqueInfo);
 
-		//	• Sample #2
+		//	â€¢ Sample #2
 		soundUniqueInfo.fileName = "footsteps/footsteps_metal_2.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 0.7f;
 		AllAudioData::m_soundsUnique[Audio::RUN_METAL].push_back(soundUniqueInfo);
 
-		//	• Sample #3
+		//	â€¢ Sample #3
 		soundUniqueInfo.fileName = "footsteps/footsteps_metal_3.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 0.7f;
 		AllAudioData::m_soundsUnique[Audio::RUN_METAL].push_back(soundUniqueInfo);
 
-		//	• Sample #4
+		//	â€¢ Sample #4
 		soundUniqueInfo.fileName = "footsteps/footsteps_metal_4.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 0.7f;
@@ -51,22 +51,22 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, -1.6f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "footsteps/footsteps_tile_1.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 1.0f;
 		AllAudioData::m_soundsUnique[Audio::RUN_TILE].push_back(soundUniqueInfo);
-		//	• Sample #2
+		//	â€¢ Sample #2
 		soundUniqueInfo.fileName = "footsteps/footsteps_tile_2.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 1.0f;
 		AllAudioData::m_soundsUnique[Audio::RUN_TILE].push_back(soundUniqueInfo);
-		//	• Sample #3
+		//	â€¢ Sample #3
 		soundUniqueInfo.fileName = "footsteps/footsteps_tile_3.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 1.0f;
 		AllAudioData::m_soundsUnique[Audio::RUN_TILE].push_back(soundUniqueInfo);
-		//	• Sample #4
+		//	â€¢ Sample #4
 		soundUniqueInfo.fileName = "footsteps/footsteps_tile_4.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 1.0f;
@@ -82,22 +82,22 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, -1.6f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "footsteps/footsteps_water_metal_1.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 1.0f;
 		AllAudioData::m_soundsUnique[Audio::RUN_WATER_METAL].push_back(soundUniqueInfo);
-		//	• Sample #2
+		//	â€¢ Sample #2
 		soundUniqueInfo.fileName = "footsteps/footsteps_water_metal_2.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 1.0f;
 		AllAudioData::m_soundsUnique[Audio::RUN_WATER_METAL].push_back(soundUniqueInfo);
-		//	• Sample #3
+		//	â€¢ Sample #3
 		soundUniqueInfo.fileName = "footsteps/footsteps_water_metal_3.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 1.0f;
 		AllAudioData::m_soundsUnique[Audio::RUN_WATER_METAL].push_back(soundUniqueInfo);
-		//	• Sample #4
+		//	â€¢ Sample #4
 		soundUniqueInfo.fileName = "footsteps/footsteps_water_metal_4.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 1.0f;
@@ -113,22 +113,22 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, -1.6f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "footsteps/footsteps_water_tile_1.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 1.0f;
 		AllAudioData::m_soundsUnique[Audio::RUN_WATER_TILE].push_back(soundUniqueInfo);
-		//	• Sample #2
+		//	â€¢ Sample #2
 		soundUniqueInfo.fileName = "footsteps/footsteps_water_tile_2.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 1.0f;
 		AllAudioData::m_soundsUnique[Audio::RUN_WATER_TILE].push_back(soundUniqueInfo);
-		//	• Sample #3
+		//	â€¢ Sample #3
 		soundUniqueInfo.fileName = "footsteps/footsteps_water_tile_3.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 1.0f;
 		AllAudioData::m_soundsUnique[Audio::RUN_WATER_TILE].push_back(soundUniqueInfo);
-		//	• Sample #4
+		//	â€¢ Sample #4
 		soundUniqueInfo.fileName = "footsteps/footsteps_water_tile_4.wav";
 		soundUniqueInfo.soundEffectLength = RUNNING_SOUND_SPEED;
 		soundUniqueInfo.volume = 1.0f;
@@ -145,7 +145,7 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "watergun/watergun_start.wav";
 		soundUniqueInfo.soundEffectLength = 0.578f;
 		soundUniqueInfo.volume = 0.7f;
@@ -162,7 +162,7 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "watergun/watergun_loop.wav";
 		soundUniqueInfo.soundEffectLength = 1.425f;
 		soundUniqueInfo.volume = 0.7f;
@@ -179,7 +179,7 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "watergun/watergun_end.wav";
 		soundUniqueInfo.soundEffectLength = 0.722f;
 		soundUniqueInfo.volume = 0.7f;
@@ -195,11 +195,172 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "watergun/watergun_reload.wav";
 		soundUniqueInfo.soundEffectLength = 1.246f;
 		soundUniqueInfo.volume = 0.7f;
 		AllAudioData::m_soundsUnique[Audio::RELOAD].push_back(soundUniqueInfo);
+	}
+	//-----------------------------------------------------------------------------
+
+	// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+//
+	//		   Heart Beat, First	 //   FIN_1.0
+	// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+//
+	soundGeneralInfo = &AllAudioData::m_sounds[Audio::HEART_BEAT_FIRST];
+	soundGeneralInfo->playOnce = true;
+	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
+	//-----------------------------------------------------------------------------
+	{
+		//	• Sample #1
+		soundUniqueInfo.fileName = "sanity/heart_firstbeat1.wav";
+		soundUniqueInfo.soundEffectLength = 0.198f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::HEART_BEAT_FIRST].push_back(soundUniqueInfo);
+		//	• Sample #2
+		soundUniqueInfo.fileName = "sanity/heart_firstbeat2.wav";
+		soundUniqueInfo.soundEffectLength = 0.201f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::HEART_BEAT_FIRST].push_back(soundUniqueInfo);
+		//	• Sample #3
+		soundUniqueInfo.fileName = "sanity/heart_firstbeat3.wav";
+		soundUniqueInfo.soundEffectLength = 0.182f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::HEART_BEAT_FIRST].push_back(soundUniqueInfo);
+		//	• Sample #4
+		soundUniqueInfo.fileName = "sanity/heart_firstbeat4.wav";
+		soundUniqueInfo.soundEffectLength = 0.182f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::HEART_BEAT_FIRST].push_back(soundUniqueInfo);
+		//	• Sample #5
+		soundUniqueInfo.fileName = "sanity/heart_firstbeat5.wav";
+		soundUniqueInfo.soundEffectLength = 0.202f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::HEART_BEAT_FIRST].push_back(soundUniqueInfo);
+		//	• Sample #6
+		soundUniqueInfo.fileName = "sanity/heart_firstbeat6.wav";
+		soundUniqueInfo.soundEffectLength = 0.169f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::HEART_BEAT_FIRST].push_back(soundUniqueInfo);
+	}
+	//-----------------------------------------------------------------------------
+
+	// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+//
+	//		   Heart Beat, Second	 //   FIN_1.0
+	// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+//
+	soundGeneralInfo = &AllAudioData::m_sounds[Audio::HEART_BEAT_SECOND];
+	soundGeneralInfo->playOnce = true;
+	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
+	//-----------------------------------------------------------------------------
+	{
+		//	• Sample #1
+		soundUniqueInfo.fileName = "sanity/heart_secondbeat1.wav";
+		soundUniqueInfo.soundEffectLength = 0.179f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::HEART_BEAT_SECOND].push_back(soundUniqueInfo);
+		//	• Sample #2
+		soundUniqueInfo.fileName = "sanity/heart_secondbeat2.wav";
+		soundUniqueInfo.soundEffectLength = 0.119f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::HEART_BEAT_SECOND].push_back(soundUniqueInfo);
+		//	• Sample #3
+		soundUniqueInfo.fileName = "sanity/heart_secondbeat3.wav";
+		soundUniqueInfo.soundEffectLength = 0.202f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::HEART_BEAT_SECOND].push_back(soundUniqueInfo);
+		//	• Sample #4
+		soundUniqueInfo.fileName = "sanity/heart_secondbeat4.wav";
+		soundUniqueInfo.soundEffectLength = 0.184f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::HEART_BEAT_SECOND].push_back(soundUniqueInfo);
+		//	• Sample #5
+		soundUniqueInfo.fileName = "sanity/heart_secondbeat5.wav";
+		soundUniqueInfo.soundEffectLength = 0.140f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::HEART_BEAT_SECOND].push_back(soundUniqueInfo);
+		//	• Sample #6
+		soundUniqueInfo.fileName = "sanity/heart_secondbeat6.wav";
+		soundUniqueInfo.soundEffectLength = 0.170f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::HEART_BEAT_SECOND].push_back(soundUniqueInfo);
+	}
+	//-----------------------------------------------------------------------------
+
+	// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+//
+	//		Insanity, Ambiance	     //   FIN_1.0
+	// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+//
+	soundGeneralInfo = &AllAudioData::m_sounds[Audio::INSANITY_AMBIANCE];
+	soundGeneralInfo->playOnce = false;
+	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
+	//-----------------------------------------------------------------------------
+	{
+		//	• Sample #1
+		soundUniqueInfo.fileName = "sanity/insanity_ambiance.wav";
+		soundUniqueInfo.soundEffectLength = 27.161f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::INSANITY_AMBIANCE].push_back(soundUniqueInfo);
+	}
+	//-----------------------------------------------------------------------------
+
+	// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+//
+	//		Insanity, Breathing	     //   FIN_1.0
+	// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+//
+	soundGeneralInfo = &AllAudioData::m_sounds[Audio::INSANITY_BREATHING];
+	soundGeneralInfo->playOnce = false;
+	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
+	//-----------------------------------------------------------------------------
+	{
+		//	• Sample #1
+		soundUniqueInfo.fileName = "sanity/insanity_breathing.wav";
+		soundUniqueInfo.soundEffectLength = 32.291f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::INSANITY_BREATHING].push_back(soundUniqueInfo);
+	}
+	//-----------------------------------------------------------------------------
+
+	// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+//
+	//    Insanity, Violin Intense	 //   FIN_1.0
+	// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+//
+	soundGeneralInfo = &AllAudioData::m_sounds[Audio::INSANITY_VIOLIN];
+	soundGeneralInfo->playOnce = true;
+	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
+	//-----------------------------------------------------------------------------
+	{
+		//	• Sample #1
+		soundUniqueInfo.fileName = "sanity/insanity_violin1.wav";
+		soundUniqueInfo.soundEffectLength = 0.526f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::INSANITY_VIOLIN].push_back(soundUniqueInfo);
+		//	• Sample #2
+		soundUniqueInfo.fileName = "sanity/insanity_violin2.wav";
+		soundUniqueInfo.soundEffectLength = 0.503f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::INSANITY_VIOLIN].push_back(soundUniqueInfo);
+		//	• Sample #1
+		soundUniqueInfo.fileName = "sanity/insanity_violin3.wav";
+		soundUniqueInfo.soundEffectLength = 0.528f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::INSANITY_VIOLIN].push_back(soundUniqueInfo);
+		//	• Sample #1
+		soundUniqueInfo.fileName = "sanity/insanity_violin4.wav";
+		soundUniqueInfo.soundEffectLength = 0.514f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::INSANITY_VIOLIN].push_back(soundUniqueInfo);
+	}
+	//-----------------------------------------------------------------------------
+
+	// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+//
+	//		Insanity, Scream		 //   FIN_1.0
+	// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+//
+	soundGeneralInfo = &AllAudioData::m_sounds[Audio::INSANITY_SCREAM];
+	soundGeneralInfo->playOnce = true;
+	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
+	//-----------------------------------------------------------------------------
+	{
+		//	• Sample #1
+		soundUniqueInfo.fileName = "sanity/insanity_scream.wav";
+		soundUniqueInfo.soundEffectLength = 1.488f;
+		soundUniqueInfo.volume = 1.0f;
+		AllAudioData::m_soundsUnique[Audio::INSANITY_SCREAM].push_back(soundUniqueInfo);
 	}
 	//-----------------------------------------------------------------------------
 
@@ -211,37 +372,37 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "impacts/water_drip_1.wav";
 		soundUniqueInfo.soundEffectLength = 0.26f;
 		soundUniqueInfo.volume = 0.7f;
 		AllAudioData::m_soundsUnique[Audio::WATER_IMPACT_ENVIRONMENT].push_back(soundUniqueInfo);
-		//	• Sample #2
+		//	â€¢ Sample #2
 		soundUniqueInfo.fileName = "impacts/water_drip_2.wav";
 		soundUniqueInfo.soundEffectLength = 0.299f;
 		soundUniqueInfo.volume = 0.7f;
 		AllAudioData::m_soundsUnique[Audio::WATER_IMPACT_ENVIRONMENT].push_back(soundUniqueInfo);
-		//	• Sample #3
+		//	â€¢ Sample #3
 		soundUniqueInfo.fileName = "impacts/water_drip_3.wav";
 		soundUniqueInfo.soundEffectLength = 0.26f;
 		soundUniqueInfo.volume = 0.7f;
 		AllAudioData::m_soundsUnique[Audio::WATER_IMPACT_ENVIRONMENT].push_back(soundUniqueInfo);
-		//	• Sample #4
+		//	â€¢ Sample #4
 		soundUniqueInfo.fileName = "impacts/water_drip_4.wav";
 		soundUniqueInfo.soundEffectLength = 0.207f;
 		soundUniqueInfo.volume = 0.7f;
 		AllAudioData::m_soundsUnique[Audio::WATER_IMPACT_ENVIRONMENT].push_back(soundUniqueInfo);
-		//	• Sample #5
+		//	â€¢ Sample #5
 		soundUniqueInfo.fileName = "impacts/water_drip_5.wav";
 		soundUniqueInfo.soundEffectLength = 0.406f;
 		soundUniqueInfo.volume = 0.7f;
 		AllAudioData::m_soundsUnique[Audio::WATER_IMPACT_ENVIRONMENT].push_back(soundUniqueInfo);
-		//	• Sample #6
+		//	â€¢ Sample #6
 		soundUniqueInfo.fileName = "impacts/water_drip_6.wav";
 		soundUniqueInfo.soundEffectLength = 0.463f;
 		soundUniqueInfo.volume = 0.7f;
 		AllAudioData::m_soundsUnique[Audio::WATER_IMPACT_ENVIRONMENT].push_back(soundUniqueInfo);
-		//	• Sample #7
+		//	â€¢ Sample #7
 		soundUniqueInfo.fileName = "impacts/water_drip_7.wav";
 		soundUniqueInfo.soundEffectLength = 0.593f;
 		soundUniqueInfo.volume = 0.7f;
@@ -257,7 +418,7 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "impacts/water_impact_enemy_candle.wav";
 		soundUniqueInfo.soundEffectLength = 0.523f;
 		soundUniqueInfo.volume = 0.7f;
@@ -273,7 +434,7 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "impacts/water_impact_my_candle.wav";
 		soundUniqueInfo.soundEffectLength = 1.364f;
 		soundUniqueInfo.volume = 1.0f;
@@ -289,7 +450,7 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "miscellaneous/re_ignition_candle.wav";
 		soundUniqueInfo.soundEffectLength = 4.129f;
 		soundUniqueInfo.volume = 1.0f;
@@ -305,7 +466,7 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "jumping/jump.wav";
 		soundUniqueInfo.soundEffectLength = 0.806f;
 		soundUniqueInfo.volume = 0.7f;
@@ -321,7 +482,7 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "jumping/landing_ground.wav";
 		soundUniqueInfo.soundEffectLength = 0.45f;
 		soundUniqueInfo.volume = 0.8f;
@@ -337,32 +498,32 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, 0.0f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "death/death_1.wav";
 		soundUniqueInfo.soundEffectLength = 4.013f;
 		soundUniqueInfo.volume = 1.0f;
 		AllAudioData::m_soundsUnique[Audio::DEATH].push_back(soundUniqueInfo);
-		//	• Sample #2
+		//	â€¢ Sample #2
 		soundUniqueInfo.fileName = "death/death_2.wav";
 		soundUniqueInfo.soundEffectLength = 4.013f;
 		soundUniqueInfo.volume = 1.0f;
 		AllAudioData::m_soundsUnique[Audio::DEATH].push_back(soundUniqueInfo);
-		//	• Sample #3
+		//	â€¢ Sample #3
 		soundUniqueInfo.fileName = "death/death_3.wav";
 		soundUniqueInfo.soundEffectLength = 4.013f;
 		soundUniqueInfo.volume = 1.0f;
 		AllAudioData::m_soundsUnique[Audio::DEATH].push_back(soundUniqueInfo);
-		//	• Sample #4
+		//	â€¢ Sample #4
 		soundUniqueInfo.fileName = "death/death_4.wav";
 		soundUniqueInfo.soundEffectLength = 4.013f;
 		soundUniqueInfo.volume = 1.0f;
 		AllAudioData::m_soundsUnique[Audio::DEATH].push_back(soundUniqueInfo);
-		//	• Sample #5
+		//	â€¢ Sample #5
 		soundUniqueInfo.fileName = "death/death_5.wav";
 		soundUniqueInfo.soundEffectLength = 4.013f;
 		soundUniqueInfo.volume = 1.0f;
 		AllAudioData::m_soundsUnique[Audio::DEATH].push_back(soundUniqueInfo);
-		//	• Sample #6
+		//	â€¢ Sample #6
 		soundUniqueInfo.fileName = "death/death_6.wav";
 		soundUniqueInfo.soundEffectLength = 4.013f;
 		soundUniqueInfo.volume = 1.0f;
@@ -378,7 +539,7 @@ void AllAudioData::init() {
 	soundGeneralInfo->positionalOffset = { 0.0f, 1.0f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
+		//	â€¢ Sample #1
 		soundUniqueInfo.fileName = "death/killing_blow.wav";
 		soundUniqueInfo.soundEffectLength = 0.488f;
 		soundUniqueInfo.volume = 0.5f;
@@ -387,56 +548,90 @@ void AllAudioData::init() {
 	//-----------------------------------------------------------------------------
 
 	// +-+-+-+-+-+-+-+-+-+-+-+-+-+//
-	//		  Sprinkler Start    //   FIN_1.0
+	//		   Start Throwing	 //   FIN_1.0
 	// +-+-+-+-+-+-+-+-+-+-+-+-+//
-	soundGeneralInfo = &AllAudioData::m_sounds[Audio::SPRINKLER_START];
+	soundGeneralInfo = &AllAudioData::m_sounds[Audio::START_THROWING];
 	soundGeneralInfo->playOnce = true;
 	soundGeneralInfo->positionalOffset = { 0.0f, 1.0f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
-		soundUniqueInfo.fileName = "miscellaneous/sprinkler_start1.wav";
-		soundUniqueInfo.soundEffectLength = 1.109f;
-		soundUniqueInfo.volume = 1.0f;
-		AllAudioData::m_soundsUnique[Audio::SPRINKLER_START].push_back(soundUniqueInfo);
-		//	• Sample #2
-		soundUniqueInfo.fileName = "miscellaneous/sprinkler_start2.wav";
-		soundUniqueInfo.soundEffectLength = 1.109f;
-		soundUniqueInfo.volume = 1.0f;
-		AllAudioData::m_soundsUnique[Audio::SPRINKLER_START].push_back(soundUniqueInfo);
+		//	â€¢ Sample #1
+		soundUniqueInfo.fileName = "miscellaneous/throwing/start_throw.wav";
+		soundUniqueInfo.soundEffectLength = 1.284f;
+		soundUniqueInfo.volume = 0.5f;
+		AllAudioData::m_soundsUnique[Audio::START_THROWING].push_back(soundUniqueInfo);
 	}
 	//-----------------------------------------------------------------------------
 
-	// +-+-+-+-+-+-+-+-+-+-+-+-+-+//
-	//		  Sprinkler water    //   FIN_2.0
-	// +-+-+-+-+-+-+-+-+-+-+-+-+//
-	soundGeneralInfo = &AllAudioData::m_sounds[Audio::SPRINKLER_WATER];
-	soundGeneralInfo->playOnce = false;
-	soundGeneralInfo->positionalOffset = { 0.0f, 1.0f, 0.0f };
-	//-----------------------------------------------------------------------------
-	{
-		//	• Sample #1
-		soundUniqueInfo.fileName = "miscellaneous/sprinkler.wav";
-		soundUniqueInfo.soundEffectLength = 12.356f;
-		soundUniqueInfo.volume = 1.0f;
-		AllAudioData::m_soundsUnique[Audio::SPRINKLER_WATER].push_back(soundUniqueInfo);
-	}
-	//-----------------------------------------------------------------------------
 
 	// +-+-+-+-+-+-+-+-+-+-+-+-+-+//
-	//		  Alarm sounds		 //   FIN_1.0
+	//		   Stop throwing	 //   FIN_1.0
 	// +-+-+-+-+-+-+-+-+-+-+-+-+//
-	soundGeneralInfo = &AllAudioData::m_sounds[Audio::ALARM];
+	soundGeneralInfo = &AllAudioData::m_sounds[Audio::STOP_THROWING];
 	soundGeneralInfo->playOnce = true;
 	soundGeneralInfo->positionalOffset = { 0.0f, 1.0f, 0.0f };
 	//-----------------------------------------------------------------------------
 	{
-		//	• Sample #1
-		soundUniqueInfo.fileName = "miscellaneous/alarm.wav";
-		soundUniqueInfo.soundEffectLength = 3.98f;
-		soundUniqueInfo.volume = 0.1f;
-		AllAudioData::m_soundsUnique[Audio::ALARM].push_back(soundUniqueInfo);
-	}
-	//-----------------------------------------------------------------------------
+		for (int i = 1; i < 8; i++) {
+			//	â€¢ Sample #i
+			soundUniqueInfo.fileName = "miscellaneous/throwing/throw" + std::to_string(i) + ".wav";
+			soundUniqueInfo.soundEffectLength = 0.97f;
+			soundUniqueInfo.volume = 0.5f;
+			AllAudioData::m_soundsUnique[Audio::STOP_THROWING].push_back(soundUniqueInfo);
+		}
+
+		// +-+-+-+-+-+-+-+-+-+-+-+-+-+//
+		//		  Sprinkler Start    //   FIN_1.0
+		// +-+-+-+-+-+-+-+-+-+-+-+-+//
+		soundGeneralInfo = &AllAudioData::m_sounds[Audio::SPRINKLER_START];
+		soundGeneralInfo->playOnce = true;
+		soundGeneralInfo->positionalOffset = { 0.0f, 1.0f, 0.0f };
+		//-----------------------------------------------------------------------------
+		{
+			//	â€¢ Sample #1
+			soundUniqueInfo.fileName = "miscellaneous/sprinkler_start1.wav";
+			soundUniqueInfo.soundEffectLength = 1.109f;
+			soundUniqueInfo.volume = 1.0f;
+			AllAudioData::m_soundsUnique[Audio::SPRINKLER_START].push_back(soundUniqueInfo);
+			//	â€¢ Sample #2
+			soundUniqueInfo.fileName = "miscellaneous/sprinkler_start2.wav";
+			soundUniqueInfo.soundEffectLength = 1.109f;
+			soundUniqueInfo.volume = 1.0f;
+			AllAudioData::m_soundsUnique[Audio::SPRINKLER_START].push_back(soundUniqueInfo);
+		}
+		//-----------------------------------------------------------------------------
+
+		// +-+-+-+-+-+-+-+-+-+-+-+-+-+//
+		//		  Sprinkler water    //   FIN_2.0
+		// +-+-+-+-+-+-+-+-+-+-+-+-+//
+		soundGeneralInfo = &AllAudioData::m_sounds[Audio::SPRINKLER_WATER];
+		soundGeneralInfo->playOnce = false;
+		soundGeneralInfo->positionalOffset = { 0.0f, 1.0f, 0.0f };
+		//-----------------------------------------------------------------------------
+		{
+			//	â€¢ Sample #1
+			soundUniqueInfo.fileName = "miscellaneous/sprinkler.wav";
+			soundUniqueInfo.soundEffectLength = 12.356f;
+			soundUniqueInfo.volume = 1.0f;
+			AllAudioData::m_soundsUnique[Audio::SPRINKLER_WATER].push_back(soundUniqueInfo);
+		}
+		//-----------------------------------------------------------------------------
+
+		// +-+-+-+-+-+-+-+-+-+-+-+-+-+//
+		//		  Alarm sounds		 //   FIN_1.0
+		// +-+-+-+-+-+-+-+-+-+-+-+-+//
+		soundGeneralInfo = &AllAudioData::m_sounds[Audio::ALARM];
+		soundGeneralInfo->playOnce = true;
+		soundGeneralInfo->positionalOffset = { 0.0f, 1.0f, 0.0f };
+		//-----------------------------------------------------------------------------
+		{
+			//	â€¢ Sample #1
+			soundUniqueInfo.fileName = "miscellaneous/alarm.wav";
+			soundUniqueInfo.soundEffectLength = 3.98f;
+			soundUniqueInfo.volume = 0.1f;
+			AllAudioData::m_soundsUnique[Audio::ALARM].push_back(soundUniqueInfo);
+		}
+		//-----------------------------------------------------------------------------
 #pragma endregion
+	}
 }

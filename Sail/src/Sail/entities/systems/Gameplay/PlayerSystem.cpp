@@ -29,9 +29,10 @@ bool PlayerSystem::onEvent(const Event& event) {
 		// if it's a component we want to keep the bit is set to 1
 		const ComponentTypeBitID componentsToKeep = (
 			ModelComponent::getBID()
-			| ReplayComponent::getBID()
 			| CullingComponent::getBID() // needed ??
 			| BoundingBoxComponent::getBID()
+			| ReplayComponent::getBID()
+			| ReplayTransformComponent::getBID()
 			);
 
 
@@ -55,13 +56,16 @@ bool PlayerSystem::onEvent(const Event& event) {
 		// Check if the player was the one who died
 		if (Netcode::getComponentOwner(e.netIDofKilled) == myPlayerID) {
 			// If my player died, I become a spectator
+
+			// Make this into a real spectator
 			e.killed->addComponent<SpectatorComponent>();
 			e.killed->getComponent<MovementComponent>()->constantAcceleration = glm::vec3(0.f);
 			e.killed->getComponent<MovementComponent>()->velocity = glm::vec3(0.f);
 			e.killed->getComponent<NetworkSenderComponent>()->removeAllMessageTypes();
 			e.killed->removeComponent<GunComponent>();
 			e.killed->removeComponent<AnimationComponent>();
-			e.killed->removeComponent<ModelComponent>(); // TODO? Don't
+			e.killed->removeComponent<ModelComponent>();
+			e.killed->removeComponent<LocalOwnerComponent>();
 
 			// Move entity above the level and make it look down
 			auto transform = e.killed->getComponent<TransformComponent>();

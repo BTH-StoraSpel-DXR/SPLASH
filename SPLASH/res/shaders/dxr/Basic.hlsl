@@ -127,7 +127,7 @@ void rayGen() {
 	payload_metaball.closestTvalue = 0;
 	payload_metaball.color = float4(0, 0, 0, 0);
 
-	TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0x01, 0 /* ray index*/, 0, 0, ray, payload_metaball);
+	TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, INSTACE_MASK_METABALLS, 0 /* ray index*/, 0, 0, ray, payload_metaball);
 	//===========MetaBalls RT END===========
 
 	float metaballDepth = dot(normalize(CB_SceneData.cameraDirection), normalize(rayDir) * payload_metaball.closestTvalue);
@@ -176,7 +176,7 @@ void rayGen() {
 	payload.closestTvalue = 0;
 
 	payload.color = float4(0, 0, 0, 0);
-	TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 0 /* ray index*/, 0, 0, ray, payload);
+	TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, INSTACE_MASK_DEFAULT & ~INSTACE_MASK_METABALLS, 0 /* ray index*/, 0, 0, ray, payload);
 
 	lOutput[launchIndex] = payload.color;
 #endif
@@ -184,7 +184,6 @@ void rayGen() {
 
 [shader("miss")]
 void miss(inout RayPayload payload) {
-	payload.color = float4(1.00f, 1.0f, 1.0f, 1.0f);
 	payload.color = float4(0.01f, 0.01f, 0.01f, 1.0f);
 	payload.closestTvalue = 1000;
 }
@@ -289,8 +288,8 @@ void closestHitProcedural(inout RayPayload payload, in ProceduralPrimitiveAttrib
 	reftractRaydesc.Origin += reftractRaydesc.Direction * 0.0001;
 
 	if (payload.recursionDepth == 1) {
-		TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF & ~0x01, 0, 0, 0, reflectRaydesc, reflect_payload);
-		TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF & ~0x01, 0, 0, 0, reftractRaydesc, refract_payload);
+		TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, INSTACE_MASK_DEFAULT & ~INSTACE_MASK_METABALLS, 0, 0, 0, reflectRaydesc, reflect_payload);
+		TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, INSTACE_MASK_DEFAULT & ~INSTACE_MASK_METABALLS, 0, 0, 0, reftractRaydesc, refract_payload);
 
 	} else {
 		reflect_payload.color = float4(0.0f, 0.0f, 0.1f,1.0f);

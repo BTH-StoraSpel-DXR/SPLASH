@@ -68,7 +68,9 @@ void AnimationSystem::update(float dt) {
 void AnimationSystem::updateTransforms(const float dt) { 
 	for (auto& e : entities) {
 		AnimationComponent* animationC = e->getComponent<AnimationComponent>();
-		addTime(animationC, dt);
+		if (animationC->updateDT) {
+			addTime(animationC, dt);
+		}
 
 		if (!animationC->currentAnimation) {
 #if defined(_DEBUG)
@@ -179,12 +181,10 @@ void AnimationSystem::updateTransforms(const float dt) {
 		animationC->hasUpdated = true;
 
 		if (animationC->leftHandEntity) {
-
 			glm::mat4 res = animationC->transforms[10] * animationC->leftHandPosition;
 			
 			glm::vec3 pos, scale;
 			glm::quat rot;
-			
 			glm::decompose(res, scale, rot, pos, glm::vec3(), glm::vec4());
 			
 			//KEEP THIS DO NOT REMOVE FUCK YOU
@@ -193,20 +193,25 @@ void AnimationSystem::updateTransforms(const float dt) {
 		}
 
 		if (animationC->rightHandEntity) {
-		
 			glm::mat4 res = animationC->transforms[22] * animationC->rightHandPosition;
 		
 			glm::vec3 pos, scale;
 			glm::quat rot;
-		
 			glm::decompose(res, scale, rot, pos, glm::vec3(), glm::vec4());
 		
 			animationC->rightHandEntity->getComponent<TransformComponent>()->setRotations(glm::eulerAngles(rot));
 			animationC->rightHandEntity->getComponent<TransformComponent>()->setTranslation(pos);
-		
 		}
 
+		if (animationC->is_camFollowingHead) {
+			glm::mat4 res = animationC->transforms[5] * animationC->headPositionMatrix;
 
+			glm::vec3 pos, scale;
+			glm::quat rot;
+			glm::decompose(res, scale, rot, pos, glm::vec3(), glm::vec4());
+
+			animationC->headPositionLocalCurrent = pos;
+		}
 	}
 }
 

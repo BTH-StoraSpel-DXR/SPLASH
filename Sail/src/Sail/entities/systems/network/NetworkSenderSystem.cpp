@@ -7,6 +7,7 @@
 #include "Sail/entities/components/NetworkSenderComponent.h"
 #include "Sail/entities/components/OnlineOwnerComponent.h"
 #include "Sail/entities/components/LocalOwnerComponent.h"
+#include "Sail/entities/components/SanityComponent.h"
 #include "Sail/entities/Entity.h"
 
 #include "Network/NWrapperSingleton.h"
@@ -105,11 +106,11 @@ void NetworkSenderSystem::update() {
 
 	// Write nrOfEntities
 	sendToOthers(nonEmptySenderComponents);
-	sendToSelf(size_t{0}); // SenderComponent messages should not be sent to ourself
+	sendToSelf(size_t{ 0 }); // SenderComponent messages should not be sent to ourself
 
 	for (auto e : entities) {
 		NetworkSenderComponent* nsc = e->getComponent<NetworkSenderComponent>();
-		
+
 		// If a SenderComponent doesn't have any active messages don't send any of its information
 		if (nsc->m_dataTypes.empty()) {
 			continue;
@@ -138,6 +139,7 @@ void NetworkSenderSystem::update() {
 #if defined(DEVELOPMENT) && defined(_LOG_TO_FILE)
 		out << "Event: " << Netcode::MessageNames[(int)(pE->type)-1] << "\n";
 #endif
+
 		writeEventToArchive(pE, sendToOthers);
 		if (pE->alsoSendToSelf) {
 			writeEventToArchive(pE, sendToSelf);
@@ -154,8 +156,7 @@ void NetworkSenderSystem::update() {
 	if (NWrapperSingleton::getInstance().isHost()) {
 		NWrapperSingleton::getInstance().getNetworkWrapper()->sendSerializedDataAllClients(binaryDataToSendToOthers);
 
-		// Clients get their packets sent back to them since the host just forwards them to all clients.
-		// So only the host needs to send this to themselves here since it's the only way the host's packets can be saved from.
+		// Host doesn't get their messages sent back to them so we need to send them to the killCamReceiverSystem from here
 		m_killCamSystem->handleIncomingData(binaryDataToSendToOthers);
 	} else {
 		NWrapperSingleton::getInstance().getNetworkWrapper()->sendSerializedDataToHost(binaryDataToSendToOthers);
@@ -183,21 +184,21 @@ void NetworkSenderSystem::update() {
 	}
 }
 
-void NetworkSenderSystem::queueEvent(NetworkSenderEvent* type) {
+void NetworkSenderSystem::queueEvent(NetworkSenderEvent* event) {
 	std::lock_guard<std::mutex> lock(m_queueMutex);
 
-	m_eventQueue.push(type);
+	m_eventQueue.push(event);
 
 #ifdef DEVELOPMENT
 	// Don't send broken events to others or to yourself
-	if (type->type < Netcode::MessageType::CREATE_NETWORKED_PLAYER || type->type >= Netcode::MessageType::EMPTY) {
+	if (event->type < Netcode::MessageType::CREATE_NETWORKED_PLAYER || event->type >= Netcode::MessageType::EMPTY) {
 		SAIL_LOG_ERROR("Attempted to send invalid message\n");
 		return;
 	}
 #endif
 
 	// if the event will be sent to ourself then increment the size counter
-	if (type->alsoSendToSelf) {
+	if (event->alsoSendToSelf) {
 		m_nrOfEventsToSendToSelf++;
 	}
 }
@@ -295,9 +296,7 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 		e->getComponent<NetworkSenderComponent>()->removeMessageType(Netcode::MessageType::SHOOT_START);
 
 		// Send data to others
-		GunComponent* g = e->getComponent<GunComponent>();
-		ArchiveHelpers::saveVec3(ar, g->position);
-		ArchiveHelpers::saveVec3(ar, g->projectileSpeed * g->direction); // Velocity
+		ar(e->getComponent<AudioComponent>()->m_sounds[Audio::SHOOT_START].frequency);
 
 		// Transition into loop
 		e->getComponent<NetworkSenderComponent>()->addMessageType(Netcode::MessageType::SHOOT_LOOP);
@@ -306,9 +305,7 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 	case Netcode::MessageType::SHOOT_LOOP:
 	{
 		// Send data to others
-		GunComponent* g = e->getComponent<GunComponent>();
-		ArchiveHelpers::saveVec3(ar, g->position);
-		ArchiveHelpers::saveVec3(ar, g->projectileSpeed * g->direction); // Velocity
+		ar(e->getComponent<AudioComponent>()->m_sounds[Audio::SHOOT_LOOP].frequency);
 	}
 	break;
 	case Netcode::MessageType::SHOOT_END:
@@ -319,9 +316,15 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 		e->getComponent<NetworkSenderComponent>()->removeMessageType(Netcode::MessageType::SHOOT_LOOP);
 
 		// Send data to others
-		GunComponent* g = e->getComponent<GunComponent>();
-		ArchiveHelpers::saveVec3(ar, g->position);
-		ArchiveHelpers::saveVec3(ar, g->projectileSpeed * g->direction); // Velocity
+		ar(e->getComponent<AudioComponent>()->m_sounds[Audio::SHOOT_END].frequency);
+	}
+	break;
+	case Netcode::MessageType::UPDATE_SANITY:
+	{
+		SanityComponent* ic = e->getComponent<SanityComponent>();
+		if (ic) {
+			ar(ic->sanity);
+		}
 	}
 	break;
 	default:
@@ -332,6 +335,10 @@ void NetworkSenderSystem::writeMessageToArchive(Netcode::MessageType& messageTyp
 
 void NetworkSenderSystem::writeEventToArchive(NetworkSenderEvent* event, Netcode::OutArchive& ar) {
 	ar(event->type); // Send the event-type
+
+	if ((int)event->type == 85) {
+		int asdf = 3;
+	}
 
 	// NOTE: Please keep this switch in alphabetical order (at least for the first word)
 	switch (event->type) {
@@ -438,7 +445,6 @@ void NetworkSenderSystem::writeEventToArchive(NetworkSenderEvent* event, Netcode
 		ar(GameDataTracker::getInstance().getStatisticsLocal().bulletsFired);
 		ar(GameDataTracker::getInstance().getStatisticsLocal().distanceWalked);
 		ar(GameDataTracker::getInstance().getStatisticsLocal().jumpsMade);
-
 	}
 	break;
 	case Netcode::MessageType::RUNNING_METAL_START:
@@ -496,7 +502,20 @@ void NetworkSenderSystem::writeEventToArchive(NetworkSenderEvent* event, Netcode
 		ar(data->playerWhoWasHitID);
 	}
 	break;
+	case Netcode::MessageType::START_THROWING:
+	{
+		Netcode::MessageStartThrowing* data = static_cast<Netcode::MessageStartThrowing*>(event->data);
+		ar(data->playerCompID); // Send
+	}
+	break;
+	case Netcode::MessageType::STOP_THROWING:
+	{
+		Netcode::MessageStopThrowing* data = static_cast<Netcode::MessageStopThrowing*>(event->data);
+		ar(data->playerCompID); // Send
+	}
+	break;
 	default:
+		SAIL_LOG_ERROR("TRIED TO SEND INVALID NETWORK EVENT (" + std::to_string((int)event->type));
 		break;
 	}
 }

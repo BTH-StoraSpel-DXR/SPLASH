@@ -20,6 +20,7 @@ void BeginEndFrameSystem::renderNothing() {
 void BeginEndFrameSystem::beginFrame(Camera& camera) {
 	Application::getInstance()->getRenderWrapper()->getCurrentRenderer()->begin(&camera);
 	Application::getInstance()->getRenderWrapper()->getScreenSpaceRenderer()->begin(&camera);
+	Application::getInstance()->getRenderWrapper()->getParticleRenderer()->begin(&camera);
 }
 
 void BeginEndFrameSystem::endFrameAndPresent() {
@@ -28,6 +29,10 @@ void BeginEndFrameSystem::endFrameAndPresent() {
 	renderWrapper->getCurrentRenderer()->present((renderWrapper->getDoPostProcessing()
 		) ? renderWrapper->getPostProcessPipeline() : nullptr);
 	
+	renderWrapper->getParticleRenderer()->end();
+	renderWrapper->getParticleRenderer()->present();
+
 	renderWrapper->getScreenSpaceRenderer()->end();
 	renderWrapper->getScreenSpaceRenderer()->present();
+
 }

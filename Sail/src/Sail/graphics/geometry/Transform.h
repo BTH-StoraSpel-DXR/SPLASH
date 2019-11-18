@@ -1,5 +1,6 @@
 #pragma once
 #include <glm/vec3.hpp>
+#include <glm/ext/quaternion_float.hpp>
 
 // Structs for storing transform data from two consecutive updates
 // so that they can be interpolated between.

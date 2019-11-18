@@ -21,7 +21,7 @@ class AudioComponent;
 
 enum AudioType { MUSIC };
 
-class XAUDIO2FX_REVERB_PARAMETERS;
+struct XAUDIO2FX_REVERB_PARAMETERS;
 
 #define X3DAUDIO_PI  3.141592654f
 
@@ -102,9 +102,7 @@ private:
 
 	// Represents the audio output device
 	IXAudio2MasteringVoice* m_masterVoice = nullptr;
-	IXAudio2SubmixVoice* m_xAPOSubmixVoice_toMaster = nullptr;
 	IXAudio2SubmixVoice* m_masterSubmixVoice = nullptr;
-	IXAudio2SubmixVoice* m_streamingSubmixVoice = nullptr;
 
 	DWORD m_destinationChannelCount;
 	// Represents each loaded sound in the form of an 'object'

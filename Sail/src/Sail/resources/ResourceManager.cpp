@@ -124,7 +124,11 @@ bool ResourceManager::loadModel(const std::string& filename, Shader* shader, con
 	}
 
 	if (temp) {
-		SAIL_LOG("Loaded model: " + filename);
+		float size = 0.f;
+		for (int i = 0; i < temp->getNumberOfMeshes(); i++) {
+			size += temp->getMesh(i)->getSize();
+		}
+		SAIL_LOG("Loaded model: " + filename + " (" + std::to_string(size / (1024 * 1024)) + "MB)");
 		temp->setName(filename);
 		m_modelMutex.lock();
 		m_models.insert({ filename, std::unique_ptr<Model>(temp) });
@@ -187,7 +191,12 @@ void ResourceManager::loadAnimationStack(const std::string& fileName, const Impo
 	}
 
 	if (temp) {
-		m_animationStacks.insert({ fileName, std::unique_ptr<AnimationStack>(temp) });
+		m_animationStacks.insert({fileName, std::unique_ptr<AnimationStack>(temp)});
+		float size = 0.f;
+		for (int i = 0; i < m_animationStacks[fileName]->getAnimationCount(); i++) {
+			size += m_animationStacks[fileName]->getAnimation(i)->getMaxAnimationFrame() * m_animationStacks[fileName]->boneCount() * sizeof(glm::mat4);
+		}
+		Logger::Log("Animation size of '" + fileName + "' : " + std::to_string(size / (1024 * 1024)) + "MB");
 	}
 	else {
 #ifdef _DEBUG
@@ -201,6 +210,7 @@ AnimationStack& ResourceManager::getAnimationStack(const std::string& fileName) 
 	if (m_animationStacks.find(fileName) == m_animationStacks.end()) {
 		loadAnimationStack(fileName);
 	}
+
 	return *m_animationStacks[fileName].get();
 }
 

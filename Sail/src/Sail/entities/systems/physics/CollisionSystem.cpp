@@ -101,7 +101,8 @@ bool CollisionSystem::collisionUpdatePart(float dt, size_t start, size_t end) {
 		collision->collisions.clear();
 
 		if (collision->padding < 0.0f) {
-			collision->padding = glm::length(boundingBox->getBoundingBox()->getHalfSize());
+			glm::vec3 halfSize = boundingBox->getBoundingBox()->getHalfSize();
+			collision->padding = glm::min(glm::min(halfSize.x, halfSize.y), halfSize.z);
 		}
 
 		if (m_octree && !csc) { //Not implemented for spheres yet

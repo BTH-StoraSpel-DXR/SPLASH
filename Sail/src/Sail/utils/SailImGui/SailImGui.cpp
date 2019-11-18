@@ -60,10 +60,6 @@ bool SailImGui::TextButton(const char* label, const ImVec2& size_arg, ImGuiButto
 	return pressed;
 }
 
-
-
-
-
 bool SailImGui::InvertButton(const char* label, const ImVec2& size_arg, ImGuiButtonFlags flags) {
 
 	ImGuiWindow* window = ImGui::GetCurrentWindow();
@@ -127,3 +123,33 @@ bool SailImGui::InvertButton(const char* label, const ImVec2& size_arg, ImGuiBut
 	IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window->DC.LastItemStatusFlags);
 	return pressed;
 }
+
+void SailImGui::rText(const char* fmt, const float end, ...) {
+
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + end - ImGui::CalcTextSize(fmt).x
+		- ImGui::GetScrollX() - 2 * ImGui::GetStyle().ItemSpacing.x);
+
+	va_list args;
+	va_start(args, end);
+	ImGui::TextV(fmt, args);
+	va_end(args);
+}
+
+void SailImGui::cText(const char* fmt, const float end, ...) {
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ((end- ImGui::GetCursorPosX() )*0.5f) - (ImGui::CalcTextSize(fmt).x * 0.5f) -   ImGui::GetStyle().ItemSpacing.x*0.5f);
+
+	va_list args;
+	va_start(args, end);
+	ImGui::TextV(fmt, args);
+	va_end(args);
+}
+
+void SailImGui::HeaderText(const char* fmt, ...) {	
+	ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered));
+	va_list args;
+	va_start(args, fmt);
+	ImGui::TextV(fmt, args);
+	va_end(args);
+	ImGui::PopStyleColor();
+}
+

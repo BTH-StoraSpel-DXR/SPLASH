@@ -13,11 +13,27 @@ constexpr float MAX_HEALTH = 20.f;
 // This component will eventually contain the health etc of the candles
 class CandleComponent : public Component<CandleComponent> {
 public:
+	enum class DamageSource{
+		NO_CLUE = 0,
+		PLAYER,
+		SPRINKLER,
+		INSANE,
+	};
+
 	CandleComponent() {}
 	virtual ~CandleComponent() {}
 
+
+
+	void kill(DamageSource source, Netcode::PlayerID shooterID) {
+		health = 0;
+		wasHitThisTick = true;
+		lastDamageSource = source;
+		wasHitByPlayerID = shooterID;
+	}
+
 	// This function is only called by the host
-	void hitWithWater(float damage, Netcode::PlayerID shooterID) {
+	void hitWithWater(float damage, DamageSource source, Netcode::PlayerID shooterID) {
 		if (health > 0.0f && invincibleTimer <= 0.0f) {
 			invincibleTimer = 0.4f; // TODO: Replace 0.4f with game settings
 			health -= damage;
@@ -53,4 +69,5 @@ public:
 	bool wasHitThisTick = false;
 	Netcode::PlayerID playerEntityID;
 	Netcode::PlayerID wasHitByPlayerID = 0;
+	DamageSource lastDamageSource;
 };

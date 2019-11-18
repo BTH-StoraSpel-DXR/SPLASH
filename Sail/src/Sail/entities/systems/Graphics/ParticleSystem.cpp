@@ -15,8 +15,7 @@
 
 ParticleSystem::ParticleSystem() {
 	registerComponent<ParticleEmitterComponent>(true, true, true);
-
-	
+	registerComponent<TransformComponent>(false, true, false);
 }
 
 ParticleSystem::~ParticleSystem() {
@@ -24,7 +23,24 @@ ParticleSystem::~ParticleSystem() {
 
 void ParticleSystem::update(float dt) {
 	for (auto& e : entities) {
-		e->getComponent<ParticleEmitterComponent>()->updateTimers(dt);
+		auto* partComponent = e->getComponent<ParticleEmitterComponent>();
+
+		// Place emitter at entities transform
+		if (e->hasComponent<TransformComponent>()) {
+			TransformComponent* trans = e->getComponent<TransformComponent>();
+			partComponent->position = trans->getMatrixWithoutUpdate() * glm::vec4(partComponent->offset, 1.f);
+		}
+
+		glm::vec3 velocityToAdd(0.f);
+		if (e->getParent() && e->getParent()->hasComponent<MovementComponent>() && e->hasComponent<CandleComponent>()) {
+			if (e->getComponent<CandleComponent>()->isCarried) {
+				velocityToAdd = e->getParent()->getComponent<MovementComponent>()->oldVelocity;
+			}
+		}
+
+		partComponent->velocity = partComponent->constantVelocity + velocityToAdd;
+
+		partComponent->updateTimers(dt);
 	}
 }
 

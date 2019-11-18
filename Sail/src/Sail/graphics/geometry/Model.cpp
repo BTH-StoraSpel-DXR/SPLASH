@@ -3,6 +3,7 @@
 
 Model::Model(Mesh::Data& buildData, Shader* shader) 
 	: m_isAnimated(false)
+	, m_castShadows(true)
 {
 	m_meshes.push_back(std::unique_ptr<Mesh>(Mesh::Create(buildData, shader)));
 }
@@ -47,4 +48,12 @@ void Model::setIsAnimated(bool animated) {
 
 bool Model::isAnimated() const {
 	return m_isAnimated;
+}
+
+void Model::setCastShadows(bool cast) {
+	m_castShadows = cast;
+}
+
+bool Model::castsShadows() const {
+	return m_castShadows;
 }

@@ -28,9 +28,13 @@ public:
 	void setIsAnimated(bool animated);
 	bool isAnimated() const;
 
+	void setCastShadows(bool cast);
+	bool castsShadows() const;
+
 private:
 	std::string m_name;
 	std::vector<Mesh::Ptr> m_meshes;
 	bool m_isAnimated;
+	bool m_castShadows;
 
 };
