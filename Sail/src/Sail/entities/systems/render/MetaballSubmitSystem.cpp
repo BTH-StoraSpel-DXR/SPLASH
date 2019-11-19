@@ -25,7 +25,7 @@ void MetaballSubmitSystem<T>::submitAll(const float alpha) {
 			flags |= Renderer::IS_VISIBLE_ON_SCREEN;
 		}
 
-		renderer->submitMetaball(Renderer::RENDER_COMMAND_TYPE_NON_MODEL_METABALL, nullptr, transform->getInterpolatedTranslation(alpha), flags);
+		renderer->submitMetaball(Renderer::RENDER_COMMAND_TYPE_NON_MODEL_METABALL, nullptr, transform->getInterpolatedTranslation(alpha), flags, 0);
 	}
 }
 

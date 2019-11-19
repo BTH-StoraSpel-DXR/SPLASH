@@ -960,11 +960,11 @@ void LevelSystem::addMapModel(Direction dir, int typeID, int doors, const std::v
 	{
 		if (typeID == 0) {
 			EntityFactory::CreateStaticMapObject("Map_tile", tileModels[TileModel::CORRIDOR_FLOOR], bb, glm::vec3(tileSize* i + tileOffset, 0.f, tileSize* j + tileOffset), glm::vec3(0.f, glm::radians(270.f), 0.f), glm::vec3(tileSize / 10.f, tileHeight, tileSize / 10.f));
-			EntityFactory::CreateStaticMapObject("Map_tile", tileModels[TileModel::CORRIDOR_CEILING], bb, glm::vec3(tileSize * i + tileOffset, 0.f, tileSize * j + tileOffset), glm::vec3(0.f, glm::radians(270.f), 0.f), glm::vec3(tileSize / 10.f, tileHeight, tileSize / 10.f));
+			//EntityFactory::CreateStaticMapObject("Map_tile", tileModels[TileModel::CORRIDOR_CEILING], bb, glm::vec3(tileSize * i + tileOffset, 0.f, tileSize * j + tileOffset), glm::vec3(0.f, glm::radians(270.f), 0.f), glm::vec3(tileSize / 10.f, tileHeight, tileSize / 10.f));
 		}
 		else {
 			EntityFactory::CreateStaticMapObject("Map_tile", tileModels[TileModel::ROOM_FLOOR], bb, glm::vec3(tileSize* i + tileOffset, 0.f, tileSize* j + tileOffset), glm::vec3(0.f, glm::radians(270.f), 0.f), glm::vec3(tileSize / 10.f, tileHeight, tileSize / 10.f));
-			EntityFactory::CreateStaticMapObject("Map_tile", tileModels[TileModel::ROOM_CEILING], bb, glm::vec3(tileSize * i + tileOffset, 0.f, tileSize * j + tileOffset), glm::vec3(0.f, glm::radians(270.f), 0.f), glm::vec3(tileSize / 10.f, tileHeight, tileSize / 10.f));
+			//EntityFactory::CreateStaticMapObject("Map_tile", tileModels[TileModel::ROOM_CEILING], bb, glm::vec3(tileSize * i + tileOffset, 0.f, tileSize * j + tileOffset), glm::vec3(0.f, glm::radians(270.f), 0.f), glm::vec3(tileSize / 10.f, tileHeight, tileSize / 10.f));
 		}
 	}
 }

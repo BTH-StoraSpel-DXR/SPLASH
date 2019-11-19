@@ -16,7 +16,7 @@ public:
 
 	virtual bool onEvent(const Event& event) override;
 	virtual void submit(Mesh* mesh, const glm::mat4& modelMatrix, RenderFlag flags, int teamColorID, bool castShadows) override;
-	virtual void submitMetaball(RenderCommandType type, Material* material, const glm::vec3& pos, RenderFlag flags) override;
+	virtual void submitMetaball(RenderCommandType type, Material* material, const glm::vec3& pos, RenderFlag flags, const int group) override;
 	virtual void submitDecal(const glm::vec3& pos, const glm::mat3& rot, const glm::vec3& halfSize) override;
 	virtual void submitWaterPoint(const glm::vec3& pos) override;
 	virtual bool checkIfOnWater(const glm::vec3& pos) override;
@@ -37,7 +37,8 @@ private:
 	std::unique_ptr<DX12RenderableTexture> m_outputTexture;
 	std::unique_ptr<DX12RenderableTexture> m_outputBloomTexture;
 
-	std::vector<DXRBase::Metaball> m_metaballs;
+	std::map<int, std::vector<DXRBase::Metaball>> m_metaballs;
+
 	D3D12_RAYTRACING_AABB m_nextMetaballAabb;
 
 	// Decals

@@ -421,7 +421,13 @@ float CalculateMetaballPotential(in float3 position, in float3 ballpos, in float
 float CalculateMetaballsPotential(in uint index, in float3 position) {
 	//return 1;
 	float sumFieldPotential = 0;
-	uint nballs = CB_SceneData.nMetaballs;
+	uint metaballGroupID = 0;
+	uint nballs = CB_SceneData.nMetaballInGroup[metaballGroupID];
+	uint groupStart = CB_SceneData.metaballGroupStart[metaballGroupID];
+
+	if (nballs > 100) {
+		nballs = 100;
+	}
 
 	int mid = index;
 	int nWeights = 30;
@@ -429,10 +435,11 @@ float CalculateMetaballsPotential(in uint index, in float3 position) {
 	int start = mid - nWeights;
 	int end = mid + nWeights;
 
-	if (start < 0)
-		start = 0;
-	if (end > nballs) 
-		end = nballs;
+	if (start < groupStart)
+		start = groupStart;
+
+	if (end > 10)
+		end = 10;
 
 	for (int i = start; i < end - 1; i++) {
 		sumFieldPotential += CalculateMetaballPotential(position, metaballs[i], METABALL_RADIUS);
@@ -461,9 +468,10 @@ struct Ballhit {
 
 bool Step(in Ballhit hit, in RayDesc rayWorld){
 		
+
 	float tmin = hit.tmin, tmax = hit.tmax;
-	unsigned int MAX_LARGE_STEPS = 32;//If these steps dont hit any metaball no hit is reported.
-	unsigned int MAX_SMALL_STEPS = 32;//If a large step hit a metaball, use small steps to adjust go backwards
+	unsigned int MAX_LARGE_STEPS = 2;//If these steps dont hit any metaball no hit is reported.
+	unsigned int MAX_SMALL_STEPS = 2;//If a large step hit a metaball, use small steps to adjust go backwards
 
 	ProceduralPrimitiveAttributes attr;
 	float t = tmin;
@@ -508,6 +516,9 @@ bool Step(in Ballhit hit, in RayDesc rayWorld){
 [shader("intersection")]
 void IntersectionShader() {
 	float startT = 1000;
+	uint metaballGroupID = 0;
+	uint nballs = CB_SceneData.nMetaballInGroup[metaballGroupID];
+	uint groupStart = CB_SceneData.metaballGroupStart[metaballGroupID];
 
 	RayDesc rayWorld;
 	rayWorld.Origin = WorldRayOrigin();
@@ -518,35 +529,42 @@ void IntersectionShader() {
 	float4 dummy;
 	float min;
 	float max;
-	uint nballs = CB_SceneData.nMetaballs;
 
 	const uint MAX_HITS = 2;
 	Ballhit hits[MAX_HITS];
 	int nHits = 0;
 
-	for (uint i = 0; i < nballs; i++) {
+	for (uint i = groupStart; i < groupStart + nballs; i++) {
 		if (intersectSphere(rayWorld, metaballs[i], METABALL_RADIUS, min, max, dummy)) {
 			hits[nHits].tmin = min;
 			hits[nHits].tmax = max + 1;
 			hits[nHits].index = i;
 			nHits++;
+
+			ProceduralPrimitiveAttributes attr;
+			attr.normal = float4(0, 1, 0, 0);
+			ReportHit(min, 0, attr);
+
 			break;
 		}
 	}
 
-	for (uint i = 0; i < nballs && nHits < MAX_HITS; i++) {
-		uint i2 = nballs - i - 1;
-		if (intersectSphere(rayWorld, metaballs[i2], METABALL_RADIUS, min, max, dummy)) {
-			hits[nHits].tmin = min;
-			hits[nHits].tmax = max + 1;
-			hits[nHits].index = i2;
-			nHits++;
-			break;
-		}
-	}
+	//for (uint i = groupStart; i < groupStart + nballs && nHits < MAX_HITS; i++) {
+	//	uint i2 = nballs - i - 1;
+	//	if (intersectSphere(rayWorld, metaballs[i2], METABALL_RADIUS, min, max, dummy)) {
+	//		hits[nHits].tmin = min;
+	//		hits[nHits].tmax = max + 1;
+	//		hits[nHits].index = i2;
+	//		nHits++;
+	//		break;
+	//	}
+	//}
 
 	if (nHits == 0)
 		return;
+
+	//return;
+
 
 	for (int curHit = 0; curHit < nHits; curHit++) {
 		if (Step(hits[curHit], rayWorld)) {

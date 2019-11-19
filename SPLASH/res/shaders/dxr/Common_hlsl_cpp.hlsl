@@ -31,6 +31,7 @@ namespace DXRShaderCommon {
 #define NUM_POINT_LIGHTS 12
 #define NUM_TEAM_COLORS 12
 #define MAX_NUM_METABALLS 500
+#define MAX_NUM_METABALL_GROUPS 16
 #define METABALL_RADIUS 0.12f
 #define MAX_DECALS 100
 
@@ -97,11 +98,13 @@ struct SceneCBuffer {
 	float3 cameraPosition;
 	bool doTonemapping;
 	float3 cameraDirection;
-	uint nMetaballs;
+	uint nMetaballGroups;
     uint nDecals;
 	float nearZ;
 	float farZ;
 	float padding2;
+	uint nMetaballInGroup[MAX_NUM_METABALL_GROUPS];//TODO FIX THIS PADDING
+	uint metaballGroupStart[MAX_NUM_METABALL_GROUPS];//TODO FIX THIS PADDING
     PointLightInput pointLights[NUM_POINT_LIGHTS];
     SpotlightInput spotLights[NUM_POINT_LIGHTS];
 	float4 teamColors[NUM_TEAM_COLORS];
@@ -110,6 +113,8 @@ struct SceneCBuffer {
 	float3 mapSize;
 	float padding3;
 	float3 mapStart;
+	float padding4;
+
 };
 
 // Properties set once per BLAS/Mesh
