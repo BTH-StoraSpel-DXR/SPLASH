@@ -234,6 +234,7 @@ Entity::SPtr EntityFactory::CreateMySpectator(Netcode::PlayerID playerID, size_t
 
 	mySpectator->addComponent<TransformComponent>(spawnLocation);
 	mySpectator->addComponent<SpectatorComponent>();
+	mySpectator->addComponent<AudioComponent>();
 
 	auto transform = mySpectator->getComponent<TransformComponent>();
 	auto pos = glm::vec3(transform->getCurrentTransformState().m_translation);
