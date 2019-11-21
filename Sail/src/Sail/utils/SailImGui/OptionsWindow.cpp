@@ -148,6 +148,16 @@ bool OptionsWindow::renderGameOptions() {
 		dynamic["map"]["seed"].setValue(seed);
 		settingsChanged = true;
 	}
+
+	bool keepSeed = (dynamic["map"]["keepSeed"].value > 0);
+	ImGui::Text("Keep Seed");
+	ImGui::SameLine(x[0]);
+	ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth() * 0.5f);
+	if (ImGui::Checkbox("##KEEPSEED", &keepSeed)) {
+		dynamic["map"]["keepSeed"].setValue(keepSeed ? 1.0f : 0.0f);
+		settingsChanged = true;
+	}
+
 	ImGui::Text("Clutter"); 
 	ImGui::SameLine(x[0]);
 	ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth() * 0.5f);

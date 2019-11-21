@@ -197,6 +197,8 @@ void SettingStorage::createGameDefaultMap() {
 	gameSettingsDynamic["map"]["tileSize"] =	DynamicSetting(7.0f, 1.0f, 30.0f);
 	gameSettingsDynamic["map"]["clutter"] = DynamicSetting(0.85f,	0.0f,	5.0f);
 	gameSettingsDynamic["map"]["seed"] =    DynamicSetting(0.0f,	0.0f,	1000000.0f);
+	gameSettingsDynamic["map"]["seed"].value = Utils::rnd() * gameSettingsDynamic["map"]["seed"].maxVal;//Randomize seed on start
+	gameSettingsDynamic["map"]["keepSeed"] = DynamicSetting(0.0f, 0.0f, 1.0f);
 	gameSettingsDynamic["map"]["sprinklerTime"] = DynamicSetting(60.0f, 0.0f, 600.0f);
 	gameSettingsDynamic["map"]["sprinklerIncrement"] = DynamicSetting(10.0f, 5.0f, 300.0f);
 

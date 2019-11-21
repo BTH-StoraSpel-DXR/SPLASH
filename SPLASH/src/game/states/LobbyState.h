@@ -56,7 +56,8 @@ protected:
 	std::string fetchMessage();
 	void addMessageToChat(const Message& message);
 	virtual bool onEvent(const Event& event) override;
-
+		
+	bool m_settingsChanged;
 private:
 	ImGuiHandler* m_imGuiHandler;
 	OptionsWindow m_optionsWindow;
@@ -79,7 +80,6 @@ private:
 	bool m_scrollToBottom;
 
 	// Render ImGui Stuff --------- WILL BE REPLACED BY OTHER GRAPHICS.
-	bool m_settingsChanged;
 	float m_timeSinceLastUpdate;
 
 	ImGuiWindowFlags m_standaloneButtonflags;

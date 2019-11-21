@@ -54,6 +54,12 @@ EndGameState::~EndGameState() {
 	GameDataTracker::getInstance().resetData();
 
 	EventDispatcher::Instance().unsubscribe(Event::Type::NETWORK_JOINED, this);
+
+	//Randomize Seed for the next Game
+	if (NWrapperSingleton::getInstance().isHost() && m_app->getSettings().gameSettingsDynamic["map"]["keepSeed"].value == 0) {
+		m_app->getSettings().gameSettingsDynamic["map"]["seed"].value = Utils::rnd() * m_app->getSettings().gameSettingsDynamic["map"]["seed"].maxVal;
+		NWrapperSingleton::getInstance().getNetworkWrapper()->updateGameSettings(m_app->getSettings().serialize(m_app->getSettings().gameSettingsStatic, m_app->getSettings().gameSettingsDynamic));
+	}
 }
 
 bool EndGameState::processInput(float dt) {
