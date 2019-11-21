@@ -11,7 +11,14 @@ AudioComponent::AudioComponent() {
 	}
 }
 
-AudioComponent::~AudioComponent() {}
+AudioComponent::~AudioComponent() {
+
+	for (int i = 0; i < Audio::SoundType::COUNT; i++) {
+
+		std::cout << "TURNING OFF SOUND #" << i << "\n";
+		m_sounds[i].isPlaying = false;
+	}
+}
 
 void AudioComponent::streamSoundRequest_HELPERFUNC(std::string filename, bool startTRUE_stopFALSE, float volume, bool isPositionalAudio, bool isLooping) {
 

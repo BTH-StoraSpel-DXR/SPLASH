@@ -221,6 +221,9 @@ void AudioSystem::update(Camera& cam, float dt, float alpha) {
 							m_audioEngine->stopSpecificSound(soundGeneral->soundID);
 							soundGeneral->hasStartedPlaying = false;
 
+							if (!soundGeneral->playOnce) {
+								std::cout << "RESTARTING SOUND " << soundGeneral->soundID << "\n";
+							}
 							soundGeneral->isPlaying = !soundGeneral->playOnce;
 						}
 						// If the sound should no longer be playing stop it and reset its timer
