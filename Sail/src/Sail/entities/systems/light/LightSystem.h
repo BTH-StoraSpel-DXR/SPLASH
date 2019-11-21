@@ -2,12 +2,14 @@
 #include "../BaseComponentSystem.h"
 
 class LightSetup;
-class PerspectiveCamera;
 
+template <typename T>
 class LightSystem final : public BaseComponentSystem {
 public:
 	LightSystem();
 	~LightSystem();
 
-	void updateLights(LightSetup* lightSetup);
+	void prepareFixedUpdate();
+
+	void updateLights(LightSetup* lightSetup, const float alpha);
 };

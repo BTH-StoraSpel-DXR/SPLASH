@@ -36,10 +36,12 @@ KillCamReceiverSystem::KillCamReceiverSystem() : ReceiverBase() {
 	registerComponent<ReplayReceiverComponent>(true, false, false);
 
 	EventDispatcher::Instance().subscribe(Event::Type::PLAYER_DEATH, this);
+	EventDispatcher::Instance().subscribe(Event::Type::TOGGLE_SLOW_MOTION, this);
 }
 
 KillCamReceiverSystem::~KillCamReceiverSystem() {
 	EventDispatcher::Instance().unsubscribe(Event::Type::PLAYER_DEATH, this);
+	EventDispatcher::Instance().unsubscribe(Event::Type::TOGGLE_SLOW_MOTION, this);
 }
 
 void KillCamReceiverSystem::stop() {
@@ -59,9 +61,11 @@ void KillCamReceiverSystem::init(Netcode::PlayerID player) {
 }
 
 void KillCamReceiverSystem::handleIncomingData(const std::string& data) {
-	std::lock_guard<std::mutex> lock(m_replayDataLock);
+	if (!m_hasStarted) { // Stop writing data to this once the 
+		std::lock_guard<std::mutex> lock(m_replayDataLock);
 
-	m_replayData[m_currentWriteInd].push(data);
+		m_replayData[m_currentWriteInd].push(data);
+	}
 }
 
 
@@ -74,12 +78,14 @@ void KillCamReceiverSystem::prepareUpdate() {
 
 // Increments the indexes in the ring buffer once per tick and clears the next write-index
 void KillCamReceiverSystem::update(float dt) {
-	std::lock_guard<std::mutex> lock(m_replayDataLock);
+	if (!m_hasStarted) {
+		std::lock_guard<std::mutex> lock(m_replayDataLock);
 
-	m_currentWriteInd = ++m_currentWriteInd % REPLAY_BUFFER_SIZE;
-	m_currentReadInd  = ++m_currentReadInd  % REPLAY_BUFFER_SIZE;
+		m_currentWriteInd = ++m_currentWriteInd % REPLAY_BUFFER_SIZE;
+		m_currentReadInd  = ++m_currentReadInd  % REPLAY_BUFFER_SIZE;
 
-	m_replayData[m_currentWriteInd] = std::queue<std::string>(); // Clear the current write-position's queue in the ring buffer
+		m_replayData[m_currentWriteInd] = std::queue<std::string>(); // Clear the current write-position's queue in the ring buffer
+	}
 }
 
 // Should only be called when the killcam is active
@@ -97,7 +103,9 @@ void KillCamReceiverSystem::processReplayData(float dt) {
 	std::lock_guard<std::mutex> lock(m_replayDataLock);
 
 	processData(dt, m_replayData[m_currentReadInd], false);
+	m_currentReadInd = ++m_currentReadInd % REPLAY_BUFFER_SIZE;
 }
+
 
 #ifdef DEVELOPMENT
 unsigned int KillCamReceiverSystem::getByteSize() const {
@@ -201,6 +209,7 @@ void KillCamReceiverSystem::setAnimation(const Netcode::ComponentID id, const An
 		auto animation = e->getComponent<AnimationComponent>();
 		animation->setAnimation(info.index);
 		animation->animationTime = info.time;
+		animation->pitch = info.pitch;
 		return;
 	}
 	SAIL_LOG_WARNING("setAnimation called but no matching entity found");
@@ -321,6 +330,7 @@ void KillCamReceiverSystem::spawnProjectile(const ProjectileInfo& info) {
 	args.velocity = info.velocity;
 	args.ownersNetId = info.ownerID;
 	args.netCompId = info.projectileID;
+	args.lifetime *= SLOW_MO_MULTIPLIER;
 
 	EntityFactory::CreateReplayProjectile(e, args);
 }
@@ -428,9 +438,13 @@ bool KillCamReceiverSystem::onEvent(const Event& event) {
 		}
 	};
 
+	auto onToggleSlowMotion = [&](const ToggleSlowMotionReplayEvent& e) {
+		m_slowMotionState = e.setting;
+	};
 
 	switch (event.type) {
-	case Event::Type::PLAYER_DEATH: onPlayerDeath((const PlayerDiedEvent&)event); break;
+	case Event::Type::PLAYER_DEATH:       onPlayerDeath((const PlayerDiedEvent&)event); break;
+	case Event::Type::TOGGLE_SLOW_MOTION: onToggleSlowMotion((const ToggleSlowMotionReplayEvent&)event); break;
 	default: break;
 	}
 

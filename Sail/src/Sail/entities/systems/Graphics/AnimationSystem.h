@@ -6,6 +6,7 @@ class Model;
 class ModelComponent;
 class AnimationComponent;
 
+template <typename T>
 class AnimationSystem final : public BaseComponentSystem {
 public:
 	AnimationSystem();

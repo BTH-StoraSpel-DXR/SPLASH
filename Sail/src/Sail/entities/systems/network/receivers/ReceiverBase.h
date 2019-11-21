@@ -55,7 +55,7 @@ protected:
 	struct GameDataForOthersInfo {
 		int bulletsFired;
 		Netcode::PlayerID bulletsFiredID;
-		int distanceWalked;
+		float distanceWalked;
 		Netcode::PlayerID distanceWalkedID;
 		int jumpsMade;
 		Netcode::PlayerID jumpsMadeID;

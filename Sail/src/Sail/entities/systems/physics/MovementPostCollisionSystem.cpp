@@ -3,17 +3,22 @@
 #include "..//..//components/TransformComponent.h"
 #include "..//..//components/MovementComponent.h"
 #include "..//..//components/CollisionSpheresComponent.h"
+#include "..//..//components/RenderInActiveGameComponent.h"
+#include "..//..//components/RenderInReplayComponent.h"
 #include "..//..//Entity.h"
 #include "Sail/utils/GameDataTracker.h"
 
-MovementPostCollisionSystem::MovementPostCollisionSystem() {
+template <typename T>
+MovementPostCollisionSystem<T>::MovementPostCollisionSystem() {
 	registerComponent<TransformComponent>(true, true, true);
 	registerComponent<MovementComponent>(true, true, true);
 	registerComponent<CollisionSpheresComponent>(false, true, true);
+	registerComponent<T>(true, false, false);
 }
 
 
-void MovementPostCollisionSystem::update(float dt) {
+template <typename T>
+void MovementPostCollisionSystem<T>::update(float dt) {
 	for (auto& e : entities) {
 		TransformComponent* transform = e->getComponent<TransformComponent>();
 		MovementComponent* movement = e->getComponent<MovementComponent>();
@@ -48,3 +53,7 @@ void MovementPostCollisionSystem::update(float dt) {
 		}
 	}
 }
+
+
+template class MovementPostCollisionSystem<RenderInActiveGameComponent>;
+template class MovementPostCollisionSystem<RenderInReplayComponent>;

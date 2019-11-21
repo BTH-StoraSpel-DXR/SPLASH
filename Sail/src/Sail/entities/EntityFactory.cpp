@@ -104,7 +104,6 @@ Entity::SPtr EntityFactory::CreateMyPlayer(Netcode::PlayerID playerID, size_t li
 	myPlayer->getComponent<ModelComponent>()->renderToGBuffer = true;
 	myPlayer->addComponent<MovementComponent>()->constantAcceleration = glm::vec3(0.0f, -9.8f, 0.0f);
 	myPlayer->addComponent<RealTimeComponent>();
-	myPlayer->addComponent<SprintingComponent>();
 	myPlayer->addComponent<ThrowingComponent>();
 	myPlayer->addComponent<RenderInActiveGameComponent>();
 
@@ -332,6 +331,7 @@ void EntityFactory::CreateGenericPlayer(Entity::SPtr playerEntity, size_t lightI
 	playerEntity->addComponent<CollidableComponent>();
 	playerEntity->addComponent<SpeedLimitComponent>()->maxSpeed = 6.0f;
 	playerEntity->addComponent<SanityComponent>()->sanity = 100.0f;
+	playerEntity->addComponent<SprintingComponent>();
 
 	// Give playerEntity a bounding box
 	playerEntity->addComponent<BoundingBoxComponent>(boundingBoxModel);

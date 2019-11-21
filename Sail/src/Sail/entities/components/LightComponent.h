@@ -17,6 +17,11 @@ public:
 	PointLight& getPointLight() {
 		return m_pointLight;
 	}
+	
+	const glm::vec3 getInterpolatedPosition(float alpha) const {
+		return (alpha * currentPos) + ((1.0f - alpha) * prevPos);
+	}
+
 #ifdef DEVELOPMENT
 	const unsigned int getByteSize() const override {
 		return sizeof(*this);
@@ -72,8 +77,10 @@ public:
 	}
 #endif
 
-
+public:
 	glm::vec3 defaultColor = { 1.0f, 1.0f, 1.0f };
+	glm::vec3 prevPos = { 0.f, 0.f, 0.f };
+	glm::vec3 currentPos = { 0.f, 0.f, 0.f };
 private:
 	PointLight m_pointLight;
 

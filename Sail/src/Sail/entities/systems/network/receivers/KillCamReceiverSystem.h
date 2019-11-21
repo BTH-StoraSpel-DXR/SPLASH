@@ -4,18 +4,21 @@
 #include "../../BaseComponentSystem.h"
 #include "Sail/netcode/NetworkedStructs.h"
 #include "Sail/events/EventReceiver.h"
+#include "Sail/events/types/ToggleSlowMotionReplayEvent.h"
 
 #include <array>
 #include "Sail/TimeSettings.h"
-
-// Packets from the past five seconds are saved so that they can be replayed in the killcam.
-constexpr size_t REPLAY_BUFFER_SIZE = TICKRATE * 5;
 
 class GameState;
 class NetworkSenderSystem;
 class GameDataTracker;
 
 class KillCamReceiverSystem : public ReceiverBase, public EventReceiver {
+public:
+	// Packets from the past five seconds are saved so that they can be replayed in the killcam.
+	static constexpr size_t REPLAY_BUFFER_SIZE = TICKRATE * 5;
+	static constexpr size_t SLOW_MO_MULTIPLIER = 4;
+
 public:
 	KillCamReceiverSystem();
 	virtual ~KillCamReceiverSystem();
@@ -29,6 +32,20 @@ public:
 	void processReplayData(float dt);
 
 
+	float getKillCamAlpha(const float alpha) const {
+		if (m_slowMotionState == SlowMotionSetting::ENABLE) {
+			return (static_cast<float>(m_killCamTickCounter) + alpha) / static_cast<float>(SLOW_MO_MULTIPLIER);
+		} else {
+			return alpha;
+		}
+	}
+
+	// If slow motion is enabled only update once every SLOW_MO_MULTIPLIER ticks
+	bool skipUpdate() {
+		m_killCamTickCounter = (m_killCamTickCounter + 1) % SLOW_MO_MULTIPLIER;
+		return (m_slowMotionState == SlowMotionSetting::ENABLE && m_killCamTickCounter != 0);
+	}
+
 #ifdef DEVELOPMENT
 	unsigned int getByteSize() const override;
 	void imguiPrint(Entity** selectedEntity = nullptr) {
@@ -36,8 +53,6 @@ public:
 		ImGui::Text(std::string("ID: " + std::to_string((int)m_playerID)).c_str());
 	}
 #endif
-
-
 private:
 	void createPlayer    (const PlayerComponentInfo& info, const glm::vec3& pos)                  override;
 	void destroyEntity   (const Netcode::ComponentID entityID)                                    override;
@@ -96,6 +111,10 @@ private:
 	size_t m_currentWriteInd = 0;
 	size_t m_currentReadInd  = 1;
 	bool   m_hasStarted      = false;
+
+	SlowMotionSetting m_slowMotionState = SlowMotionSetting::ENABLE;
+	size_t m_killCamTickCounter = 0; // Counts ticks in the range [ 0, SLOW_MO_MULTIPLIER )
+
 
 	Netcode::ComponentID m_idOfKillingProjectile = 0;
 };

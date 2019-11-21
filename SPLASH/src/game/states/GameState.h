@@ -40,9 +40,8 @@ private:
 	bool onPlayerDisconnect(const NetworkDisconnectEvent& event);
 	bool onPlayerDropped(const NetworkDroppedEvent& event);
 	void onPlayerStateStatusChanged(const NetworkUpdateStateLoadStatus& event);
-
 	bool onPlayerJoined(const NetworkJoinedEvent& event);
-	
+
 	void shutDownGameState();
 
 	// Where to updates the component systems. Responsibility can be moved to other places

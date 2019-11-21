@@ -4,6 +4,8 @@
 #include "Sail/entities/components/AnimationComponent.h"
 #include "Sail/entities/components/ModelComponent.h"
 #include "Sail/entities/components/TransformComponent.h"
+#include "Sail/entities/components/RenderInActiveGameComponent.h"
+#include "Sail/entities/components/RenderInReplayComponent.h"
 #include "Sail/graphics/geometry/Model.h"
 #include "sail/api/VertexBuffer.h"
 #include "API/DX12/DX12API.h"
@@ -23,7 +25,8 @@
 #include "Sail/graphics/shader/dxr/GBufferOutShader.h"
 // --------------------------
 
-AnimationSystem::AnimationSystem() 
+template <typename T>
+AnimationSystem<T>::AnimationSystem() 
 	: BaseComponentSystem()
 	, m_interpolate(true) 
 {
@@ -31,6 +34,7 @@ AnimationSystem::AnimationSystem()
 	registerComponent<AnimationComponent>(true, true, true);
 	registerComponent<ModelComponent>(true, true, true);
 	registerComponent<TransformComponent>(false, true, true);
+	registerComponent<T>(true, false, false);
 
 	m_updateShader = &Application::getInstance()->getResourceManager().getShaderSet<AnimationUpdateComputeShader>();
 	m_dispatcher = std::unique_ptr<ComputeShaderDispatcher>(ComputeShaderDispatcher::Create());
@@ -42,10 +46,12 @@ AnimationSystem::AnimationSystem()
 	m_inputLayout->pushVec3(InputLayout::BITANGENT, "BINORMAL", 0);
 }
 
-AnimationSystem::~AnimationSystem() {
+template <typename T>
+AnimationSystem<T>::~AnimationSystem() {
 }
 
-void AnimationSystem::updateHands(const glm::vec3& lPos, const glm::vec3& rPos, const glm::vec3& lRot, const glm::vec3& rRot) {
+template <typename T>
+void AnimationSystem<T>::updateHands(const glm::vec3& lPos, const glm::vec3& rPos, const glm::vec3& lRot, const glm::vec3& rRot) {
 	for (auto& e : entities) {
 		AnimationComponent* ac = e->getComponent<AnimationComponent>();
 		if (ac) {
@@ -60,12 +66,14 @@ void AnimationSystem::updateHands(const glm::vec3& lPos, const glm::vec3& rPos, 
 	}
 }
 
-void AnimationSystem::update(float dt) {
+template <typename T>
+void AnimationSystem<T>::update(float dt) {
 	updateTransforms(dt);
 	updateMeshCPU();
 }
 
-void AnimationSystem::updateTransforms(const float dt) { 
+template <typename T>
+void AnimationSystem<T>::updateTransforms(const float dt) { 
 	for (auto& e : entities) {
 		AnimationComponent* animationC = e->getComponent<AnimationComponent>();
 		if (animationC->updateDT) {
@@ -222,7 +230,8 @@ void AnimationSystem::updateTransforms(const float dt) {
 	}
 }
 
-void AnimationSystem::updateMeshGPU(ID3D12GraphicsCommandList4* cmdList) {
+template <typename T>
+void AnimationSystem<T>::updateMeshGPU(ID3D12GraphicsCommandList4* cmdList) {
 	m_dispatcher->begin(cmdList);
 	for (auto& e : entities) {
 		AnimationComponent* animationC = e->getComponent<AnimationComponent>();
@@ -318,7 +327,8 @@ void AnimationSystem::updateMeshGPU(ID3D12GraphicsCommandList4* cmdList) {
 	}
 }
 
-void AnimationSystem::updateMeshCPU() { 
+template <typename T>
+void AnimationSystem<T>::updateMeshCPU() { 
 	for (auto& e : entities) {
 		AnimationComponent* animationC = e->getComponent<AnimationComponent>();
 		ModelComponent* modelC = e->getComponent<ModelComponent>();
@@ -372,11 +382,13 @@ void AnimationSystem::updateMeshCPU() {
 
 }
 
-const std::vector<Entity*>& AnimationSystem::getEntities() const {
+template <typename T>
+const std::vector<Entity*>& AnimationSystem<T>::getEntities() const {
 	return entities;
 }
 
-void AnimationSystem::initDebugAnimations() {
+template <typename T>
+void AnimationSystem<T>::initDebugAnimations() {
 	Application* app = Application::getInstance();
 	auto* shader = &app->getResourceManager().getShaderSet<GBufferOutShader>();
 	std::string name = "Doc.fbx";
@@ -404,7 +416,8 @@ void AnimationSystem::initDebugAnimations() {
 }
 
 #ifdef DEVELOPMENT
-unsigned int AnimationSystem::getByteSize() const {
+template <typename T>
+unsigned int AnimationSystem<T>::getByteSize() const {
 	unsigned int size = BaseComponentSystem::getByteSize() + sizeof(*this);
 	size += sizeof(ComputeShaderDispatcher);
 	size += sizeof(InputLayout);
@@ -412,14 +425,16 @@ unsigned int AnimationSystem::getByteSize() const {
 }
 #endif
 
-void AnimationSystem::addTime(AnimationComponent* e, const float time) {
+template <typename T>
+void AnimationSystem<T>::addTime(AnimationComponent* e, const float time) {
 	e->animationTime += time * e->animationSpeed;
 	if (e->animationTime >= e->currentAnimation->getMaxAnimationTime()) {
 		e->animationTime -= (int(e->animationTime / e->currentAnimation->getMaxAnimationTime()) * e->currentAnimation->getMaxAnimationTime());
 	}
 }
 
-void AnimationSystem::interpolate(glm::mat4& res, const glm::mat4& mat1, const glm::mat4& mat2, const float w) {
+template <typename T>
+void AnimationSystem<T>::interpolate(glm::mat4& res, const glm::mat4& mat1, const glm::mat4& mat2, const float w) {
 	glm::vec3 pos[2], scale[2];
 	glm::quat rot[2];
 
@@ -435,7 +450,8 @@ void AnimationSystem::interpolate(glm::mat4& res, const glm::mat4& mat1, const g
 	res = res * glm::toMat4(resRot);
 }
 
-void AnimationSystem::updatePerFrame() {
+template <typename T>
+void AnimationSystem<T>::updatePerFrame() {
 	for (auto& e : entities) {
 		AnimationComponent* animationC = e->getComponent<AnimationComponent>();
 		if (!animationC->computeUpdate) {
@@ -449,14 +465,21 @@ void AnimationSystem::updatePerFrame() {
 	}
 }
 
-void AnimationSystem::toggleInterpolation() {
+template <typename T>
+void AnimationSystem<T>::toggleInterpolation() {
 	m_interpolate = !m_interpolate;
 }
 
-const bool AnimationSystem::getInterpolation() {
+template <typename T>
+const bool AnimationSystem<T>::getInterpolation() {
 	return m_interpolate;
 }
 
-void AnimationSystem::setInterpolation(const bool interpolation) {
+template <typename T>
+void AnimationSystem<T>::setInterpolation(const bool interpolation) {
 	m_interpolate = interpolation;
 }
+
+
+template class AnimationSystem<RenderInActiveGameComponent>;
+template class AnimationSystem<RenderInReplayComponent>;

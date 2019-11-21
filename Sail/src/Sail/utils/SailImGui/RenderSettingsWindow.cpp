@@ -6,6 +6,7 @@
 #include "Sail/entities/systems/graphics/AnimationSystem.h"
 #include "../Physics/Octree.h"
 #include "Sail/entities/components/ModelComponent.h"
+#include "Sail/entities/components/RenderInActiveGameComponent.h"
 #include "Sail/graphics/camera/Camera.h"
 #include "imgui.h"
 
@@ -28,9 +29,9 @@ void RenderSettingsWindow::renderWindow() {
 	ImGui::Checkbox("Enable post processing",
 		&(*Application::getInstance()->getRenderWrapper()).getDoPostProcessing()
 	);
-	bool interpolate = ECS::Instance()->getSystem<AnimationSystem>()->getInterpolation();
+	bool interpolate = ECS::Instance()->getSystem<AnimationSystem<RenderInActiveGameComponent>>()->getInterpolation();
 	ImGui::Checkbox("enable animation interpolation", &interpolate);
-	ECS::Instance()->getSystem<AnimationSystem>()->setInterpolation(interpolate);
+	ECS::Instance()->getSystem<AnimationSystem<RenderInActiveGameComponent>>()->setInterpolation(interpolate);
 	static Entity* pickedEntity = nullptr;
 	static float metalness = 1.0f;
 	static float roughness = 1.0f;

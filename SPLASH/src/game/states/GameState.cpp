@@ -24,6 +24,7 @@
 #include "API/DX12/renderer/DX12HybridRaytracerRenderer.h"
 #include "API/DX12/dxr/DXRBase.h"
 
+
 GameState::GameState(StateStack& stack)
 	: State(stack)
 	, m_cam(90.f, 1280.f / 720.f, 0.1f, 5000.f)
@@ -272,6 +273,9 @@ bool GameState::processInput(float dt) {
 	if (Input::IsKeyPressed(KeyBinds::START_KILLCAM) & cooldown > TOGGLE_TIMER) {
 		m_isInKillCamMode = !m_isInKillCamMode;
 		cooldown = 0.0f;
+		if (!m_isInKillCamMode) {
+			m_componentSystems.killCamReceiverSystem->stop();
+		}
 	}
 //#endif
 
@@ -436,16 +440,16 @@ bool GameState::processInput(float dt) {
 
 void GameState::initSystems(const unsigned char playerID) {
 	m_componentSystems.teamColorSystem = ECS::Instance()->createSystem<TeamColorSystem>();
-	m_componentSystems.movementSystem = ECS::Instance()->createSystem<MovementSystem>();
-	
+	m_componentSystems.movementSystem = ECS::Instance()->createSystem<MovementSystem<RenderInActiveGameComponent>>();
+
 	m_componentSystems.collisionSystem = ECS::Instance()->createSystem<CollisionSystem>();
 	m_componentSystems.collisionSystem->provideOctree(m_octree);
 
-	m_componentSystems.movementPostCollisionSystem = ECS::Instance()->createSystem<MovementPostCollisionSystem>();
+	m_componentSystems.movementPostCollisionSystem = ECS::Instance()->createSystem<MovementPostCollisionSystem<RenderInActiveGameComponent>>();
 
 	m_componentSystems.speedLimitSystem = ECS::Instance()->createSystem<SpeedLimitSystem>();
 
-	m_componentSystems.animationSystem = ECS::Instance()->createSystem<AnimationSystem>();
+	m_componentSystems.animationSystem = ECS::Instance()->createSystem<AnimationSystem<RenderInActiveGameComponent>>();
 	m_componentSystems.animationChangerSystem = ECS::Instance()->createSystem<AnimationChangerSystem>();
 
 	m_componentSystems.updateBoundingBoxSystem = ECS::Instance()->createSystem<UpdateBoundingBoxSystem>();
@@ -464,7 +468,7 @@ void GameState::initSystems(const unsigned char playerID) {
 
 	//m_componentSystems.aiSystem = ECS::Instance()->createSystem<AiSystem>();
 
-	m_componentSystems.lightSystem = ECS::Instance()->createSystem<LightSystem>();
+	m_componentSystems.lightSystem = ECS::Instance()->createSystem<LightSystem<RenderInActiveGameComponent>>();
 	m_componentSystems.lightListSystem = ECS::Instance()->createSystem<LightListSystem>();
 	m_componentSystems.spotLightSystem = ECS::Instance()->createSystem<SpotLightSystem>();
 
@@ -542,8 +546,13 @@ void GameState::initSystems(const unsigned char playerID) {
 
 	// Create systems needed for the killcam
 	m_componentSystems.killCamReceiverSystem->init(playerID);
-	m_componentSystems.killCamModelSubmitSystem    = ECS::Instance()->createSystem<ModelSubmitSystem<RenderInReplayComponent>>();
-	m_componentSystems.killCamMetaballSubmitSystem = ECS::Instance()->createSystem<MetaballSubmitSystem<RenderInReplayComponent>>();
+	
+	m_componentSystems.killCamAnimationSystem             = ECS::Instance()->createSystem<AnimationSystem<RenderInReplayComponent>>();
+	m_componentSystems.killCamLightSystem                 = ECS::Instance()->createSystem<LightSystem<RenderInReplayComponent>>();
+	m_componentSystems.killCamMetaballSubmitSystem        = ECS::Instance()->createSystem<MetaballSubmitSystem<RenderInReplayComponent>>();
+	m_componentSystems.killCamModelSubmitSystem           = ECS::Instance()->createSystem<ModelSubmitSystem<RenderInReplayComponent>>();
+	m_componentSystems.killCamMovementSystem              = ECS::Instance()->createSystem<MovementSystem<RenderInReplayComponent>>();
+	m_componentSystems.killCamMovementPostCollisionSystem = ECS::Instance()->createSystem<MovementPostCollisionSystem<RenderInReplayComponent>>();
 
 }
 
@@ -615,13 +624,12 @@ bool GameState::onEvent(const Event& event) {
 	State::onEvent(event);
 
 	switch (event.type) {
-		case Event::Type::WINDOW_RESIZE:					onResize((const WindowResizeEvent&)event); break;
-		case Event::Type::NETWORK_SERIALIZED_DATA_RECIEVED:	onNetworkSerializedPackageEvent((const NetworkSerializedPackageEvent&)event); break;
-		case Event::Type::NETWORK_DISCONNECT:				onPlayerDisconnect((const NetworkDisconnectEvent&)event); break;
-		case Event::Type::NETWORK_DROPPED:					onPlayerDropped((const NetworkDroppedEvent&)event); break;
-		case Event::Type::NETWORK_UPDATE_STATE_LOAD_STATUS:	onPlayerStateStatusChanged((const NetworkUpdateStateLoadStatus&)event); break;
-		case Event::Type::NETWORK_JOINED:	onPlayerJoined((const NetworkJoinedEvent&)event); break;
-
+		case Event::Type::WINDOW_RESIZE:                    onResize((const WindowResizeEvent&)event); break;
+		case Event::Type::NETWORK_SERIALIZED_DATA_RECIEVED: onNetworkSerializedPackageEvent((const NetworkSerializedPackageEvent&)event); break;
+		case Event::Type::NETWORK_DISCONNECT:               onPlayerDisconnect((const NetworkDisconnectEvent&)event); break;
+		case Event::Type::NETWORK_DROPPED:                  onPlayerDropped((const NetworkDroppedEvent&)event); break;
+		case Event::Type::NETWORK_UPDATE_STATE_LOAD_STATUS: onPlayerStateStatusChanged((const NetworkUpdateStateLoadStatus&)event); break;
+		case Event::Type::NETWORK_JOINED:                   onPlayerJoined((const NetworkJoinedEvent&)event); break;
 		default: break;
 	}
 
@@ -670,6 +678,7 @@ bool GameState::onPlayerJoined(const NetworkJoinedEvent& event) {
 	return true;
 }
 
+
 void GameState::onPlayerStateStatusChanged(const NetworkUpdateStateLoadStatus& event) {
 
 	if (NWrapperSingleton::getInstance().isHost() && m_gameStarted) {
@@ -688,7 +697,7 @@ bool GameState::update(float dt, float alpha) {
 	m_killFeedWindow.updateTiming(dt);	
 	waitForOtherPlayers();
 
-	//Dont update game if game have not started. This is to sync all players to start at the same time
+	//Don't update game if game have not started. This is to sync all players to start at the same time
 	if (!m_gameStarted) {
 		return true;
 	}
@@ -713,7 +722,7 @@ bool GameState::fixedUpdate(float dt) {
 
 	counter += dt * 2.0f;
 
-	//Dont update game if game have not started. This is to sync all players to start at the same time
+	//Don't update game if game have not started. This is to sync all players to start at the same time
 	if (!m_gameStarted) {
 		return true;
 	}
@@ -730,19 +739,23 @@ bool GameState::fixedUpdate(float dt) {
 	}
 #endif
 
-	
-	updatePerTickComponentSystems(dt);
-
+	// This should happen before updatePerTickComponentSystems(dt) so don't move this function call
 	if (m_isInKillCamMode) {
 		updatePerTickKillCamComponentSystems(dt);
 	}
+	
+	updatePerTickComponentSystems(dt);
+
 
 	return true;
 }
 
+
 // Renders the state
 // alpha is a the interpolation value (range [0,1]) between the last two snapshots
 bool GameState::render(float dt, float alpha) {
+	static float killCamAlpha = 0.f;
+
 	// Clear back buffer
 	m_app->getAPI()->clear({ 0.01f, 0.01f, 0.01f, 1.0f });
 
@@ -750,16 +763,16 @@ bool GameState::render(float dt, float alpha) {
 	m_componentSystems.beginEndFrameSystem->beginFrame(m_cam);
 
 	if (m_isInKillCamMode) {
-		m_componentSystems.killCamModelSubmitSystem->submitAll(alpha);
-		m_componentSystems.killCamMetaballSubmitSystem->submitAll(alpha);
+		killCamAlpha = m_componentSystems.killCamReceiverSystem->getKillCamAlpha(alpha);
+
+		m_componentSystems.killCamModelSubmitSystem->submitAll(killCamAlpha);
+		m_componentSystems.killCamMetaballSubmitSystem->submitAll(killCamAlpha);
 	} else {
 		m_componentSystems.modelSubmitSystem->submitAll(alpha);
 		m_componentSystems.particleSystem->submitAll();
 		m_componentSystems.metaballSubmitSystem->submitAll(alpha);
 		m_componentSystems.boundingboxSubmitSystem->submitAll();
 	}
-
-
 
 	m_componentSystems.guiSubmitSystem->submitAll();
 	m_componentSystems.beginEndFrameSystem->endFrameAndPresent();
@@ -845,9 +858,17 @@ void GameState::shutDownGameState() {
 
 // TODO: Add more systems here that only deal with replay entities/components
 void GameState::updatePerTickKillCamComponentSystems(float dt) {
-	
+	if (m_componentSystems.killCamReceiverSystem->skipUpdate()) {
+		return;
+	}
+
 	m_componentSystems.killCamReceiverSystem->prepareUpdate();
+	m_componentSystems.killCamLightSystem->prepareFixedUpdate();
+
 	m_componentSystems.killCamReceiverSystem->processReplayData(dt);
+	m_componentSystems.killCamMovementSystem->update(dt);
+	m_componentSystems.killCamMovementPostCollisionSystem->update(dt);
+	m_componentSystems.killCamAnimationSystem->update(dt);
 }
 
 // HERE BE DRAGONS
@@ -862,7 +883,8 @@ void GameState::updatePerTickComponentSystems(float dt) {
 	m_componentSystems.spectateInputSystem->fixedUpdate(dt);
 
 	m_componentSystems.prepareUpdateSystem->update(); // HAS TO BE RUN BEFORE OTHER SYSTEMS WHICH USE TRANSFORM
-	
+	m_componentSystems.lightSystem->prepareFixedUpdate();
+
 	// Update entities with info from the network and from ourself
 	// DON'T MOVE, should happen at the start of each tick
 	m_componentSystems.networkReceiverSystem->update(dt);
@@ -878,7 +900,6 @@ void GameState::updatePerTickComponentSystems(float dt) {
 	runSystem(dt, m_componentSystems.projectileSystem);
 	runSystem(dt, m_componentSystems.animationChangerSystem);
 	runSystem(dt, m_componentSystems.animationSystem);
-	//runSystem(dt, m_componentSystems.aiSystem);
 	runSystem(dt, m_componentSystems.sprinklerSystem);
 	runSystem(dt, m_componentSystems.candleThrowingSystem);
 	runSystem(dt, m_componentSystems.candleHealthSystem);
@@ -915,7 +936,11 @@ void GameState::updatePerFrameComponentSystems(float dt, float alpha) {
 	if (!m_lightDebugWindow.isManualOverrideOn()) {
 		m_lights.clearPointLights();
 		//check and update all lights for all entities
-		m_componentSystems.lightSystem->updateLights(&m_lights);
+		if (m_isInKillCamMode) {
+			m_componentSystems.killCamLightSystem->updateLights(&m_lights, m_componentSystems.killCamReceiverSystem->getKillCamAlpha(alpha));
+		} else {
+			m_componentSystems.lightSystem->updateLights(&m_lights, alpha);
+		}
 		m_componentSystems.lightListSystem->updateLights(&m_lights);
 		m_componentSystems.spotLightSystem->updateLights(&m_lights, alpha, dt);
 	}
@@ -925,7 +950,12 @@ void GameState::updatePerFrameComponentSystems(float dt, float alpha) {
 	if (m_showcaseProcGen) {
 		m_cam.setPosition(glm::vec3(100.f, 100.f, 100.f));
 	}
-	m_componentSystems.animationSystem->updatePerFrame();
+	
+	if (m_isInKillCamMode) {
+		m_componentSystems.killCamAnimationSystem->updatePerFrame();
+	} else {
+		m_componentSystems.animationSystem->updatePerFrame();
+	}
 	m_componentSystems.audioSystem->update(m_cam, dt, alpha);
 	m_componentSystems.octreeAddRemoverSystem->updatePerFrame(dt);
 

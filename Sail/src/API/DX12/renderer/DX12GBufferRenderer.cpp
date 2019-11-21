@@ -14,6 +14,8 @@
 #include "../DX12Utils.h"
 #include "Sail/entities/systems/Graphics/AnimationSystem.h"
 #include "Sail/entities/systems/Graphics/ParticleSystem.h"
+#include "Sail/entities/components/RenderInActiveGameComponent.h"
+#include "Sail/entities/components/RenderInReplayComponent.h"
 #include "Sail/entities/ECS.h"
 #include "../DX12VertexBuffer.h"
 #include "Sail/entities/systems/physics/OctreeAddRemoverSystem.h"
@@ -53,7 +55,8 @@ void DX12GBufferRenderer::present(PostProcessPipeline* postProcessPipeline, Rend
 	auto frameIndex = m_context->getFrameIndex();
 	int count = static_cast<int>(commandQueue.size());
 
-	auto* animationSystem = ECS::Instance()->getSystem<AnimationSystem>();
+	auto* animationSystem = ECS::Instance()->getSystem<AnimationSystem<RenderInActiveGameComponent>>();
+	auto* killCamAnimationSystem = ECS::Instance()->getSystem<AnimationSystem<RenderInReplayComponent>>();
 	auto* particleSystem = ECS::Instance()->getSystem<ParticleSystem>();
 	if (animationSystem || particleSystem) {
 		m_computeCommand.allocators[frameIndex]->Reset();
@@ -62,6 +65,10 @@ void DX12GBufferRenderer::present(PostProcessPipeline* postProcessPipeline, Rend
 		if (animationSystem) {
 			// Run animation updates on the gpu first
 			animationSystem->updateMeshGPU(m_computeCommand.list.Get());
+		}
+		if (killCamAnimationSystem) {
+			// Run animation updates on the gpu first
+			killCamAnimationSystem->updateMeshGPU(m_computeCommand.list.Get());
 		}
 		if (particleSystem) {
 			// Update particles on compute shader
