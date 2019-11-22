@@ -71,9 +71,10 @@ void AiSystem::initNodeSystem(Model* bbModel, Octree* octree) {
 		glm::vec3 pos(x_cur * padding + offsetX, offsetY, z_cur * padding + offsetZ);
 
 		bool blocked = false;
-		e->getComponent<BoundingBoxComponent>()->getBoundingBox()->setPosition(pos);
+		BoundingBox* bb= e->getComponent<BoundingBoxComponent>()->getBoundingBox();
+		bb->setPosition(pos);
 		std::vector<Octree::CollisionInfo> vec;
-		m_octree->getCollisions(e.get(), &vec);
+		m_octree->getCollisions(e.get(), bb, &vec);
 
 		for (Octree::CollisionInfo& info : vec ) {
 			int j = ( info.entity->getName().compare("Map_") );

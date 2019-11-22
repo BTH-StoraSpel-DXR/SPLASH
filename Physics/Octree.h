@@ -92,7 +92,7 @@ public:
 
 	void update();
 
-	void getCollisions(Entity* entity, std::vector<CollisionInfo>* outCollisionData, const bool doSimpleCollisions = false);
+	void getCollisions(Entity* entity, const BoundingBox* entityBoundingBox, std::vector<CollisionInfo>* outCollisionData, const bool doSimpleCollisions = false);
 	void getRayIntersection(const glm::vec3& rayStart, const glm::vec3& rayDir, RayIntersectionInfo* outIntersectionData, Entity* ignoreThis = nullptr, float padding = 0.0f, const bool doSimpleIntersections = false);
 
 	int frustumCulledDraw(Camera& camera);

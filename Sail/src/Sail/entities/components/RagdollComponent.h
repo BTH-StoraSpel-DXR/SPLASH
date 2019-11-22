@@ -19,9 +19,9 @@ public:
 	const unsigned int getByteSize() const override {
 		unsigned int size = sizeof(*this);
 		size += contactPoints.size() * sizeof(ContactPoint);
-		for (auto& vec : contactPoints) {
+		/*for (auto& vec : contactPoints) {
 			size += vec.collisions.size() * sizeof(Octree::CollisionInfo);
-		}
+		}*/
 		return size;
 	}
 #endif
@@ -29,7 +29,7 @@ public:
 	struct ContactPoint {
 		BoundingBox boundingBox;
 		glm::vec3 localOffSet;
-		std::vector<Octree::CollisionInfo> collisions;
+		//std::vector<Octree::CollisionInfo> collisions;
 		Transform transform;
 	};
 
