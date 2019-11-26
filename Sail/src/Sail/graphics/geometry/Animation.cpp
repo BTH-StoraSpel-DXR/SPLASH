@@ -93,13 +93,15 @@ const float Animation::getTimeAtFrame(const unsigned int frame) {
 	}
 	return 0.0f;
 }
+
 const unsigned int Animation::getFrameAtTime(float time, const FindType type) {
 	time = fmodf(time, getMaxAnimationTime());
 
-	float leastDiff = 50000;
-	unsigned int closestFrame = m_maxFrame;
+	float leastDiff = 50000.f;
+	unsigned int closestFrame = m_numFrames;
+	float closestFrameTime = 0.f;
 	/* find closest frame */
-	for (unsigned int frame = 0; frame < m_maxFrame; frame++) {
+	for (unsigned int frame = 0; frame < m_numFrames; frame++) {
 		float diff = fabsf(m_frameTimes[frame] - time);
 		if (diff < leastDiff) {
 			leastDiff = diff;
@@ -109,30 +111,34 @@ const unsigned int Animation::getFrameAtTime(float time, const FindType type) {
 		}
 	}
 
-	if (closestFrame != m_maxFrame) {
-		switch (type) {
-		case BEHIND:
-			if (closestFrame == 0) {
-				return m_maxFrame - 1;
-			} else {
-				return closestFrame - 1;
-			}
-			break;
-		case INFRONT:
-			if (closestFrame == m_maxFrame - 1) {
-				return 0;
-			} else {
-				return closestFrame + 1;
-			}
-			break;
-		default:
+	switch (type) {
+	case BEHIND:
+		// The closest frame was BEHIND the set time
+		if (m_frameTimes[closestFrame] <= time) {
 			return closestFrame;
-			break;
+		// The closest frame was INFRONT of the set time
+		} else {
+			if (closestFrame != 0) {
+				return closestFrame - 1;
+			} else {
+				return m_maxFrame;
+			}
 		}
-	} else {
-		// Couldn't find a frame for some reason?
-		SAIL_LOG_WARNING("Animation::getFrameAtTime: Couldn't find a proper frame.");
-		return 0;
+	case INFRONT:
+		// The closest frame was INFRONT of the set time
+		if (m_frameTimes[closestFrame] > time) {
+			return closestFrame;
+		// The closest frame was BEHIND the set time
+		} else {
+			if (closestFrame != m_maxFrame) {
+				return closestFrame + 1;
+			} else {
+				return 0;
+			}
+		}
+	default:
+		return closestFrame;
+		break;
 	}
 }
 
@@ -142,6 +148,7 @@ void Animation::addFrame(const unsigned int frame, const float time, Animation::
 	}
 	if (m_maxFrame < frame) {
 		m_maxFrame = frame;
+		m_numFrames = m_maxFrame + 1;
 	}
 
 	m_frames[frame] = data;

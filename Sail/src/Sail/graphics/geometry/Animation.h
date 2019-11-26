@@ -33,12 +33,12 @@ public:
 	~Animation();
 	const float getMaxAnimationTime();
 	const unsigned int getMaxAnimationFrame();
-	const glm::mat4* getAnimationTransform(const float time, const FindType type = BEHIND);
+	const glm::mat4* getAnimationTransform(const float time, const FindType type = CLOSEST);
 	const glm::mat4* getAnimationTransform(const unsigned int frame);
 	const unsigned int getAnimationTransformSize(const float time);
 	const unsigned int getAnimationTransformSize(const unsigned int frame);
 	const float getTimeAtFrame(const unsigned int frame);
-	const unsigned int getFrameAtTime(float time, const FindType type = BEHIND);
+	const unsigned int getFrameAtTime(float time, const FindType type = CLOSEST);
 	void addFrame(const unsigned int frame, const float time, Animation::Frame* data);
 
 	void setName(const std::string& name);
@@ -49,6 +49,7 @@ private:
 	std::string m_name;
 	float m_maxFrameTime;
 	unsigned int m_maxFrame;
+	unsigned int m_numFrames;
 
 
 	inline const bool exists(const unsigned int frame);
