@@ -101,8 +101,6 @@ void AudioSystem::initialize() {
 	m_audioEngine->loadSound("sanity/heart_secondbeat4.wav");
 	m_audioEngine->loadSound("sanity/heart_secondbeat5.wav");
 	m_audioEngine->loadSound("sanity/heart_secondbeat6.wav");
-	m_audioEngine->loadSound("sanity/insanity_ambiance.wav");
-	m_audioEngine->loadSound("sanity/insanity_breathing.wav");
 	m_audioEngine->loadSound("sanity/insanity_scream.wav");
 	m_audioEngine->loadSound("sanity/insanity_violin1.wav");
 	m_audioEngine->loadSound("sanity/insanity_violin2.wav");
