@@ -15,6 +15,7 @@
 HostSendToSpectatorSystem::HostSendToSpectatorSystem() {
 	registerComponent<NetworkSenderComponent>(true, true, true);
 	registerComponent<TransformComponent>(true, true, false);
+	registerComponent<AudioComponent>(false, true, true);
 }
 
 HostSendToSpectatorSystem::~HostSendToSpectatorSystem() {
@@ -45,9 +46,12 @@ void HostSendToSpectatorSystem::sendEntityCreationPackage(Netcode::PlayerID Play
 
 	// Find how many players are alive so that the receiver knows how many messages to receive
 	for (auto e : entities) {
-		for (int i = 0; i < Audio::SoundType::COUNT; i++) {
-			e->getComponent<AudioComponent>()->m_sounds[i].isPlaying = false;
+		if (e->hasComponent<AudioComponent>()) {
+			for (int i = 0; i < Audio::SoundType::COUNT; i++) {
+				e->getComponent<AudioComponent>()->m_sounds[i].isPlaying = false;
+			}
 		}
+
 
 		if (e->getComponent<NetworkSenderComponent>()->m_entityType == Netcode::EntityType::PLAYER_ENTITY) {
 			for (auto c : e->getChildEntities()) {
