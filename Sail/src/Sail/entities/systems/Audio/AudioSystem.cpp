@@ -168,9 +168,9 @@ void AudioSystem::update(Camera& cam, float dt, float alpha) {
 				soundGeneral = &audioC->m_sounds[soundTypeIndex];
 
 				// Deal with all sounds & streams except death sound
-				if (soundTypeIndex == Audio::SoundType::DEATH || soundTypeIndex == Audio::SoundType::INSANITY_SCREAM) {
-					continue;
-				}
+				//if (soundTypeIndex == Audio::SoundType::DEATH || soundTypeIndex == Audio::SoundType::INSANITY_SCREAM) {
+				//	continue;
+				//}
 
 				soundPoolSize = audioData.m_soundsUnique[soundTypeIndex].size();
 				if (soundPoolSize > 0) {
@@ -229,8 +229,8 @@ void AudioSystem::update(Camera& cam, float dt, float alpha) {
 			}
 
 			// Deal with death sound (Fixes LOUD deathsound issue)
-			dealWithDeathSound(audioC, dt);
-			dealwithInsanitySound(audioC, dt);
+			//dealWithDeathSound(audioC, dt);
+			//dealwithInsanitySound(audioC, dt);
 		}
 
 		// - - - S T R E A M I N G  --------------------------------------------------------------------
@@ -368,98 +368,98 @@ void AudioSystem::updateProjectileLowPass(Audio::SoundInfo_General* general) {
 	m_audioEngine->updateProjectileLowPass(general->frequency, general->soundID);
 }
 
-void AudioSystem::dealWithDeathSound(AudioComponent* audioC, float dt) {
-	Audio::SoundInfo_General* soundGeneral = &audioC->m_sounds[Audio::SoundType::DEATH];
-	if (soundGeneral->isPlaying) {
-		int soundPoolSize = audioData.m_soundsUnique[Audio::SoundType::DEATH].size();
-
-		if (soundPoolSize > 0) {
-			if (!soundGeneral->hasStartedPlaying) {
-
-				int randomSoundIndex = randomASoundIndex(
-					soundPoolSize,
-					soundGeneral
-				);
-
-				Audio::SoundInfo_Unique* soundUnique = &audioData.m_soundsUnique[Audio::SoundType::DEATH].at(randomSoundIndex);
-				soundGeneral->volume = soundUnique->volume;
-				soundGeneral->hasStartedPlaying = true;
-				soundGeneral->durationElapsed = 0.0f;
-				soundGeneral->currentSoundsLength = soundUnique->soundEffectLength;
-
-				m_audioEngine->startDeathSound(
-					soundUnique->fileName,
-					soundGeneral->volume
-				);
-				soundGeneral->playOnce = true;
-			}
-			// Update the sound with the current positions if it's playing.
-			if (soundGeneral->durationElapsed < soundGeneral->currentSoundsLength) {
-
-				m_audioEngine->updateDeathvolume(soundGeneral->volume);
-				soundGeneral->durationElapsed += dt;
-			}
-			else {
-				soundGeneral->durationElapsed = 0.0f; // Reset the sound effect to its beginning
-
-				soundGeneral->hasStartedPlaying = false;
-
-				soundGeneral->isPlaying = !soundGeneral->playOnce;
-			}
-		}
-	}
-	else if (soundGeneral->hasStartedPlaying) {
-		soundGeneral->hasStartedPlaying = false;
-		soundGeneral->durationElapsed = 0.0f;
-	}
-}
-
-void AudioSystem::dealwithInsanitySound(AudioComponent* audioC, float dt) {
-	Audio::SoundInfo_General* soundGeneral = &audioC->m_sounds[Audio::SoundType::INSANITY_SCREAM];
-	if (soundGeneral->isPlaying) {
-		int soundPoolSize = audioData.m_soundsUnique[Audio::SoundType::INSANITY_SCREAM].size();
-
-		if (soundPoolSize > 0) {
-			if (!soundGeneral->hasStartedPlaying) {
-
-				int randomSoundIndex = randomASoundIndex(
-					soundPoolSize,
-					soundGeneral
-				);
-
-				Audio::SoundInfo_Unique* soundUnique = &audioData.m_soundsUnique[Audio::SoundType::INSANITY_SCREAM].at(randomSoundIndex);
-				soundGeneral->volume = soundUnique->volume;
-				soundGeneral->hasStartedPlaying = true;
-				soundGeneral->durationElapsed = 0.0f;
-				soundGeneral->currentSoundsLength = soundUnique->soundEffectLength;
-
-				m_audioEngine->startInsanitySound(
-					soundUnique->fileName,
-					soundGeneral->volume
-				);
-				soundGeneral->playOnce = true;
-			}
-
-			// Update the sound with the current positions if it's playing
-			if (soundGeneral->durationElapsed < soundGeneral->currentSoundsLength) {
-
-				m_audioEngine->updateInsanityVolume(soundGeneral->volume);
-				soundGeneral->durationElapsed += dt;
-			}
-			else {
-				soundGeneral->durationElapsed = 0.0f; // Reset the sound effect to its beginning
-
-				soundGeneral->hasStartedPlaying = false;
-
-				soundGeneral->isPlaying = !soundGeneral->playOnce;
-			}
-		}
-	}
-	else if (soundGeneral->hasStartedPlaying) {
-		soundGeneral->hasStartedPlaying = false;
-		soundGeneral->durationElapsed = 0.0f;
-	}
-}
+//void AudioSystem::dealWithDeathSound(AudioComponent* audioC, float dt) {
+//	Audio::SoundInfo_General* soundGeneral = &audioC->m_sounds[Audio::SoundType::DEATH];
+//	if (soundGeneral->isPlaying) {
+//		int soundPoolSize = audioData.m_soundsUnique[Audio::SoundType::DEATH].size();
+//
+//		if (soundPoolSize > 0) {
+//			if (!soundGeneral->hasStartedPlaying) {
+//
+//				int randomSoundIndex = randomASoundIndex(
+//					soundPoolSize,
+//					soundGeneral
+//				);
+//
+//				Audio::SoundInfo_Unique* soundUnique = &audioData.m_soundsUnique[Audio::SoundType::DEATH].at(randomSoundIndex);
+//				soundGeneral->volume = soundUnique->volume;
+//				soundGeneral->hasStartedPlaying = true;
+//				soundGeneral->durationElapsed = 0.0f;
+//				soundGeneral->currentSoundsLength = soundUnique->soundEffectLength;
+//
+//				m_audioEngine->startDeathSound(
+//					soundUnique->fileName,
+//					soundGeneral->volume
+//				);
+//				soundGeneral->playOnce = true;
+//			}
+//			// Update the sound with the current positions if it's playing.
+//			if (soundGeneral->durationElapsed < soundGeneral->currentSoundsLength) {
+//
+//				m_audioEngine->updateDeathvolume(soundGeneral->volume);
+//				soundGeneral->durationElapsed += dt;
+//			}
+//			else {
+//				soundGeneral->durationElapsed = 0.0f; // Reset the sound effect to its beginning
+//
+//				soundGeneral->hasStartedPlaying = false;
+//
+//				soundGeneral->isPlaying = !soundGeneral->playOnce;
+//			}
+//		}
+//	}
+//	else if (soundGeneral->hasStartedPlaying) {
+//		soundGeneral->hasStartedPlaying = false;
+//		soundGeneral->durationElapsed = 0.0f;
+//	}
+//}
+//
+//void AudioSystem::dealwithInsanitySound(AudioComponent* audioC, float dt) {
+//	Audio::SoundInfo_General* soundGeneral = &audioC->m_sounds[Audio::SoundType::INSANITY_SCREAM];
+//	if (soundGeneral->isPlaying) {
+//		int soundPoolSize = audioData.m_soundsUnique[Audio::SoundType::INSANITY_SCREAM].size();
+//
+//		if (soundPoolSize > 0) {
+//			if (!soundGeneral->hasStartedPlaying) {
+//
+//				int randomSoundIndex = randomASoundIndex(
+//					soundPoolSize,
+//					soundGeneral
+//				);
+//
+//				Audio::SoundInfo_Unique* soundUnique = &audioData.m_soundsUnique[Audio::SoundType::INSANITY_SCREAM].at(randomSoundIndex);
+//				soundGeneral->volume = soundUnique->volume;
+//				soundGeneral->hasStartedPlaying = true;
+//				soundGeneral->durationElapsed = 0.0f;
+//				soundGeneral->currentSoundsLength = soundUnique->soundEffectLength;
+//
+//				m_audioEngine->startInsanitySound(
+//					soundUnique->fileName,
+//					soundGeneral->volume
+//				);
+//				soundGeneral->playOnce = true;
+//			}
+//
+//			// Update the sound with the current positions if it's playing
+//			if (soundGeneral->durationElapsed < soundGeneral->currentSoundsLength) {
+//
+//				m_audioEngine->updateInsanityVolume(soundGeneral->volume);
+//				soundGeneral->durationElapsed += dt;
+//			}
+//			else {
+//				soundGeneral->durationElapsed = 0.0f; // Reset the sound effect to its beginning
+//
+//				soundGeneral->hasStartedPlaying = false;
+//
+//				soundGeneral->isPlaying = !soundGeneral->playOnce;
+//			}
+//		}
+//	}
+//	else if (soundGeneral->hasStartedPlaying) {
+//		soundGeneral->hasStartedPlaying = false;
+//		soundGeneral->durationElapsed = 0.0f;
+//	}
+//}
 
 void AudioSystem::hotFixAmbiance(Entity* e, AudioComponent* audioC) {
 	if (e->getName() == "LabAmbiance") {
@@ -532,21 +532,33 @@ bool AudioSystem::onEvent(const Event& event) {
 			}
 		}
 
+		auto& deathSoundE = ECS::Instance()->createEntity(e.killed->getName() + "_deathSound");
+		deathSoundE->addComponent<LifeTimeComponent>();
+		deathSoundE->addComponent<AudioComponent>();
+		deathSoundE->addComponent<TransformComponent>();
+
+		deathSoundE->getComponent<LifeTimeComponent>()->totalLifeTime = 5.0f;
+		deathSoundE->getComponent<TransformComponent>()->setTranslation(e.myPlayer->getComponent<TransformComponent>()->getTranslation());
+		SAIL_LOG(Utils::toStr(e.killed->getComponent<TransformComponent>()->getTranslation()));
+
 		//TODO: Find out why death sound is high as fuck!
-		else if (e.killerID == Netcode::INSANITY_COMP_ID) {
-			if (auto* audioComp = e.myPlayer->getComponent<AudioComponent>()) {
-				auto& insanitySound = audioComp->m_sounds[Audio::SoundType::INSANITY_SCREAM];
-				insanitySound.isPlaying = true;
-				insanitySound.playOnce = true;
-			}
+		if (e.killerID == Netcode::INSANITY_COMP_ID) {
+			deathSoundE->getComponent<AudioComponent>()->m_sounds[Audio::INSANITY_SCREAM].isPlaying = true;
+			//e.myPlayer->getComponent<AudioComponent>()->m_sounds[Audio::JUMP].isPlaying = true;
+			//if (auto* audioComp = e.myPlayer->getComponent<AudioComponent>()) {
+			//	auto& insanitySound = audioComp->m_sounds[Audio::SoundType::INSANITY_SCREAM];
+			//	insanitySound.isPlaying = true;
+			//	insanitySound.playOnce = true;
+			//}
 		} else {
 			// Play death sound
-			if (auto* audioComp = e.killed->getComponent<AudioComponent>()) {
-				auto& deathSound = audioComp->m_sounds[Audio::SoundType::DEATH];
-				deathSound.isPlaying = true;
-				deathSound.playOnce = true;
-			}
-			
+			deathSoundE->getComponent<AudioComponent>()->m_sounds[Audio::DEATH].isPlaying = true;
+			//e.myPlayer->getComponent<AudioComponent>()->m_sounds[Audio::JUMP].isPlaying = true;
+			//if (auto* audioComp = e.killed->getComponent<AudioComponent>()) {
+			//	auto& deathSound = audioComp->m_sounds[Audio::SoundType::DEATH];
+			//	deathSound.isPlaying = true;
+			//	deathSound.playOnce = true;
+			//}			
 		}
 	};
 
@@ -669,9 +681,9 @@ bool AudioSystem::onEvent(const Event& event) {
 	case Event::Type::PLAYER_DEATH: 
 		for (auto& entity : entities) {
 			AudioComponent* ac = entity->getComponent<AudioComponent>();
-			for (auto& sound : ac->m_sounds) {
-				sound.isPlaying = false;
-			}
+			//for (auto& sound : ac->m_sounds) {
+			//	sound.isPlaying = false;
+			//}
 			// Stop all streams EXCEPT for 'lab ambiance'
 			auto& iterator = ac->m_currentlyStreaming.begin();
 			while (iterator != ac->m_currentlyStreaming.end()) {

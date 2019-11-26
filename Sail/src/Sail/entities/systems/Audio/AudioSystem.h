@@ -48,8 +48,8 @@ private:
 
 	void updateProjectileLowPass(Audio::SoundInfo_General* general);
 
-	void dealWithDeathSound(AudioComponent* audioC, float dt);
-	void dealwithInsanitySound(AudioComponent* audioC, float dt);
+	//void dealWithDeathSound(AudioComponent* audioC, float dt);
+	//void dealwithInsanitySound(AudioComponent* audioC, float dt);
 	void hotFixAmbiance(Entity* e, AudioComponent* audioC);
 };
 
