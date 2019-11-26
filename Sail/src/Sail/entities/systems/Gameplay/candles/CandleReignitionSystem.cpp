@@ -28,10 +28,13 @@ void CandleReignitionSystem::update(float dt) {
 		if (e->hasComponent<LocalOwnerComponent>()) {
 
 			auto candle = e->getComponent<CandleComponent>();
-			if (!candle->isLit) {
+			
+			if (candle->userReignition || e->getParent()->getComponent<SanityComponent>()->sanity <= 0) {
 				candle->downTime += dt;
+				// Play the re-ignition sound
+				e->getParent()->getComponent<AudioComponent>()->m_sounds[Audio::RE_IGNITE_CANDLE].isPlaying = true;
 
-				if (candle->downTime >= m_candleForceRespawnTimer || candle->userReignition) {
+				if (candle->downTime >= m_candleForceRespawnTimer) {
 					NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
 						Netcode::MessageType::IGNITE_CANDLE,
 						SAIL_NEW Netcode::MessageIgniteCandle{

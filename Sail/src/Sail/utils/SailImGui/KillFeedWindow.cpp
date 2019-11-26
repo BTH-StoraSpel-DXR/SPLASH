@@ -106,7 +106,7 @@ bool KillFeedWindow::onEvent(const Event& event) {
 		} else if (e.killerID == Netcode::INSANITY_COMP_ID) {
 			killFeedInfo.name1 = "Insanity";
 			killFeedInfo.type = "devoured";
-		} else if (e.killerID == e.netIDofKilled) {
+		} else if (Netcode::getComponentOwner(e.killerID) == idOfDeadPlayer) {
 			killFeedInfo.name1 = killFeedInfo.name2;
 			killFeedInfo.type = "eliminated himself!";
 			killFeedInfo.name2 = "";

@@ -25,6 +25,7 @@ SanitySystem::~SanitySystem() {
 void SanitySystem::update(float dt) {
 	const bool isHost = NWrapperSingleton::getInstance().isHost();
 	
+
 	//Only let host control sanity for all players.
 	if (!isHost) {
 		return;
@@ -51,8 +52,9 @@ void SanitySystem::update(float dt) {
 			float dist;
 			if (candleComp->isCarried && candleComp->isLit) {
 				dist = -12;
-			} else {
-				dist = glm::distance(playerTransformComp->getTranslation(), candleTransformComp->getTranslation());
+			}
+			else {
+				dist = glm::min(glm::distance(playerTransformComp->getTranslation(), candleTransformComp->getTranslation()), 25.f);
 			}
 
 			sanityComp->sanity -= (dist - 1) * dt * 0.5f;

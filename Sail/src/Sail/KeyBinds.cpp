@@ -79,7 +79,7 @@ void KeyBinds::init() {
 	SHOOT              = SAIL_MOUSE_LEFT_BUTTON;
 	THROW_CHARGE	   = SAIL_KEY_F;
 	SPRAY              = SAIL_KEY_L;
-	LIGHT_CANDLE       = SAIL_KEY_J;
+	LIGHT_CANDLE       = SAIL_KEY_R;
 	SHOW_IN_GAME_MENU  = SAIL_KEY_ESCAPE;
 
 	// GameState
@@ -91,7 +91,7 @@ void KeyBinds::init() {
 	SET_DIRECTIONAL_LIGHT = SAIL_KEY_G;
 	TOGGLE_CONSOLE        = SAIL_KEY_OEM_5;
 	TOGGLE_CONSOLE_US     = SAIL_KEY_OEM_5; // SAIL_KEY_OEM_3 was original keybind
-	RELOAD_SHADER         = SAIL_KEY_R;
+	RELOAD_SHADER         = SAIL_KEY_F6;
 	REMOVE_OLDEST_LIGHT   = SAIL_KEY_X;
 	LIGHT_CANDLE_1        = SAIL_KEY_Z;
 	LIGHT_CANDLE_2        = SAIL_KEY_V;
