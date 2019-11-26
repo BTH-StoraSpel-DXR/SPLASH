@@ -432,8 +432,8 @@ void DXRBase::rebuildWater() {
 	unsigned int numElements = m_waterArrSize;
 	Memory::SafeDeleteArr(m_waterDataCPU);
 	Memory::SafeDeleteArr(m_updateWater);
-	m_waterDataCPU = new unsigned int[numElements];
-	m_updateWater = new bool[numElements];
+	m_waterDataCPU = SAIL_NEW unsigned int[numElements];
+	m_updateWater = SAIL_NEW bool[numElements];
 	memset(m_waterDataCPU, 0, sizeof(unsigned int) * numElements);
 	memset(m_updateWater, 0, sizeof(bool) * numElements);
 	// Recreate sbuffer to resize it

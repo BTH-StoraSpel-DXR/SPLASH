@@ -58,6 +58,14 @@ class AnimationComponent : public Component<AnimationComponent> {
 public:
 	class Transition {
 	public:
+		Transition() {
+			to = nullptr;
+			transitionTime = 1.0f;
+			transpiredTime = 0.0f;
+			waitForEnd = true;
+			done = true;
+			toIndex = 51020130;
+		}
 		Transition(Animation* _to, const float time = 1.0f, const bool wait = true) {
 			to = _to;
 			transitionTime = time;
@@ -121,7 +129,7 @@ public:
 
 	std::unique_ptr<VertexBuffer> tposeVBuffer;
 
-	Transition* currentTransition;
+	Transition currentTransition;
 
 	// Used for upper body rotation
 	float pitch = 0.f;

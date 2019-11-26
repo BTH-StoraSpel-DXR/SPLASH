@@ -164,7 +164,7 @@ Model& ResourceManager::getModelCopy(const std::string& filename, Shader* shader
 	Mesh* mesh = model.getMesh(0);
 	Mesh::Data data;
 	data.deepCopy(mesh->getData());
-	Model* tempModel = new Model(data, shaderToUse);
+	Model* tempModel = SAIL_NEW Model(data, shaderToUse);
 	std::string nameCopy = getSuitableName(filename);
 	tempModel->setName(nameCopy);
 	SAIL_LOG("copied model: " + filename + ", using name: " + nameCopy);
