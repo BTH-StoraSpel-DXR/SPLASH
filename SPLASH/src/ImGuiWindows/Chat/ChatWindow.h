@@ -41,7 +41,8 @@ public:
 	void setFadeThreshold(const float& time);
 	void resetMessageTime();
 	void setRetainFocus(const bool retain);
-
+	void removeFocus();
+	void setBackgroundOpacity(const float& opacity);
 
 
 
@@ -62,7 +63,7 @@ private:
 	ImGuiHandler* m_imguiHandler;
 	EventDispatcher* m_eventDispatcher;
 	NWrapperSingleton* m_network;
-	
+
 	std::string m_message;
 	std::list<ChatMessage> m_messages;
 	float m_timeSinceLastMessage;
@@ -74,4 +75,5 @@ private:
 	bool m_retainFocus;
 
 	float m_backgroundOpacityMul;
+	bool m_removeFocus;
 };

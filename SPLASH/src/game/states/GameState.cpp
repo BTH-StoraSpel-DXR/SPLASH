@@ -62,10 +62,12 @@ GameState::GameState(StateStack& stack)
 	initConsole();
 	m_app->setCurrentCamera(&m_cam);
 
-	m_app->getChatWindow()->setFadeThreshold(5.0f);
-	m_app->getChatWindow()->setFadeTime(5.0f);
+	m_app->getChatWindow()->setFadeThreshold(4.0f);
+	m_app->getChatWindow()->setFadeTime(0.7f);
 	m_app->getChatWindow()->resetMessageTime();
 	m_app->getChatWindow()->setRetainFocus(false);
+	m_app->getChatWindow()->removeFocus();
+	m_app->getChatWindow()->setBackgroundOpacity(0.05f);
 
 	auto& dynamic = m_app->getSettings().gameSettingsDynamic;
 	auto& settings = m_app->getSettings();

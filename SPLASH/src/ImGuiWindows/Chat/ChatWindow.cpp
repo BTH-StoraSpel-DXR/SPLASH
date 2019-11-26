@@ -19,8 +19,9 @@ ChatWindow::ChatWindow(bool showWindow) :
 	m_backgroundOpacityMul(0.4f),
 	m_scrollToBottom(false),
 	m_messageLimit(30),
-	m_messageSizeLimit(30),
-	m_retainFocus(true)
+	m_messageSizeLimit(150),
+	m_retainFocus(true),
+	m_removeFocus(false)
 {
 	m_app = Application::getInstance();
 	m_settings = &m_app->getSettings();
@@ -106,18 +107,21 @@ void ChatWindow::renderChat(float dt) {
 	if (m_timeSinceLastMessage > m_fadeThreshold && m_fadeThreshold >= 0.0f) {
 		pop = true;
 		alpha = 1.0f - ((m_timeSinceLastMessage - m_fadeThreshold) / m_fadeTime);
-		alpha = alpha < 0.02f ? 0.02f : alpha;
+		alpha = alpha < 0.01f ? 0.01f : alpha;
 		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
 
 	}
 
 	ImVec4 borderCol(ImGui::GetStyleColorVec4(ImGuiCol_Border));
-	borderCol.z*= m_backgroundOpacityMul;
+	borderCol.w*= m_backgroundOpacityMul;
 	ImGui::PushStyleColor(ImGuiCol_Border, borderCol);
 
 	ImVec4 bgCol(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
-	bgCol.z*= m_backgroundOpacityMul;
+	bgCol.w*= m_backgroundOpacityMul;
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, bgCol);
+
+
+
 
 	if (ImGui::Begin("##CHATWINDOW", nullptr, chatFlags)) {
 		ImGui::PushFont(m_imguiHandler->getFont("Beb20"));
@@ -135,6 +139,11 @@ void ChatWindow::renderChat(float dt) {
 		}
 #endif
 		if (ImGui::BeginChild("##CHATTEXT", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()))) {
+			if (alpha <= 0.02f) {
+				ImVec4 txtCol(ImGui::GetStyleColorVec4(ImGuiCol_Text));
+				txtCol.w = 0.0f;
+				ImGui::PushStyleColor(ImGuiCol_Text, txtCol);
+			}
 			for (auto currentMessage : m_messages) {
 				//System or player which has left
 				if (currentMessage.id == 255 || currentMessage.id == 254) {
@@ -156,7 +165,7 @@ void ChatWindow::renderChat(float dt) {
 						ImGui::Text(player->name.c_str());
 						ImGui::PopStyleColor();
 						ImGui::SameLine();
-						ImGui::Text(std::string(": " + currentMessage.message).c_str());
+						ImGui::TextWrapped(std::string(": " + currentMessage.message).c_str());
 						ImGui::PopStyleVar();
 					}
 
@@ -169,6 +178,9 @@ void ChatWindow::renderChat(float dt) {
 				ImGui::SetScrollHereY(1.0f);
 				m_scrollToBottom = false;
 			}
+			if (alpha <= 0.02f) {
+				ImGui::PopStyleColor();
+			}
 		}
 		ImGui::EndChild();
 		ImGui::PopFont();
@@ -176,7 +188,7 @@ void ChatWindow::renderChat(float dt) {
 		static bool justSent = false;
 		static bool releasedEnter = true;
 		justSent = false;
-		static char buf[101] = "";
+		static char buf[152] = "";
 		strncpy_s(buf, m_message.c_str(), m_message.size());
 
 		if (ImGui::IsKeyReleased(SAIL_KEY_RETURN)) {
@@ -186,6 +198,7 @@ void ChatWindow::renderChat(float dt) {
 		// TEXTINPUT
 		ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth() * 0.9f);
 		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha + 0.3f);
+
 		if (ImGui::InputTextWithHint("##ChatInput", (focus ? "" : "Press enter to chat"), buf, m_messageSizeLimit, ImGuiInputTextFlags_EnterReturnsTrue)) {
 			m_message = buf;
 			if (m_message != "" && releasedEnter) {
@@ -200,7 +213,7 @@ void ChatWindow::renderChat(float dt) {
 		else {
 			m_message = buf;
 		}
-
+		
 		ImGui::PopStyleVar();
 		focus = ImGui::IsItemActive() || justSent;
 		// SENDBUTTON
@@ -212,6 +225,10 @@ void ChatWindow::renderChat(float dt) {
 				justSent = true;
 				//sentLastFrame = true;
 			}
+		}
+		if (m_removeFocus) {
+			m_removeFocus = false;
+			ImGui::SetWindowFocus();
 		}
 		if (ImGui::IsKeyPressed(SAIL_KEY_RETURN, false)) {
 			
@@ -226,6 +243,9 @@ void ChatWindow::renderChat(float dt) {
 		ImGui::PopStyleVar();
 	}
 	ImGui::PopStyleColor(2);
+
+	
+
 
 	ImGui::End();
 }
@@ -262,6 +282,14 @@ void ChatWindow::resetMessageTime() {
 
 void ChatWindow::setRetainFocus(const bool retain) {
 	m_retainFocus = retain;
+}
+
+void ChatWindow::removeFocus() {
+	m_removeFocus = true;
+}
+
+void ChatWindow::setBackgroundOpacity(const float& opacity) {
+	m_backgroundOpacityMul = opacity;
 }
 
 
