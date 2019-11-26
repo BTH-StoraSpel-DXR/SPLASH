@@ -257,6 +257,11 @@ GameState::GameState(StateStack& stack)
 		ImGuiWindowFlags_NoBackground;
 
 
+	
+	//This will create all torch particles before players report done loading which will remove the freazing after waiting for players. 
+	m_componentSystems.particleSystem->addQueuedEntities();
+	m_componentSystems.particleSystem->update(0);
+
 	// Keep this at the bottom
 	if (!m_isSingleplayer) {
 		NWrapperSingleton::getInstance().getNetworkWrapper()->updateStateLoadStatus(States::Game, 1); //Indicate To other players that you are ready to start.

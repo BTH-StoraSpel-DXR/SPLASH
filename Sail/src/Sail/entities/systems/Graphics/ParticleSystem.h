@@ -16,6 +16,7 @@ public:
 
 private:
 	void initEmitter(Entity* owner, ParticleEmitterComponent* component);
+	virtual void stop() override;
 
 private:
 	std::unique_ptr<ComputeShaderDispatcher> m_dispatcher;

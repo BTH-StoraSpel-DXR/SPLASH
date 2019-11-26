@@ -24,10 +24,7 @@ ParticleSystem::ParticleSystem() {
 }
 
 ParticleSystem::~ParticleSystem() {
-	for (auto& it : m_emitters) {
-		auto& emitter = it.second;
-		delete[] emitter.physicsBufferDefaultHeap;
-	}
+	stop();
 }
 
 void ParticleSystem::update(float dt) {
@@ -141,4 +138,14 @@ void ParticleSystem::initEmitter(Entity* owner, ParticleEmitterComponent* compon
 	}
 
 	component->setAsCreatedInSystem();
+}
+
+void ParticleSystem::stop() {
+	//Clean each after game
+	for (auto& it : m_emitters) {
+		auto& emitter = it.second;
+		delete[] emitter.physicsBufferDefaultHeap;
+	}
+
+	m_emitters.clear();
 }
