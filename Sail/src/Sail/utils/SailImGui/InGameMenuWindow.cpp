@@ -20,7 +20,10 @@ InGameMenuWindow::~InGameMenuWindow() {}
 
 void InGameMenuWindow::renderWindow() {
 	// Rendering a pause window in the middle of the game window.
-
+	if (!m_openedThisFrame && ImGui::IsKeyPressed(KeyBinds::SHOW_IN_GAME_MENU, false)) {
+		m_exitInGameMenu = true;
+		Input::HideCursor(true);
+	}
 	m_openedThisFrame = false;
 }
 

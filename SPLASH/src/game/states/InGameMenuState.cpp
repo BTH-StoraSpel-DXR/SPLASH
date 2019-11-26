@@ -87,6 +87,7 @@ bool InGameMenuState::render(float dt, float alpha) {
 }
 
 bool InGameMenuState::renderImgui(float dt) {
+	m_inGameMenuWindow.renderWindow();
 
 	if (m_usePercentage) {
 		m_menuWidth = m_percentage * m_app->getWindow()->getWindowWidth();
