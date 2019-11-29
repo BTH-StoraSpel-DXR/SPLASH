@@ -92,6 +92,6 @@ private:
 	void createGameModeDefault();
 	void createGameColorsDefault();
 
-	void setMapValues(const int x, const int y, const float clutter, const int seed);
+	void setMapValues(const int x, const int y, const float clutter, const int seed, const int roomMin, const int roomMax, const float hallwayThreashold);
 
 };

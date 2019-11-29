@@ -17,6 +17,8 @@ OptionsWindow::OptionsWindow(bool showWindow) {
 	m_levelSystem->clutterModifier = dynamic["map"]["clutter"].value * 100;
 	m_levelSystem->xsize = dynamic["map"]["sizeX"].value;
 	m_levelSystem->ysize = dynamic["map"]["sizeY"].value;
+	m_levelSystem->minRoomSize = dynamic["map"]["minRoomSize"].value;
+	m_levelSystem->roomMaxSize = dynamic["map"]["maxRoomSize"].value;
 
 	m_levelSystem->generateMap();
 
@@ -263,19 +265,61 @@ bool OptionsWindow::renderGameOptions() {
 		SettingStorage::DynamicSetting* mapSizeY = &m_app->getSettings().gameSettingsDynamic["map"]["sizeY"];
 
 		ImGui::Indent();
-		static int size[] = { 0,0 };
-		size[0] = (int)mapSizeX->value;
-		size[1] = (int)mapSizeY->value;
+		static int maxsize[] = { 0,0 };
+		maxsize[0] = (int)mapSizeX->value;
+		maxsize[1] = (int)mapSizeY->value;
 		ImGui::Text("MapSize (x,y)");
 		ImGui::SameLine(x[0]);
 		ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth() * 0.5f);
-		if (ImGui::SliderInt2("##MapSizeXY", size, (int)mapSizeX->minVal, (int)mapSizeX->maxVal)) {
-			mapSizeX->value = size[0];
-			mapSizeY->value = size[1];
+		if (ImGui::SliderInt2("##MapSizeXY", maxsize, (int)mapSizeX->minVal, (int)mapSizeX->maxVal)) {
+			mapSizeX->value = maxsize[0];
+			mapSizeY->value = maxsize[1];
 			settingsChanged = true;
 			mapChanged = true;
 		}
 
+		SettingStorage::DynamicSetting* roomSizeX = &m_app->getSettings().gameSettingsDynamic["map"]["minRoomSize"];
+		SettingStorage::DynamicSetting* roomSizeY = &m_app->getSettings().gameSettingsDynamic["map"]["maxRoomSize"];
+		static int roomsize[] = { 0,0 };
+		roomsize[0] = (int)roomSizeX->value;
+		roomsize[1] = (int)roomSizeY->value;
+		ImGui::Text("RoomSize (min, max)");
+		ImGui::SameLine(x[0]);
+		ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth() * 0.5f);
+		if (ImGui::SliderInt2("##RoomSizeXY", roomsize, (int)roomSizeX->minVal, (int)mapSizeX->maxVal)) {
+
+			if (roomsize[0] != (int)roomSizeX->value) {
+				//size[0] was changed. clamp size[1] to size[0] if greater than size[1]
+				if (roomsize[0] > roomsize[1]) {
+					roomsize[1] = roomsize[0];
+				}
+			} else {
+				//size[1] was changed. clamp size[0] to size[1] if lesser than size[0]
+				if (roomsize[1] < roomsize[0]) {
+					roomsize[0] = roomsize[1];
+				}
+			}
+			
+			roomSizeX->value = roomsize[0];
+			roomSizeY->value = roomsize[1];
+			settingsChanged = true;
+			mapChanged = true;
+		}
+
+		/*=========HallwayThreshold==========*/
+		SettingStorage::DynamicSetting* hwth = &m_app->getSettings().gameSettingsDynamic["map"]["hallwayThreshold"];
+		static float hw = 0;
+		hw = hwth->value;
+		ImGui::Text("Hallway percentage");
+		ImGui::SameLine(x[0]);
+		ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth() * 0.5f);
+		if (ImGui::SliderFloat("##HWTH", &hw, hwth->minVal, hwth->maxVal)) {
+			hwth->value = hw;
+			settingsChanged = true;
+			mapChanged = true;
+		}
+
+		/*=========SEED==========*/
 		int seed = dynamic["map"]["seed"].value;
 		ImGui::Text("Seed");
 		ImGui::SameLine(x[0]);
@@ -285,6 +329,7 @@ bool OptionsWindow::renderGameOptions() {
 			settingsChanged = true;
 			mapChanged = true;
 		}
+
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(ImGui::GetWindowWidth() - ImGui::GetCursorPos().x);
 		if (ImGui::Button("Randomize")) {
@@ -361,6 +406,11 @@ void OptionsWindow::updateMap() {
 	m_levelSystem->clutterModifier = m_settings->gameSettingsDynamic["map"]["clutter"].value * 100;
 	m_levelSystem->xsize = m_settings->gameSettingsDynamic["map"]["sizeX"].value;
 	m_levelSystem->ysize = m_settings->gameSettingsDynamic["map"]["sizeY"].value;
+
+	//New
+	m_levelSystem->minRoomSize = m_settings->gameSettingsDynamic["map"]["minRoomSize"].value;
+	m_levelSystem->roomMaxSize = m_settings->gameSettingsDynamic["map"]["maxRoomSize"].value;
+	m_levelSystem->hallwayThreshold = m_settings->gameSettingsDynamic["map"]["hallwayThreshold"].value;
 
 	m_levelSystem->generateMap();
 }

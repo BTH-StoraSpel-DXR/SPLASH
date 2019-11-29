@@ -131,19 +131,20 @@ void SettingStorage::setMap(const int mode, const int index, const int playerCou
 		//DEATHMATCH
 		case 0:
 			switch (index) {
-			case -1:	setMapValues(rand() % 30, rand() % 30, float(rand()%100)/100.0f, rand() % 300000); break;
-			case 0:		setMapValues(6,		6,		0.85f,		12397);		break;
-			case 1:		setMapValues(10,	10,		0.85f,		34590);		break;
-			case 2:		setMapValues(7,		7,		0.85f,		345912);	break;
-			case 3:		setMapValues(12,	12,		0.85f,		20);		break;
-			case 4:		setMapValues(5,		12,		0.85f,		234923);	break;
-			case 5:		setMapValues(3,		6,		0.85f,		100);		break;
-			case 6:		setMapValues(6,		10,		0.85f,		300);		break;
-			case 7:		setMapValues(7,		8,		0.85f,		123897);	break;
-			case 8:		setMapValues(12,	9,		0.85f,		123612);	break;
-			case 9:		setMapValues(2,		2,		0.85f,		500);		break;
-			case 10:	setMapValues(6,		6,		0.85f,		1200);		break;
-			case 11:	setMapValues(4,		4,		0.85f,		2);			break;
+			//TODO remove rand and use rand from utills
+			case -1:	setMapValues(rand() % 30, rand() % 30, float(rand()%100)/100.0f, rand() % 300000, 1, 36, 0.3); break;
+			case 0:		setMapValues(6,		6,		0.85f,		12397,	 1, 36, 0.3);		break;
+			case 1:		setMapValues(10,	10,		0.85f,		34590,	 1, 36, 0.3);		break;
+			case 2:		setMapValues(7,		7,		0.85f,		345912,	 1, 36, 0.3);	break;
+			case 3:		setMapValues(12,	12,		0.85f,		20,		 1, 36, 0.3);		break;
+			case 4:		setMapValues(5,		12,		0.85f,		234923,	 1, 36, 0.3);	break;
+			case 5:		setMapValues(3,		6,		0.85f,		100,	 1, 36, 0.3);		break;
+			case 6:		setMapValues(6,		10,		0.85f,		300,	 1, 36, 0.3);		break;
+			case 7:		setMapValues(7,		8,		0.85f,		123897,	 1, 36, 0.3);	break;
+			case 8:		setMapValues(12,	9,		0.85f,		123612,	 1, 36, 0.3);	break;
+			case 9:		setMapValues(2,		2,		0.85f,		500,	 1, 36, 0.3);		break;
+			case 10:	setMapValues(6,		6,		0.85f,		1200,	 1, 36, 0.3);		break;
+			case 11:	setMapValues(4,		4,		0.85f,		2,		 1, 36, 0.3);			break;
 			default: break;
 				
 			}
@@ -151,19 +152,19 @@ void SettingStorage::setMap(const int mode, const int index, const int playerCou
 		case 1:
 			//TEAMDEATHMATCH
 			switch (index) {
-			case -1:	setMapValues(int(Utils::fastrand() * 30), int(Utils::fastrand() * 30), Utils::fastrand(), int(Utils::fastrand() * 300000)); break;
-			case 0:		setMapValues(6, 6, 0.85f, 12397);		break;
-			case 1:		setMapValues(10, 10, 0.85f, 34590);		break;
-			case 2:		setMapValues(7, 7, 0.85f, 345912);	break;
-			case 3:		setMapValues(12, 12, 0.85f, 20);		break;
-			case 4:		setMapValues(5, 12, 0.85f, 234923);	break;
-			case 5:		setMapValues(3, 6, 0.85f, 100);		break;
-			case 6:		setMapValues(6, 10, 0.85f, 300);		break;
-			case 7:		setMapValues(7, 8, 0.85f, 123897);	break;
-			case 8:		setMapValues(12, 9, 0.85f, 123612);	break;
-			case 9:		setMapValues(2, 2, 0.85f, 500);		break;
-			case 10:	setMapValues(6, 6, 0.85f, 1200);		break;
-			case 11:	setMapValues(4, 4, 0.85f, 2);			break;
+			case -1:	setMapValues(int(Utils::fastrand() * 30), int(Utils::fastrand() * 30), Utils::fastrand(), int(Utils::fastrand() * 300000), 1, 36, 0.3); break;
+			case 0:		setMapValues(6, 6, 0.85f, 12397,	 1, 36, 0.3);		break;
+			case 1:		setMapValues(10, 10, 0.85f, 34590,	 1, 36, 0.3);		break;
+			case 2:		setMapValues(7, 7, 0.85f, 345912,	 1, 36, 0.3);	break;
+			case 3:		setMapValues(12, 12, 0.85f, 20,		 1, 36, 0.3);		break;
+			case 4:		setMapValues(5, 12, 0.85f, 234923,	 1, 36, 0.3);	break;
+			case 5:		setMapValues(3, 6, 0.85f, 100,		 1, 36, 0.3);		break;
+			case 6:		setMapValues(6, 10, 0.85f, 300,		 1, 36, 0.3);		break;
+			case 7:		setMapValues(7, 8, 0.85f, 123897,	 1, 36, 0.3);	break;
+			case 8:		setMapValues(12, 9, 0.85f, 123612,	 1, 36, 0.3);	break;
+			case 9:		setMapValues(2, 2, 0.85f, 500,		 1, 36, 0.3);		break;
+			case 10:	setMapValues(6, 6, 0.85f, 1200,		 1, 36, 0.3);		break;
+			case 11:	setMapValues(4, 4, 0.85f, 2,		 1, 36, 0.3);			break;
 			default: break;
 				
 			}
@@ -257,6 +258,10 @@ void SettingStorage::createGameDefaultMap() {
 	auto& gameSettingD = gameSettingsDynamic["map"] = std::unordered_map<std::string, DynamicSetting>();
 	gameSettingD["sizeX"] =   DynamicSetting(6.0f,	2.0f,	30.0f);
 	gameSettingD["sizeY"] =   DynamicSetting(6.0f,	2.0f,	30.0f);
+	gameSettingD["minRoomSize"] =   DynamicSetting(1.0f,	1.0f,	36.0f);
+	gameSettingD["maxRoomSize"] =   DynamicSetting(36.0f,	1.0f,	36.0f);
+	gameSettingD["hallwayThreshold"] =   DynamicSetting(0.3f,	0.01f,	0.5f);
+
 	gameSettingD["tileSize"] =	DynamicSetting(7.0f, 1.0f, 30.0f);
 	gameSettingD["clutter"] = DynamicSetting(0.85f,	0.0f,	1.0f);
 	gameSettingD["seed"] =    DynamicSetting(0.0f,	0.0f,	1000000.0f);
@@ -401,11 +406,14 @@ void SettingStorage::createGameColorsDefault() {
 	}
 }
 
-void SettingStorage::setMapValues(const int x, const int y, const float clutter, const int seed) {
+void SettingStorage::setMapValues(const int x, const int y, const float clutter, const int seed, const int roomMin, const int roomMax, const float hallwayThreashold) {
 	gameSettingsDynamic["map"]["sizeX"].setValue(x);
 	gameSettingsDynamic["map"]["sizeY"].setValue(y);
 	gameSettingsDynamic["map"]["clutter"].setValue(clutter);
 	gameSettingsDynamic["map"]["seed"].setValue(seed);
+	gameSettingsDynamic["map"]["minRoomSize"].setValue(roomMin);
+	gameSettingsDynamic["map"]["maxRoomSize"].setValue(roomMax);
+	gameSettingsDynamic["map"]["hallwayThreshold"].setValue(hallwayThreashold);
 }
 
 
