@@ -13,8 +13,7 @@ LevelSystem::LevelSystem():BaseComponentSystem() {
 	registerComponent<CollidableComponent>(false, false, true);
 	xsize = 1;
 	ysize = 1;
-	tileSize = 7;
-	hallwayThreshold = 0.3f;
+	tileSize = 7hallwayThreshold = 0.3f;
 	minSplitSize = 5;
 	minRoomSize = 1;
 	roomMaxSize = 36;
