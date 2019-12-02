@@ -87,8 +87,8 @@ void DX12API::createDevice() {
 	//Enable the D3D12 debug layer.
 	wComPtr<ID3D12Debug1> debugController;
 	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
-		debugController->EnableDebugLayer();
-		debugController->SetEnableGPUBasedValidation(true);
+		/*debugController->EnableDebugLayer();
+		debugController->SetEnableGPUBasedValidation(true);*/
 	}
 	wComPtr<IDXGIInfoQueue> dxgiInfoQueue;
 	if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(dxgiInfoQueue.GetAddressOf())))) {

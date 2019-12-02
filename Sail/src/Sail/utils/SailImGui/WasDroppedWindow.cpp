@@ -12,7 +12,6 @@
  }
 
  void WasDroppedWindow::renderWindow() {
-	 ImGui::SetNextWindowPosCenter(ImGuiCond_Always);
 	 ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
 	 flags |= ImGuiWindowFlags_AlwaysAutoResize;
 	 ImGui::Begin("ERROR", NULL, flags);

@@ -69,6 +69,7 @@ void DX12ImGuiHandler::init() {
 	ImGui_ImplWin32_Init((void*)*window->getHwnd());
 	ImGui_ImplDX12_Init(m_context->getDevice(), DX12API::NUM_SWAP_BUFFERS,
 		DXGI_FORMAT_R8G8B8A8_UNORM,
+		m_descHeap->get(),
 		m_descHeap->getCPUDescriptorHandleForIndex(0),
 		m_descHeap->getGPUDescriptorHandleForIndex(0));
 	m_descHeap->setIndex(1);
