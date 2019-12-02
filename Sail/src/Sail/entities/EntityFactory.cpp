@@ -487,13 +487,13 @@ Entity::SPtr EntityFactory::CreateProjectile(Entity::SPtr e, const EntityFactory
 
 
 	MovementComponent* movement = e->addComponent<MovementComponent>();
-	movement->velocity = info.velocity;
+	movement->velocity = info.velocity * 100.0f;
 	movement->constantAcceleration = glm::vec3(0.f, -9.8f, 0.f);
 
 	CollisionComponent* collision = e->addComponent<CollisionComponent>();
-	collision->drag = 15.0f;
+	collision->drag = 0.0f;
 	// NOTE: 0.0f <= Bounciness <= 1.0f
-	collision->bounciness = 0.0f;
+	collision->bounciness = 1.0f;
 	collision->padding = radius;
 
 	e->addComponent<RenderInActiveGameComponent>();

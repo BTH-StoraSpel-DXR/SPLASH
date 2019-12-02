@@ -10,7 +10,7 @@
 #include "API/DX12/renderer/DX12RaytracingRenderer.h"
 
 // The likelihood that a projectile gets destroyed if it collides with at least one other entity this tick.
-constexpr float DESTRUCTION_PROBABILITY = 0.3f;
+constexpr float DESTRUCTION_PROBABILITY = 0.0f;
 
 ProjectileSystem::ProjectileSystem() {
 	// TODO: System owner should check if this is correct
