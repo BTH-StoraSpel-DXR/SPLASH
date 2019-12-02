@@ -224,6 +224,9 @@ void SettingStorage::createApplicationDefaultGraphics() {
 		{ "off", 0.0f },
 		{ "on", 1.0f }
 	}));
+
+	// Only for gamma showcase
+	applicationSettingsDynamic["graphics"]["gamma"] = DynamicSetting(2.2f, 0.0f, 5.0f);
 }
 void SettingStorage::createApplicationDefaultSound() {
 	auto& applicationSettingsD = applicationSettingsDynamic["sound"] = std::unordered_map<std::string, DynamicSetting>();

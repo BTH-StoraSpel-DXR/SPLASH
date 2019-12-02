@@ -85,7 +85,11 @@ RenderableTexture* PostProcessPipeline::run(RenderableTexture* baseTexture, void
 
 	// Last stage - tonemapping, always runs
 	input.inputRenderableTexture = stageTwoOutput;
-	auto* tonemapOutput = runStage(input, m_stages["Tonemapper"], cmdList);
+	auto& tonemapStage = m_stages["Tonemapper"];
+	float gamma = Application::getInstance()->getSettings().applicationSettingsDynamic["graphics"]["gamma"].value;
+	// Set gamma in shader
+	tonemapStage.shader->getPipeline()->trySetCBufferVar("gamma", &gamma, sizeof(float));
+	auto* tonemapOutput = runStage(input, tonemapStage, cmdList);
 
 	return tonemapOutput->outputTexture;
 }

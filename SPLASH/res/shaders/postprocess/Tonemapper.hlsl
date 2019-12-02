@@ -3,18 +3,18 @@ RWTexture2D<float4> output : register(u10);
 
 SamplerState CSss : register(s2);
 
-float3 tonemap(float3 color) {
+float3 tonemap(float3 color, float gamma) {
 	// Gamma correction
     float3 output = color / (color + 1.0f);
     // Tone mapping using the Reinhard operator
-    output = pow(output, 1.0f / 2.2f);
+    output = pow(output, 1.0f / gamma);
 	return output;
 }
 
 cbuffer CSData : register(b0) {
     float textureSizeDifference;
     uint2 textureSize;
-    float blendFactor;
+    float gamma;
 }
 
 #define BLOCK_SIZE 256
@@ -27,5 +27,5 @@ void CSMain(int3 groupThreadID : SV_GroupThreadID,
     }
 
     float3 finalColor = sourceTexture[dispatchThreadID.xy * textureSizeDifference].rgb;
-	output[dispatchThreadID.xy] = float4(tonemap(finalColor), 1.0f);
+	output[dispatchThreadID.xy] = float4(tonemap(finalColor, gamma), 1.0f);
 }

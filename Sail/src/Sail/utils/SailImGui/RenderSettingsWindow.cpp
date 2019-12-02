@@ -32,6 +32,9 @@ void RenderSettingsWindow::renderWindow() {
 	bool interpolate = ECS::Instance()->getSystem<AnimationSystem<RenderInActiveGameComponent>>()->getInterpolation();
 	ImGui::Checkbox("enable animation interpolation", &interpolate);
 	ECS::Instance()->getSystem<AnimationSystem<RenderInActiveGameComponent>>()->setInterpolation(interpolate);
+
+	ImGui::SliderFloat("Gamma", &Application::getInstance()->getSettings().applicationSettingsDynamic["graphics"]["gamma"].value, 0.f, 5.f);
+
 	static Entity* pickedEntity = nullptr;
 	static float metalness = 1.0f;
 	static float roughness = 1.0f;
