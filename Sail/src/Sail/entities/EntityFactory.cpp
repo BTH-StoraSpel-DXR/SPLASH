@@ -487,7 +487,7 @@ Entity::SPtr EntityFactory::CreateProjectile(Entity::SPtr e, const EntityFactory
 
 
 	MovementComponent* movement = e->addComponent<MovementComponent>();
-	movement->velocity = info.velocity * 100.0f;
+	movement->velocity = glm::normalize(info.velocity) * 100000.0f;
 	movement->constantAcceleration = glm::vec3(0.f, -9.8f, 0.f);
 
 	CollisionComponent* collision = e->addComponent<CollisionComponent>();
