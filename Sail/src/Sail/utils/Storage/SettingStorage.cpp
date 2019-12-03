@@ -131,7 +131,7 @@ void SettingStorage::setMap(const int mode, const int index, const int playerCou
 		//DEATHMATCH
 		case 0:
 			switch (index) {
-			case -1:	setMapValues(rand() % 30, rand() % 30, float(rand()%100)/100.0f, rand() % 300000); break;
+			case -1:	setMapValues(5,5,100,2); break;
 			case 0:		setMapValues(6,		6,		0.85f,		12397);		break;
 			case 1:		setMapValues(10,	10,		0.85f,		34590);		break;
 			case 2:		setMapValues(7,		7,		0.85f,		345912);	break;
@@ -264,7 +264,7 @@ void SettingStorage::createGameDefaultMap() {
 	gameSettingD["sprinklerIncrement"] = DynamicSetting(30.0f, 5.0f, 300.0f);
 
 	gameSettingsStatic["map"] = std::unordered_map<std::string, Setting>();
-	gameSettingsStatic["map"]["sprinkler"] = Setting(0, std::vector<Setting::Option>({
+	gameSettingsStatic["map"]["sprinkler"] = Setting(1, std::vector<Setting::Option>({
 		{ "on", 0.0f },
 		{ "off",1.0f }
 	}));

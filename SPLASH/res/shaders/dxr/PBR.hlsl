@@ -74,10 +74,10 @@ float4 pbrShade(float3 worldPosition, float3 worldNormal, float3 invViewDir, flo
 			// Standard attenuation
 			// float attenuation = 1.f / (p.attConstant + p.attLinear * distance + p.attQuadratic * distance * distance);
 			// Tweaked UE4 attenuation
-			float lightRadius = 10.f;
+			float lightRadius = 10.f * 10.f;
 			float attenuation = pow(saturate(1.f - pow(distance/lightRadius, 4.f)), 2.f) / (distance * distance + 1.f);
 			attenuation *= 8.f;
-			float3 radiance = p.color * attenuation;
+			float3 radiance = p.color * attenuation * 20.f;
 
 			float3 F = fresnelSchlick(max(dot(H, V), 0.0f), F0);
 
