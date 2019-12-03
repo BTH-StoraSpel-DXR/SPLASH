@@ -35,7 +35,7 @@ namespace ShaderComponent {
 		bool m_isRW;
 
 		unsigned int m_register;
-		std::vector<wComPtr<ID3D12Resource1>> m_bufferUploadHeap;
+		std::vector<wComPtr<ID3D12Resource>> m_bufferUploadHeap;
 		std::vector<UINT8*> m_cbGPUAddress;
 
 		std::unique_ptr<DescriptorHeap> m_srvHeap;

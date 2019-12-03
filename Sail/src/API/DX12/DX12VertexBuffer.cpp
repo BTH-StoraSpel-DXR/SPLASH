@@ -81,7 +81,7 @@ void DX12VertexBuffer::bind(void* cmdList) const {
 	dxCmdList->IASetVertexBuffers(0, 1, &vbView);
 }
 
-ID3D12Resource1* DX12VertexBuffer::getBuffer(int frameOffset) const {
+ID3D12Resource* DX12VertexBuffer::getBuffer(int frameOffset) const {
 	unsigned int frameIndex = (m_context->getSwapIndex() + m_context->getNumGPUBuffers() + frameOffset) % m_context->getNumGPUBuffers();
 	assert(m_hasBeenInitialized[frameIndex] && "Vertex buffer has to be initialized before call to getBuffer");
 	return m_defaultVertexBuffers[frameIndex].Get();

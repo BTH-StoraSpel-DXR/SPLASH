@@ -44,7 +44,7 @@ namespace DXRUtils {
 	struct ShaderTableData {
 		UINT64 SizeInBytes;
 		UINT32 StrideInBytes;
-		wComPtr<ID3D12Resource1> Resource = nullptr;
+		wComPtr<ID3D12Resource> Resource = nullptr;
 		void release() {
 			if (Resource) {
 				Resource->Release();

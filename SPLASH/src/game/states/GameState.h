@@ -11,6 +11,8 @@
 #include "../events/NetworkWelcomeEvent.h"
 #include "Sail/entities/systems/SystemDeclarations.h"
 
+class DX12DDSTexture;
+
 class GameState final : public State {
 public:
 	GameState(StateStack& stack);

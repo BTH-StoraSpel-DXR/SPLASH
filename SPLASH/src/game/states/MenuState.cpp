@@ -186,7 +186,7 @@ if (m_usePercentage) {
 
 	if (ImGui::Begin("##LOGOWINDOW", nullptr, m_standaloneButtonflags)) {
 		static ImVec2 z(3.7, 1.0);
-		Texture& logo = m_app->getResourceManager().getTexture("splash_logo.tga");
+		Texture& logo = m_app->getResourceManager().getTexture("splash_logo_smaller.tga");
 		ImGui::Image(imguiHandler->getTextureID(&logo), ImVec2(m_app->getWindow()->getWindowWidth() *0.4f, (m_app->getWindow()->getWindowWidth()*0.4f) / z.x));
 		ImGui::SetWindowPos(ImVec2(m_app->getWindow()->getWindowWidth()*0.5f - ImGui::GetWindowSize().x*0.5f, 0));
 	}

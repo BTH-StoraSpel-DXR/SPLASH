@@ -18,8 +18,9 @@ class CameraController;
 class KillCamReceiverSystem : public ReceiverBase, public EventReceiver {
 public:
 	// Packets from the past five seconds are saved so that they can be replayed in the killcam.
-	static constexpr size_t REPLAY_BUFFER_SIZE = TICKRATE * 5;
-	static constexpr size_t SLOW_MO_MULTIPLIER = 20;
+	static constexpr size_t KILLCAM_DURATION   = 3;
+	static constexpr size_t REPLAY_BUFFER_SIZE = TICKRATE * KILLCAM_DURATION;
+	static constexpr size_t SLOW_MO_MULTIPLIER = 16;
 
 public:
 	KillCamReceiverSystem();
@@ -30,6 +31,8 @@ public:
 	void update (float dt) override;
 	void updatePerFrame(float dt, float alpha);
 	void stop() override;
+
+	bool startMyKillCam();
 
 	void prepareUpdate();
 	void processReplayData(float dt);
@@ -111,15 +114,47 @@ private:
 	bool onEvent(const Event& event) override;
 
 private:
+	struct NetcodeDataRingBuffer {
+		std::array<std::queue<std::string>, REPLAY_BUFFER_SIZE> netcodeData;
+		size_t writeIndex = 0;
+		size_t readIndex = 1;
+
+		void clear() {
+			for (std::queue<std::string>& data : netcodeData) { data = std::queue<std::string>(); }
+			writeIndex = 0;
+			readIndex = 1;
+		}
+
+		void prepareWrite() {
+			writeIndex = ++writeIndex % REPLAY_BUFFER_SIZE;
+			netcodeData[writeIndex] = std::queue<std::string>();
+		}
+
+		void prepareRead() { 
+			readIndex  = ++readIndex % REPLAY_BUFFER_SIZE;
+		}
+
+		void savePacket(const std::string& data) {
+			netcodeData[writeIndex].push(data);
+		}
+
+		std::queue<std::string>& getTickData() {
+			return netcodeData[readIndex];
+		}
+	};
+
+
 	// All the messages that have been sent/received over the network in the past few seconds
 	// Will be used like a ring buffer
-	std::array<std::queue<std::string>, REPLAY_BUFFER_SIZE> m_replayData;
+	NetcodeDataRingBuffer m_replayData;
 	std::array<std::vector<Netcode::ComponentID>, REPLAY_BUFFER_SIZE> m_notHoldingTorches;
-	std::mutex m_replayDataLock;
 
-	size_t m_currentWriteInd = 0;
-	size_t m_currentReadInd  = 1;
-	bool   m_hasStarted      = false;
+	// Copies the current state of m_replayData so that we can keep recording to m_replayData and play our killcam at
+	// the same time
+	NetcodeDataRingBuffer m_myKillCamData;	
+
+	bool m_hasStarted   = false;
+	bool m_finalKillCam = false;
 
 	SlowMotionSetting m_slowMotionState = SlowMotionSetting::DISABLE;
 	size_t m_killCamTickCounter = 0; // Counts ticks in the range [ 0, SLOW_MO_MULTIPLIER )

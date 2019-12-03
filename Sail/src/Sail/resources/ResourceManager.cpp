@@ -3,9 +3,13 @@
 #include "Sail/graphics/shader/Shader.h"
 #include "Sail/api/shader/ShaderPipeline.h"
 #include "Sail/api/Mesh.h"
+#include "API/DX12/resources/DX12DDSTexture.h"
+
+#include <filesystem>
 
 const std::string ResourceManager::SAIL_DEFAULT_MODEL_LOCATION = "res/models/";
 const std::string ResourceManager::SAIL_DEFAULT_SOUND_LOCATION = "res/sounds/";
+const std::string ResourceManager::SAIL_DEFAULT_TEXTURE_LOCATION = "res/textures/";
 
 ResourceManager::ResourceManager() {
 	m_fbxLoader = std::make_unique<FBXLoader>();
@@ -60,6 +64,7 @@ bool ResourceManager::hasAudioData(const std::string& filename) {
 //
 
 void ResourceManager::loadTextureData(const std::string& filename) {
+	SAIL_LOG_WARNING(filename + " should be swapped out for a dds version.");
 	auto inserted = m_textureDatas.insert({ filename, std::make_unique<TextureData>(filename) });
 	if (inserted.second) {
 		m_byteSize[RMDataType::Textures] += inserted.first->second->getByteSize();
@@ -81,7 +86,16 @@ bool ResourceManager::hasTextureData(const std::string& filename) {
 //
 
 void ResourceManager::loadTexture(const std::string& filename) {
-	m_textures.insert({ filename, std::unique_ptr<Texture>(Texture::Create(filename)) });
+	auto path = std::filesystem::path(SAIL_DEFAULT_TEXTURE_LOCATION + filename);
+	if (path.has_extension() && std::filesystem::exists(path)) {
+		if (path.extension().compare(".tga") == 0 || path.extension().compare(".dds") == 0) {
+			m_textures.insert({filename, std::unique_ptr<Texture>(Texture::Create(path.string()))});
+		} else {
+			SAIL_LOG_ERROR(filename + " does not have a supported texture format.");
+		}
+	} else {
+		SAIL_LOG_ERROR("ResourceManager::loadTexture: Something is wrong with '" + filename + "'.");
+	}
 }
 Texture& ResourceManager::getTexture(const std::string& filename) {
 	auto pos = m_textures.find(filename);

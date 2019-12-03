@@ -70,6 +70,24 @@ void PBRMaterial::setMetalnessRoughnessAOTexture(const std::string& filename) {
 	m_pbrSettings.hasMetalnessRoughnessAOTexture = 1;
 }
 
+void PBRMaterial::manuallySetTexture(Texture* tex, unsigned int arraySlot) {
+	m_textures[arraySlot] = tex;
+	switch (arraySlot) {
+	case 0:
+		m_pbrSettings.hasAlbedoTexture = 1;
+		break;
+	case 1:
+		m_pbrSettings.hasNormalTexture = 1;
+		break;
+	case 2:
+		m_pbrSettings.hasMetalnessRoughnessAOTexture = 1;
+		break;
+	default:
+		SAIL_LOG_ERROR("Defuq @ manuallySetTexture");
+		break;
+	}
+}
+
 void PBRMaterial::getAndInsertTexture(const std::string& filename, int arraySlot) {
 	Texture* t = &Application::getInstance()->getResourceManager().getTexture(filename);
 	m_textures[arraySlot] = t;

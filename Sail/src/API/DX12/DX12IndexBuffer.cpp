@@ -50,7 +50,7 @@ void DX12IndexBuffer::bind(void* cmdList) const {
 	dxCmdList->IASetIndexBuffer(&ibView);
 }
 
-ID3D12Resource1* DX12IndexBuffer::getBuffer() const {
+ID3D12Resource* DX12IndexBuffer::getBuffer() const {
 	auto frameIndex = m_context->getSwapIndex();
 	return m_indexBuffers[frameIndex].Get();
 }

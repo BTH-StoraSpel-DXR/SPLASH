@@ -9,6 +9,9 @@
 #include <sstream>
 #include <iomanip>
 
+// TEST
+#include "API/DX12/resources/DX12DDSTexture.h" 
+
 // Uncomment to use forward rendering
 //#define DISABLE_RT
 
@@ -134,11 +137,13 @@ PBRTestState::PBRTestState(StateStack& stack)
 	m_cubeModel->getMesh(0)->getMaterial()->setColor(glm::vec4(0.2f, 0.8f, 0.4f, 1.0f));
 
 	m_planeModel = ModelFactory::PlaneModel::Create(glm::vec2(20.f, 20.f), shader, glm::vec2(4.0f));
-	m_planeModel->getMesh(0)->getMaterial()->setAlbedoTexture("pbr/ice/albedo.tga");
-	m_planeModel->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/ice/metalnessRoughnessAO.tga");
-	m_planeModel->getMesh(0)->getMaterial()->setNormalTexture("pbr/ice/normal.tga");
+	//m_planeModel->getMesh(0)->getMaterial()->setAlbedoTexture("pbr/ice/albedo.tga");
+	m_testDDSTexture = new DX12DDSTexture("res/textures/pbr/DDS/Tiles/CF_Albedo.dds");
+	m_planeModel->getMesh(0)->getMaterial()->manuallySetTexture(m_testDDSTexture, 0);
+	//m_planeModel->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/ice/metalnessRoughnessAO.tga");
+	//m_planeModel->getMesh(0)->getMaterial()->setNormalTexture("pbr/ice/normal.tga");
 
-	Model* cylinderModel0 = &m_app->getResourceManager().getModel("pbrCylinder.fbx", shader);
+	/*Model* cylinderModel0 = &m_app->getResourceManager().getModel("pbrCylinder.fbx", shader);
 	cylinderModel0->getMesh(0)->getMaterial()->setAlbedoTexture("pbr/metal/albedo.tga");
 	cylinderModel0->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/metal/metalnessRoughnessAO.tga");
 	cylinderModel0->getMesh(0)->getMaterial()->setNormalTexture("pbr/metal/normal.tga");
@@ -151,7 +156,7 @@ PBRTestState::PBRTestState(StateStack& stack)
 	Model* cylinderModel2 = &m_app->getResourceManager().getModel("pbrCylinder__.fbx", shader);
 	cylinderModel2->getMesh(0)->getMaterial()->setAlbedoTexture("pbr/greenTiles/albedo.tga");
 	cylinderModel2->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/greenTiles/metalnessRoughnessAO.tga");
-	cylinderModel2->getMesh(0)->getMaterial()->setNormalTexture("pbr/greenTiles/normal.tga");
+	cylinderModel2->getMesh(0)->getMaterial()->setNormalTexture("pbr/greenTiles/normal.tga");*/
 
 	/*
 		Creation of entities
@@ -159,9 +164,9 @@ PBRTestState::PBRTestState(StateStack& stack)
 
 	{	
 		auto e = EntityFactory::CreateStaticMapObject("Plane", m_planeModel.get(), nullptr, glm::vec3(0.f, 0.f, 0.f));
-		e = EntityFactory::CreateStaticMapObject("Cylinder1", cylinderModel0, nullptr, glm::vec3(0.f, 1.f, 0.f));
+		/*e = EntityFactory::CreateStaticMapObject("Cylinder1", cylinderModel0, nullptr, glm::vec3(0.f, 1.f, 0.f));
 		e = EntityFactory::CreateStaticMapObject("Cylinder2", cylinderModel1, nullptr, glm::vec3(3.f, 1.f, 0.f));
-		e = EntityFactory::CreateStaticMapObject("Cylinder3", cylinderModel2, nullptr, glm::vec3(-3.f, 1.f, 0.f));
+		e = EntityFactory::CreateStaticMapObject("Cylinder3", cylinderModel2, nullptr, glm::vec3(-3.f, 1.f, 0.f));*/
 	}
 
 }

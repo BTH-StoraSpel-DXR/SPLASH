@@ -3,6 +3,8 @@
 #include "Sail.h"
 #include "Sail/entities/systems/SystemDeclarations.h"
 
+class DX12DDSTexture;
+
 class PBRTestState final : public State {
 public:
 	PBRTestState(StateStack& stack);
@@ -46,5 +48,6 @@ private:
 	std::unique_ptr<Model> m_cubeModel;
 	std::unique_ptr<Model> m_planeModel;
 	std::unique_ptr<Model> m_sphereModel;
+	DX12DDSTexture* m_testDDSTexture;
 
 };

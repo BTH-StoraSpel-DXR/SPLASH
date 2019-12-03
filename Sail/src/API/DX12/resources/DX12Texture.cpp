@@ -5,31 +5,44 @@
 #include "Sail/graphics/shader/compute/GenerateMipsComputeShader.h"
 #include "../DX12ComputeShaderDispatcher.h"
 #include "../shader/DX12ShaderPipeline.h"
+#include "Sail/resources/loaders/DDSTextureLoader12.h"
+
+#include <filesystem>
 
 Texture* Texture::Create(const std::string& filename) {
 	return SAIL_NEW DX12Texture(filename);
 }
 
-DX12Texture::DX12Texture(const std::string& filename) 
+DX12Texture::DX12Texture(const std::string& filename)
 	: m_isInitialized(false)
-	, m_textureData(getTextureData(filename))
 	, m_initFenceVal(UINT64_MAX)
 {
 	context = Application::getInstance()->getAPI<DX12API>();
 	// Dont create one resource per swap buffer
 	useOneResource = true;
 
-	m_textureDesc = {};
-	m_textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // TODO: read this from texture data
-	m_textureDesc.Width = m_textureData.getWidth();
-	m_textureDesc.Height = m_textureData.getHeight();
-	m_textureDesc.DepthOrArraySize = 1;
-	m_textureDesc.MipLevels = MIP_LEVELS;
-	m_textureDesc.SampleDesc.Count = 1;
-	m_textureDesc.SampleDesc.Quality = 0;
-	m_textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	m_textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	m_isDDSTexture = std::filesystem::path(filename).extension().compare(".dds") == 0;
+
+	if (!m_isDDSTexture) {
+		m_textureData = &getTextureData(filename);
+
+		m_textureDesc = {};
+		m_textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // TODO: read this from texture data
+		m_textureDesc.Width = m_textureData->getWidth();
+		m_textureDesc.Height = m_textureData->getHeight();
+		m_textureDesc.DepthOrArraySize = 1;
+		m_textureDesc.SampleDesc.Count = 1;
+		m_textureDesc.SampleDesc.Quality = 0;
+		m_textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+		m_textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		m_textureDesc.MipLevels = MIP_LEVELS;
+	} else {
+		std::wstring wide_string = std::wstring(filename.begin(), filename.end());
+		ThrowIfFailed(DirectX::LoadDDSTextureFromFile(context->getDevice(), wide_string.c_str(), textureDefaultBuffers[0].ReleaseAndGetAddressOf(),
+													  m_ddsData, m_subresources));
+		m_textureDesc = textureDefaultBuffers[0]->GetDesc();
+	}
 
 	// A texture rarely updates its data, if at all, so it is stored in a default heap
 	state[0] = D3D12_RESOURCE_STATE_COPY_DEST;
@@ -65,8 +78,11 @@ void DX12Texture::initBuffers(ID3D12GraphicsCommandList4* cmdList) {
 
 			// Generate mip maps
 			// This waits until the texture data is uploaded to the default heap since the generator reads from that source
-			DX12Utils::SetResourceUAVBarrier(cmdList, textureDefaultBuffers[0].Get());
-			generateMips(cmdList);
+			if (!m_isDDSTexture) {
+				DX12Utils::SetResourceUAVBarrier(cmdList, textureDefaultBuffers[0].Get());
+
+				generateMips(cmdList);
+			}
 		}
 		return;
 	}
@@ -75,21 +91,29 @@ void DX12Texture::initBuffers(ID3D12GraphicsCommandList4* cmdList) {
 	// this function gets the size an upload buffer needs to be to upload a texture to the gpu.
 	// each row must be 256 byte aligned except for the last row, which can just be the size in bytes of the row
 	// eg. textureUploadBufferSize = ((((width * numBytesPerPixel) + 255) & ~255) * (height - 1)) + (width * numBytesPerPixel);
-	context->getDevice()->GetCopyableFootprints(&m_textureDesc, 0, 1, 0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
+	context->getDevice()->GetCopyableFootprints(&m_textureDesc, 0, (m_isDDSTexture ? static_cast<UINT>(m_subresources.size()) : 1),
+												0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
 
 	// Create the upload heap
 	// This could be done in a buffer manager owned by dx12api
 	m_textureUploadBuffer.Attach(DX12Utils::CreateBuffer(context->getDevice(), textureUploadBufferSize, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, DX12Utils::sUploadHeapProperties));
 	m_textureUploadBuffer->SetName(L"Texture upload buffer");
 
-	D3D12_SUBRESOURCE_DATA textureData = {};
-	textureData.pData = m_textureData.getTextureData();
-	textureData.RowPitch = m_textureData.getWidth() * m_textureData.getBytesPerPixel();
-	textureData.SlicePitch = textureData.RowPitch * m_textureData.getHeight();
-	// Copy the upload buffer contents to the default heap using a helper method from d3dx12.h
-	DX12Utils::UpdateSubresources(cmdList, textureDefaultBuffers[0].Get(), m_textureUploadBuffer.Get(), 0, 0, 1, &textureData);
-	//transitionStateTo(cmdList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE); // Uncomment if generateMips is disabled
-	
+	if (!m_isDDSTexture) {
+		D3D12_SUBRESOURCE_DATA textureData = {};
+		textureData.pData = m_textureData->getTextureData();
+		textureData.RowPitch = m_textureData->getWidth() * m_textureData->getBytesPerPixel();
+		textureData.SlicePitch = textureData.RowPitch * m_textureData->getHeight();
+		// Copy the upload buffer contents to the default heap using a helper method from d3dx12.h
+		DX12Utils::UpdateSubresources(cmdList, textureDefaultBuffers[0].Get(), m_textureUploadBuffer.Get(), 0, 0, 1, &textureData);
+		//transitionStateTo(cmdList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE); // Uncomment if generateMips is disabled
+	} else {
+		// Copy the upload buffer contents to the default heap using a helper method from d3dx12.h
+		DX12Utils::UpdateSubresources(cmdList, textureDefaultBuffers[0].Get(), m_textureUploadBuffer.Get(),
+									  0, 0, static_cast<UINT>(m_subresources.size()), m_subresources.data());
+		transitionStateTo(cmdList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	}
+
 	auto type = cmdList->GetType();
 	m_queueUsedForUpload = (type == D3D12_COMMAND_LIST_TYPE_DIRECT) ? context->getDirectQueue() : context->getComputeQueue();
 	// Schedule a signal to be called directly after this command list has executed
@@ -106,7 +130,7 @@ bool DX12Texture::hasBeenInitialized() const {
 	return m_isInitialized;
 }
 
-ID3D12Resource1* DX12Texture::getResource() const {
+ID3D12Resource* DX12Texture::getResource() const {
 	return textureDefaultBuffers[0].Get();
 }
 

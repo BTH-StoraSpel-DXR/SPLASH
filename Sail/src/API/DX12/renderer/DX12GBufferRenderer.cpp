@@ -20,6 +20,7 @@
 #include "../DX12VertexBuffer.h"
 #include "Sail/entities/systems/physics/OctreeAddRemoverSystem.h"
 #include "Sail/events/EventDispatcher.h"
+#include "API/DX12/resources/DX12DDSTexture.h"
 
 DX12GBufferRenderer::DX12GBufferRenderer() {
 	EventDispatcher::Instance().subscribe(Event::Type::WINDOW_RESIZE, this);
@@ -211,7 +212,9 @@ void DX12GBufferRenderer::recordCommands(PostProcessPipeline* postProcessPipelin
 		shaderPipeline->trySetCBufferVar("sys_mView", &camera->getViewMatrix(), sizeof(glm::mat4));
 		shaderPipeline->trySetCBufferVar("sys_mProj", &camera->getProjMatrix(), sizeof(glm::mat4));
 
-		cmdList->SetGraphicsRoot32BitConstants(GlobalRootParam::CBV_TEAM_COLOR, 3, &teamColors[command->teamColorID], 0);
+		if (teamColors.size() > 0) {
+			cmdList->SetGraphicsRoot32BitConstants(GlobalRootParam::CBV_TEAM_COLOR, 3, &teamColors[command->teamColorID], 0);
+		}
 
 		command->model.mesh->draw(*this, cmdList.Get());
 	}

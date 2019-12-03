@@ -20,7 +20,7 @@ public:
 protected:
 	DX12API* context;
 
-	std::vector<wComPtr<ID3D12Resource1>> textureDefaultBuffers;
+	std::vector<wComPtr<ID3D12Resource>> textureDefaultBuffers;
 	DescriptorHeap cpuDescHeap;
 	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> srvHeapCDHs;
 	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> depthSrvHeapCDHs;

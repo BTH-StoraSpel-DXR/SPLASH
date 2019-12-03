@@ -455,10 +455,10 @@ void DXRBase::updateMetaballpositions(const std::vector<DXRBase::MetaballGroup*>
 	HRESULT hr;
 
 	void* pAabbMappedData;
-	ID3D12Resource1* aabb_res;
+	ID3D12Resource* aabb_res;
 
 	void* pPosMappedData;
-	ID3D12Resource1* pos_res = m_metaballPositions_srv[m_context->getSwapIndex()];
+	ID3D12Resource* pos_res = m_metaballPositions_srv[m_context->getSwapIndex()];
  	hr = pos_res->Map(0, nullptr, &pPosMappedData);
 	DX12Utils::checkDeviceRemovalReason(m_context->getDevice(), hr);
 
@@ -1225,7 +1225,7 @@ void DXRBase::initDecals(D3D12_GPU_DESCRIPTOR_HANDLE* gpuHandle, D3D12_CPU_DESCR
 }
 
 void DXRBase::addMetaballGroupAABB(int index) {
-	std::vector<ID3D12Resource1*> & aabbRes = m_aabb_desc_resources[index];
+	std::vector<ID3D12Resource*> & aabbRes = m_aabb_desc_resources[index];
 
 	aabbRes.reserve(DX12API::NUM_GPU_BUFFERS);
 	for (size_t i = 0; i < DX12API::NUM_GPU_BUFFERS; i++) {

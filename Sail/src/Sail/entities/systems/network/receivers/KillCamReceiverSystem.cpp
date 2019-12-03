@@ -39,38 +39,76 @@ KillCamReceiverSystem::KillCamReceiverSystem() : ReceiverBase() {
 	EventDispatcher::Instance().subscribe(Event::Type::PLAYER_DEATH, this);
 	EventDispatcher::Instance().subscribe(Event::Type::TOGGLE_SLOW_MOTION, this);
 	EventDispatcher::Instance().subscribe(Event::Type::TORCH_NOT_HELD, this);
+
 }
 
 KillCamReceiverSystem::~KillCamReceiverSystem() {
 	EventDispatcher::Instance().unsubscribe(Event::Type::PLAYER_DEATH, this);
 	EventDispatcher::Instance().unsubscribe(Event::Type::TOGGLE_SLOW_MOTION, this);
 	EventDispatcher::Instance().unsubscribe(Event::Type::TORCH_NOT_HELD, this);
+
+	stop();
 }
 
 void KillCamReceiverSystem::stop() {
 	// Clear the saved data
-	for (std::queue<std::string>& data : m_replayData) {
-		data = std::queue<std::string>();
-	}
-
 	for (std::vector<Netcode::ComponentID>& data : m_notHoldingTorches) {
 		data.clear();
 	}
-
+	m_replayData.clear();
+	m_myKillCamData.clear();
 
 	m_slowMotionState = SlowMotionSetting::DISABLE;
-	m_currentWriteInd = 0;
-	m_currentReadInd  = 1;
 	m_hasStarted      = false;
 	m_idOfKiller      = Netcode::UNINITIALIZED;
 	m_idOfKillingProjectile = Netcode::UNINITIALIZED;
 	m_killerPlayer = nullptr;
 	m_killerProjectile = nullptr;
 	m_trackingProjectile = false;
-	m_cam = nullptr;
+	Memory::SafeDelete(m_cam);
 
 	m_projectilePos = { 0,0,0 };
 	m_killerHeadPos = { 0,0,0 };
+}
+
+bool KillCamReceiverSystem::startMyKillCam() {
+	// Only play kill cam if we were actually killed by a player
+	if (m_idOfKillingProjectile == Netcode::UNINITIALIZED) {
+		EventDispatcher::Instance().emit(ToggleKillCamEvent(false));
+		return false;
+	}
+
+	const Netcode::PlayerID killerID = Netcode::getComponentOwner(m_idOfKillingProjectile);
+
+	// Copy the past few seconds to data that we'll read from for our own killcam
+	m_myKillCamData = m_replayData;
+
+	for (auto e : entities) {
+		const Netcode::ComponentID compID = e->getComponent<ReplayReceiverComponent>()->m_id;
+
+		e->tryToAddToSystems = true;
+		e->addComponent<RenderInReplayComponent>();
+
+
+		if (e->hasComponent<PlayerComponent>()) {
+			if (killerID == Netcode::getComponentOwner(compID)) {
+				e->addComponent<KillerComponent>();
+				m_killerPlayer = e;
+
+				SAIL_LOG("I was killed by: " + NWrapperSingleton::getInstance().getPlayer(killerID)->name);
+			}
+
+			// Put torches where they were at that point in time
+			for (Netcode::ComponentID& notHolding : m_notHoldingTorches[m_myKillCamData.readIndex]) {
+				if (compID == notHolding) {
+					setCandleState(compID, false);
+				}
+			}
+		}
+	}
+	m_hasStarted = true;
+
+	return true;
 }
 
 void KillCamReceiverSystem::init(Netcode::PlayerID player, Camera* cam) {
@@ -82,11 +120,7 @@ void KillCamReceiverSystem::init(Netcode::PlayerID player, Camera* cam) {
 }
 
 void KillCamReceiverSystem::handleIncomingData(const std::string& data) {
-	if (!m_hasStarted) { // Stop writing data to this once the 
-		std::lock_guard<std::mutex> lock(m_replayDataLock);
-
-		m_replayData[m_currentWriteInd].push(data);
-	}
+	m_replayData.savePacket(data);
 }
 
 
@@ -99,16 +133,9 @@ void KillCamReceiverSystem::prepareUpdate() {
 
 // Increments the indexes in the ring buffer once per tick and clears the next write-index
 void KillCamReceiverSystem::update(float dt) {
-	if (!m_hasStarted) {
-		std::lock_guard<std::mutex> lock(m_replayDataLock);
-
-		m_currentWriteInd = ++m_currentWriteInd % REPLAY_BUFFER_SIZE;
-		m_currentReadInd = ++m_currentReadInd % REPLAY_BUFFER_SIZE;
-
-		// Clear the current write-position's queue in the ring buffer
-		m_replayData[m_currentWriteInd] = std::queue<std::string>();
-		m_notHoldingTorches[m_currentWriteInd].clear();
-	}
+	m_replayData.prepareWrite();
+	m_replayData.prepareRead();
+	m_notHoldingTorches[m_replayData.writeIndex].clear();
 }
 
 void KillCamReceiverSystem::updatePerFrame(float dt, float alpha) {
@@ -160,56 +187,31 @@ void KillCamReceiverSystem::processReplayData(float dt) {
 	// Add the entities to all relevant systems so that they for example will have their animations updated
 	if (!m_hasStarted) {
 		// Only play kill cam if we were actually killed by a player
-		if (m_idOfKillingProjectile == Netcode::UNINITIALIZED) {
-			EventDispatcher::Instance().emit(ToggleKillCamEvent(false));
+		if (!startMyKillCam()) {
 			return;
 		}
-
-		const Netcode::PlayerID killerID = Netcode::getComponentOwner(m_idOfKillingProjectile);
-
-		for (auto e : entities) {
-			const Netcode::ComponentID compID = e->getComponent<ReplayReceiverComponent>()->m_id;
-			
-			e->tryToAddToSystems = true;
-			e->addComponent<RenderInReplayComponent>();
-
-
-			if (e->hasComponent<PlayerComponent>()) {
-				if (killerID == Netcode::getComponentOwner(compID)) {
-					e->addComponent<KillerComponent>();
-					m_killerPlayer = e;
-
-					SAIL_LOG("I was killed by: " + NWrapperSingleton::getInstance().getPlayer(killerID)->name);
-				}
-
-				// Put torches where they were at that point in time
-				for (Netcode::ComponentID& notHolding : m_notHoldingTorches[m_currentReadInd]) {
-					if (compID == notHolding) {
-						setCandleState(compID, false);
-					}
-				}
-			}
-		}
-		m_hasStarted = true;
 	}
 
-	std::lock_guard<std::mutex> lock(m_replayDataLock);
+	NetcodeDataRingBuffer* data = &m_myKillCamData;
+	// TODO: if final killcam use m_replayData instead
 
-	processData(dt, m_replayData[m_currentReadInd], false);
-	m_currentReadInd = ++m_currentReadInd % REPLAY_BUFFER_SIZE;
+	data->prepareRead();
+	processData(dt, data->getTickData(), false);
 
 	// If we've reached the end of the killcam we should end it
-	if (m_currentReadInd == m_currentWriteInd) {
+	if (data->readIndex == data->writeIndex) {
+		data->clear();
 		EventDispatcher::Instance().emit(ToggleKillCamEvent(false));
 	}
 }
 
 
 #ifdef DEVELOPMENT
+// NOTE: does not track the size of m_myKillCamData but that will only be used when the killcam is being played
 unsigned int KillCamReceiverSystem::getByteSize() const {
 	unsigned int size = BaseComponentSystem::getByteSize() + sizeof(*this);
 	for (int i = 0; i < REPLAY_BUFFER_SIZE; i++) {
-		const auto& queue = m_replayData[i];
+		const auto& queue = m_replayData.netcodeData[i];
 		const size_t queueSize = queue.size();
 		size += queueSize * sizeof(std::string);								// string structure size
 		if (queueSize) {
@@ -221,13 +223,15 @@ unsigned int KillCamReceiverSystem::getByteSize() const {
 }
 #endif
 
+
+// TODO: Move dead entities to under the map
 void KillCamReceiverSystem::destroyEntity(const Netcode::ComponentID entityID) {
 	if (auto e = findFromNetID(entityID); e) {
-		//for (auto& c : e->getChildEntities()) {
-		//	c->queueDestruction();
-		//}
-		
-		e->queueDestruction();
+
+		// Only destroy projectiles atm
+		if (e->hasComponent<ProjectileComponent>()) {
+			e->queueDestruction();
+		}
 		
 		if (entityID == m_idOfKillingProjectile) {
 			m_killerProjectile = nullptr;
@@ -286,7 +290,7 @@ void KillCamReceiverSystem::igniteCandle(const Netcode::ComponentID candleID) {
 void KillCamReceiverSystem::matchEnded() {}
 
 void KillCamReceiverSystem::playerDied(const Netcode::ComponentID networkIdOfKilled, const Netcode::ComponentID killerID) {
-	destroyEntity(networkIdOfKilled);
+	//destroyEntity(networkIdOfKilled);
 	
 	//if (auto e = findFromNetID(networkIdOfKilled); e) {
 	//	EventDispatcher::Instance().emit(PlayerDiedEvent(
@@ -586,7 +590,7 @@ bool KillCamReceiverSystem::onEvent(const Event& event) {
 
 	auto onTorchNotHeld = [&](const TorchNotHeldEvent& e) {
 		if (!m_hasStarted) {
-			m_notHoldingTorches[m_currentWriteInd].push_back(e.netCompID);
+			m_notHoldingTorches[m_replayData.writeIndex].push_back(e.netCompID);
 		}
 	};
 

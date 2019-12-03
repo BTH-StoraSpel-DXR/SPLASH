@@ -89,7 +89,7 @@ void DX12RenderableTexture::resize(int width, int height) {
 	createTextures();
 }
 
-ID3D12Resource1* DX12RenderableTexture::getResource() const {
+ID3D12Resource* DX12RenderableTexture::getResource() const {
 	return textureDefaultBuffers[context->getSwapIndex()].Get();
 }
 

@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "TextureData.h"
 
-const std::string TextureData::DEFAULT_TEXTURE_LOCATION = "res/textures/";
-
 TextureData::TextureData() {
 	m_data.channels = 4;
 	m_data.height = 0;
@@ -17,7 +15,7 @@ TextureData::~TextureData() {
 }
 
 void TextureData::load(const std::string& filename) {
-	FileLoader::TGALoader TGALoader(DEFAULT_TEXTURE_LOCATION + filename, m_data);
+	FileLoader::TGALoader TGALoader(filename, m_data);
 }
 
 unsigned int TextureData::getWidth() const {

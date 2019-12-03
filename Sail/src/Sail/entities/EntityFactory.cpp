@@ -22,9 +22,9 @@ void EntityFactory::CreateCandle(Entity::SPtr& candle, const glm::vec3& lightPos
 	auto* shader = &Application::getInstance()->getResourceManager().getShaderSet<GBufferOutShader>();
 	Model* candleModel = &Application::getInstance()->getResourceManager().getModel("Torch.fbx", shader);
 	candleModel->setCastShadows(false);
-	candleModel->getMesh(0)->getMaterial()->setAlbedoTexture("pbr/Torch/Torch_Albedo.tga");
-	candleModel->getMesh(0)->getMaterial()->setNormalTexture("pbr/Torch/Torch_NM.tga");
-	candleModel->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/Torch/Torch_MRAO.tga");
+	candleModel->getMesh(0)->getMaterial()->setAlbedoTexture("pbr/DDS/Torch/Torch_Albedo.dds");
+	candleModel->getMesh(0)->getMaterial()->setNormalTexture("pbr/DDS/Torch/Torch_NM.dds");
+	candleModel->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/DDS/Torch/Torch_MRAO.dds");
 
 
 	auto* wireframeShader = &Application::getInstance()->getResourceManager().getShaderSet<GBufferWireframe>();
@@ -50,7 +50,7 @@ void EntityFactory::CreateCandle(Entity::SPtr& candle, const glm::vec3& lightPos
 	particleEmitterComp->spread = { 0.1f, 0.1f, 0.1f };
 	particleEmitterComp->spawnRate = 0.001f;
 	particleEmitterComp->lifeTime = 0.13f;
-	std::string particleTextureName = "particles/animFire.tga";
+	std::string particleTextureName = "particles/animFire.dds";
 	if (!Application::getInstance()->getResourceManager().hasTexture(particleTextureName)) {
 		Application::getInstance()->getResourceManager().loadTexture(particleTextureName);
 	}
@@ -73,9 +73,9 @@ Entity::SPtr EntityFactory::CreateWaterGun(const std::string& name) {
 
 	auto* shader = &Application::getInstance()->getResourceManager().getShaderSet<GBufferOutShader>();
 	Model* candleModel = &Application::getInstance()->getResourceManager().getModel("WaterPistol.fbx", shader);
-	candleModel->getMesh(0)->getMaterial()->setAlbedoTexture("pbr/WaterGun/Watergun_Albedo.tga");
-	candleModel->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/WaterGun/Watergun_MRAO.tga");
-	candleModel->getMesh(0)->getMaterial()->setNormalTexture("pbr/WaterGun/Watergun_NM.tga");
+	candleModel->getMesh(0)->getMaterial()->setAlbedoTexture("pbr/DDS/WaterGun/Watergun_Albedo.dds");
+	candleModel->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/DDS/WaterGun/Watergun_MRAO.dds");
+	candleModel->getMesh(0)->getMaterial()->setNormalTexture("pbr/DDS/WaterGun/Watergun_NM.dds");
 
 
 	auto gun = ECS::Instance()->createEntity(name.c_str());
@@ -321,9 +321,9 @@ void EntityFactory::CreateGenericPlayer(Entity::SPtr playerEntity, size_t lightI
 	std::string modelName = "Doc.fbx";
 	auto* shader = &Application::getInstance()->getResourceManager().getShaderSet<GBufferOutShader>();
 	Model* characterModel = &Application::getInstance()->getResourceManager().getModelCopy(modelName, shader);
-	characterModel->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/Character/CharacterMRAO.tga");
-	characterModel->getMesh(0)->getMaterial()->setAlbedoTexture("pbr/Character/CharacterTex.tga");
-	characterModel->getMesh(0)->getMaterial()->setNormalTexture("pbr/Character/CharacterNM.tga");
+	characterModel->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/DDS/Doc/Doc_MRAO.dds");
+	characterModel->getMesh(0)->getMaterial()->setAlbedoTexture("pbr/DDS/Doc/Doc_Albedo.dds");
+	characterModel->getMesh(0)->getMaterial()->setNormalTexture("pbr/DDS/Doc/Doc_NM.dds");
 	characterModel->setIsAnimated(true);
 	AnimationStack* stack = &Application::getInstance()->getResourceManager().getAnimationStack(modelName);
 

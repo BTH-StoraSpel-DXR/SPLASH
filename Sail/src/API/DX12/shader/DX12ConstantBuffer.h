@@ -41,7 +41,7 @@ namespace ShaderComponent {
 		unsigned int m_resourceHeapSize;
 
 		unsigned int m_register;
-		std::vector<wComPtr<ID3D12Resource1>> m_constantBufferUploadHeap;
+		std::vector<wComPtr<ID3D12Resource>> m_constantBufferUploadHeap;
 		std::vector<UINT8*> m_cbGPUAddress;
 
 	};

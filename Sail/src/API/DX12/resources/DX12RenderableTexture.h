@@ -17,7 +17,7 @@ public:
 	virtual void changeFormat(Texture::FORMAT newFormat) override;
 	virtual void resize(int width, int height) override;
 
-	ID3D12Resource1* getResource() const;
+	ID3D12Resource* getResource() const;
 	ID3D12Resource* getDepthResource() const;
 	D3D12_CPU_DESCRIPTOR_HANDLE getDepthSrvCDH(int frameIndex = -1) const;
 	D3D12_CPU_DESCRIPTOR_HANDLE getRtvCDH(int frameIndex = -1) const;

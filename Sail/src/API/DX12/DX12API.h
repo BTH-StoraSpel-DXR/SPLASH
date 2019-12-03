@@ -177,7 +177,7 @@ private:
 
 	wComPtr<ID3D12DescriptorHeap> m_renderTargetsHeap;
 	wComPtr<IDXGISwapChain4> m_swapChain;
-	std::vector<wComPtr<ID3D12Resource1>> m_renderTargets;
+	std::vector<wComPtr<ID3D12Resource>> m_renderTargets;
 	wComPtr<ID3D12RootSignature> m_globalRootSignature;
 	std::map<std::string, UINT> m_globalRootSignatureRegisters;
 

@@ -60,10 +60,6 @@ namespace KeyBinds {
 
 	// Debugging
 	int SPECTATOR_DEBUG;
-
-//#ifdef DEVELOPMENT
-	int START_KILLCAM;
-//#endif
 }
 
 void KeyBinds::init() {
@@ -122,8 +118,4 @@ void KeyBinds::init() {
 
 	// Debugging
 	SPECTATOR_DEBUG = SAIL_KEY_M;
-
-//#ifdef DEVELOPMENT
-	START_KILLCAM = SAIL_KEY_K;
-//#endif
 }
