@@ -2,6 +2,8 @@
 #include "../BaseComponentSystem.h"
 #include "Sail/graphics/camera/Camera.h"
 #include "Sail/graphics/camera/PerspectiveCamera.h"
+#include "Sail/graphics/light/PointLight.h"
+#include "Sail/graphics/light/LightSetup.h"
 
 class CameraRecordSystem final : public BaseComponentSystem {
 public:
@@ -9,6 +11,8 @@ public:
 	~CameraRecordSystem() = default;
 
 	void setCamera(Camera* camera);
+	void setLightSetup(LightSetup* light, int index);
+	void prepareRrender();
 	void submitCamera(Camera* camera);
 	void update(float dt);
 
@@ -25,6 +29,7 @@ private:
 		glm::vec3 pos;
 		glm::vec3 direction;
 		float timeStamp;
+		float delta;
 	};
 
 	int m_currentCheckpoint = 0;
@@ -35,4 +40,6 @@ private:
 
 	Camera* m_originalCam = nullptr;
 	PerspectiveCamera m_replaycam;
+	LightSetup* m_lightSetup;
+	PointLight m_light;
 };

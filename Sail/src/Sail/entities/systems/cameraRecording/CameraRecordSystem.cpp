@@ -6,14 +6,28 @@
 
 CameraRecordSystem::CameraRecordSystem() : m_replaycam(90.f, 1280.f / 720.f, 0.1f, 5000.f) {
 	registerComponent<NoEntityComponent>(true, false, false);
+
+	m_light.setColor(glm::vec3(1, 1, 1));
+	m_light.setAttenuation(.0f, 0.1f, 0.02f);
 }
 
 void CameraRecordSystem::setCamera(Camera* camera) {
 	m_originalCam = camera;
 }
 
+void CameraRecordSystem::setLightSetup(LightSetup* light, int index) {
+	m_lightSetup = light;
+	m_light.setIndex(index);
+}
+
+void CameraRecordSystem::prepareRrender() {
+	if (m_lightSetup && m_replay) {
+		m_lightSetup->addPointLight(m_light);
+	}
+}
+
 void CameraRecordSystem::submitCamera(Camera* camera) {
-	m_checkpoints.emplace_back(Checkpoint{camera->getPosition(), camera->getDirection(), m_curTime});
+	m_checkpoints.emplace_back(Checkpoint{camera->getPosition(), camera->getDirection(), m_curTime, (m_checkpoints.empty() ? 0 : m_curTime - m_checkpoints.back().timeStamp)});
 }
 
 void CameraRecordSystem::update(float dt) {
@@ -24,10 +38,19 @@ void CameraRecordSystem::update(float dt) {
 
 	if (m_replay) {
 		if (m_currentCheckpoint < (int)m_checkpoints.size() - 1) {
-			float alpha = (m_checkpoints[m_currentCheckpoint + 1].timeStamp - m_curTime) / (m_checkpoints[m_currentCheckpoint + 1].timeStamp - m_checkpoints[m_currentCheckpoint].timeStamp);
+			static float clockLightModifier = 0;
+			clockLightModifier += dt * (rand() % 100 / 100.0f);
 
-			glm::vec3 pos = (m_checkpoints[m_currentCheckpoint + 1].pos - m_checkpoints[m_currentCheckpoint].pos) * alpha;
-			glm::vec3 dir = (m_checkpoints[m_currentCheckpoint + 1].direction - m_checkpoints[m_currentCheckpoint].direction) * alpha;
+			float r = (sinf(clockLightModifier * 50.0f) * 0.075f + 0.55f) + (rand() % 10 - 5) / 50.0f;
+			m_light.setIndex(1);
+			m_light.setColor(glm::vec3(r + 0.05f, (r - 0.05f) * 0.5f, (r - 0.1f) * 0.25f));
+
+
+			float alpha = (m_curTime - m_checkpoints[m_currentCheckpoint].timeStamp) / m_checkpoints[m_currentCheckpoint + 1].delta;
+			//SAIL_LOG(std::to_string(alpha));
+			glm::vec3 pos = m_checkpoints[m_currentCheckpoint].pos +		(m_checkpoints[m_currentCheckpoint + 1].pos - m_checkpoints[m_currentCheckpoint].pos) * alpha;
+			glm::vec3 dir = m_checkpoints[m_currentCheckpoint].direction +	(m_checkpoints[m_currentCheckpoint + 1].direction - m_checkpoints[m_currentCheckpoint].direction) * alpha;
+			m_light.setPosition(pos);
 
 			m_replaycam.setPosition(pos);
 			m_replaycam.setDirection(dir);
@@ -40,6 +63,8 @@ void CameraRecordSystem::update(float dt) {
 			stopReplay();
 		}
 	}
+
+	prepareRrender();
 }
 
 void CameraRecordSystem::renderImGUI() {

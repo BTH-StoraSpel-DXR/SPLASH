@@ -461,6 +461,7 @@ bool GameState::processInput(float dt) {
 void GameState::initSystems(const unsigned char playerID) {
 	m_componentSystems.cameraRecordSystem = ECS::Instance()->createSystem<CameraRecordSystem>();
 	m_componentSystems.cameraRecordSystem->setCamera(&m_cam);
+	m_componentSystems.cameraRecordSystem->setLightSetup(&m_lights, m_currLightIndex++);
 
 	m_componentSystems.teamColorSystem = ECS::Instance()->createSystem<TeamColorSystem>();
 	m_componentSystems.movementSystem = ECS::Instance()->createSystem<MovementSystem<RenderInActiveGameComponent>>();
@@ -996,7 +997,6 @@ void GameState::updatePerFrameComponentSystems(float dt, float alpha) {
 
 	// TODO? move to its own thread
 	m_componentSystems.sprintingSystem->update(dt, alpha);
-	m_componentSystems.cameraRecordSystem->update(dt);
 
 	m_componentSystems.gameInputSystem->processMouseInput(dt);
 	if (m_isInKillCamMode) {
@@ -1023,6 +1023,7 @@ void GameState::updatePerFrameComponentSystems(float dt, float alpha) {
 		m_componentSystems.spotLightSystem->updateLights(&m_lights, alpha, dt);
 	}
 	
+	m_componentSystems.cameraRecordSystem->update(dt);
 	m_componentSystems.crosshairSystem->update(dt);
 
 	if (m_showcaseProcGen) {
