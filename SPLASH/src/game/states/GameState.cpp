@@ -459,6 +459,9 @@ bool GameState::processInput(float dt) {
 }
 
 void GameState::initSystems(const unsigned char playerID) {
+	m_componentSystems.cameraRecordSystem = ECS::Instance()->createSystem<CameraRecordSystem>();
+	m_componentSystems.cameraRecordSystem->setCamera(&m_cam);
+
 	m_componentSystems.teamColorSystem = ECS::Instance()->createSystem<TeamColorSystem>();
 	m_componentSystems.movementSystem = ECS::Instance()->createSystem<MovementSystem<RenderInActiveGameComponent>>();
 
@@ -786,7 +789,7 @@ bool GameState::render(float dt, float alpha) {
 	m_app->getAPI()->clear({ 0.01f, 0.01f, 0.01f, 1.0f });
 
 	// Draw the scene. Entities with model and trans component will be rendered.
-	m_componentSystems.beginEndFrameSystem->beginFrame(m_cam);
+	m_componentSystems.beginEndFrameSystem->beginFrame(m_componentSystems.cameraRecordSystem->isInReplay() ? m_componentSystems.cameraRecordSystem->getCamera() : m_cam);
 
 	if (m_isInKillCamMode) {
 		killCamAlpha = m_componentSystems.killCamReceiverSystem->getKillCamAlpha(alpha);
@@ -908,6 +911,8 @@ bool GameState::renderImguiDebug(float dt) {
 	
 	m_ecsSystemInfoImGuiWindow.renderWindow();
 
+	m_componentSystems.cameraRecordSystem->renderImGUI();
+
 	return false;
 }
 
@@ -991,6 +996,7 @@ void GameState::updatePerFrameComponentSystems(float dt, float alpha) {
 
 	// TODO? move to its own thread
 	m_componentSystems.sprintingSystem->update(dt, alpha);
+	m_componentSystems.cameraRecordSystem->update(dt);
 
 	m_componentSystems.gameInputSystem->processMouseInput(dt);
 	if (m_isInKillCamMode) {

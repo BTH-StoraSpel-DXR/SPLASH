@@ -9,6 +9,7 @@ class AnimationChangerSystem;
 class AudioSystem;
 class BeginEndFrameSystem;
 class BoundingboxSubmitSystem;
+class CameraRecordSystem;
 class CandleHealthSystem;
 class CandlePlacementSystem;
 class CandleReignitionSystem;
@@ -45,7 +46,6 @@ class TeamColorSystem;
 class CandleThrowingSystem;
 class CrosshairSystem;
 
-
 // Systems that need duplicate versions for the killcam (due to slow motion and other reasons)
 template <typename T>
 class AnimationSystem;
@@ -65,6 +65,7 @@ struct Systems {
 	AudioSystem*               audioSystem               = nullptr;
 	BeginEndFrameSystem*       beginEndFrameSystem       = nullptr;
 	BoundingboxSubmitSystem*   boundingboxSubmitSystem   = nullptr;
+	CameraRecordSystem*		   cameraRecordSystem		 = nullptr;
 	CandleHealthSystem*        candleHealthSystem        = nullptr;
 	CandlePlacementSystem*     candlePlacementSystem     = nullptr;
 	CandleReignitionSystem*    candleReignitionSystem    = nullptr;

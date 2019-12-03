@@ -2,6 +2,7 @@
 // Ordered by directory name, then file name
 
 #include "Audio/AudioSystem.h"
+#include "cameraRecording/CameraRecordSystem.h"
 
 #include "entityManagement/EntityAdderSystem.h"
 #include "entityManagement/EntityRemovalSystem.h"
