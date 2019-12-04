@@ -79,7 +79,7 @@ void OptionsWindow::renderWindow() {
 	ImGui::PopStyleColor();
 	ImGui::Separator();
 
-	const static std::vector<std::string> soundSettings = { "global", "music", "effects", "voices" };
+	const static std::vector<std::string> soundSettings = { "global"/*, "music", "effects", "voices"*/ };
 	for (auto& settingName : soundSettings) {
 		dopt = &dynamic["sound"][settingName];
 		ImGui::Text(settingName.c_str());

@@ -101,8 +101,6 @@ bool SettingStorage::deSerialize(const std::string& content, std::unordered_map<
 
 const int SettingStorage::teamColorIndex(const int team) {
 	if (team < 12 && team >= -1) {
-		std::string name = "team" + std::to_string(team);
-		unsigned int value = (unsigned int)(int)gameSettingsStatic["team" + std::to_string(team)]["color"].getSelected().value;
 		return (unsigned int)(int)gameSettingsStatic["team" + std::to_string(team)]["color"].getSelected().value;
 	}
 	else {
@@ -228,9 +226,9 @@ void SettingStorage::createApplicationDefaultGraphics() {
 void SettingStorage::createApplicationDefaultSound() {
 	auto& applicationSettingsD = applicationSettingsDynamic["sound"] = std::unordered_map<std::string, DynamicSetting>();
 	applicationSettingsD["global"]  = DynamicSetting(1.0f, 0.0f, 1.0f);
-	applicationSettingsD["music"]   = DynamicSetting(1.0f, 0.0f, 1.0f);
-	applicationSettingsD["effects"] = DynamicSetting(1.0f, 0.0f, 1.0f);
-	applicationSettingsD["voices"]  = DynamicSetting(1.0f, 0.0f, 1.0f);
+	//applicationSettingsD["music"]   = DynamicSetting(1.0f, 0.0f, 1.0f);
+	//applicationSettingsD["effects"] = DynamicSetting(1.0f, 0.0f, 1.0f);
+	//applicationSettingsD["voices"]  = DynamicSetting(1.0f, 0.0f, 1.0f);
 }
 void SettingStorage::createApplicationDefaultMisc() {
 	applicationSettingsStatic["misc"] = std::unordered_map<std::string, Setting>();

@@ -227,6 +227,11 @@ void NWrapperClient::requestTeam(char team) {
 	sendMsg(msg, sizeof(msg));
 }
 
+void NWrapperClient::requestTeamColor(char teamColorID) {
+	char msg[] = { ML_TEAMCOLOR_REQUEST, teamColorID, ML_NULL };
+	sendMsg(msg, sizeof(msg));
+}
+
 void NWrapperClient::updateStateLoadStatus(States::ID state, char status) {
 	m_lastReportedState = state;
 

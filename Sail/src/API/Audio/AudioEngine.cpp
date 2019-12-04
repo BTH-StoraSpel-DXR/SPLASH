@@ -634,7 +634,7 @@ HRESULT AudioEngine::initXAudio2() {
 	UINT32 flags = XAUDIO2_1024_QUANTUM;
 
 #ifdef DEVELOPMENT
-	flags |= XAUDIO2_DEBUG_ENGINE;
+	//flags |= XAUDIO2_DEBUG_ENGINE;
 #endif
 
 	HRESULT hr = XAudio2Create(&m_xAudio2, flags);
@@ -655,7 +655,7 @@ HRESULT AudioEngine::initXAudio2() {
 
 #if DEVELOPMENT
 	// Activate debug layer if we're in development
-	activateDebugLayer();
+	//activateDebugLayer();
 #endif
 
 	return hr;
@@ -879,10 +879,9 @@ void AudioEngine::streamSoundInternal(const std::string& filename, int myIndex, 
 #endif
 
 			if ((STREAMING_BUFFER_SIZE % wfx->nBlockAlign) != 0) {
-				//
+
 				// non-PCM data will fail here. ADPCM requires a more complicated streaming mechanism to deal with submission in audio frames that do
 				// not necessarily align to the 2K async boundary.
-				//
 				m_isStreaming[myIndex] = false;
 				break;
 			}
@@ -932,12 +931,9 @@ void AudioEngine::streamSoundInternal(const std::string& filename, int myIndex, 
 					break;
 				}
 
-				//
-				// Now that the event has been signaled, we know we have audio available. The next
-				// question is whether our XAudio2 source voice has played enough data for us to give
-				// it another buffer full of audio. We'd like to keep no more than MAX_BUFFER_COUNT - 1
-				// buffers on the queue, so that one buffer is always free for disk I/O.
-				//
+				// Now that the event has been signaled, we know we have audio available.
+				// We'd like to keep no more than MAX_BUFFER_COUNT - 1 buffers on the queue,
+				// so that one buffer is always free for disk I/O.
 				XAUDIO2_VOICE_STATE state;
 				for (;;) {
 					m_stream[myIndex].sourceVoice->GetState(&state);
@@ -946,8 +942,8 @@ void AudioEngine::streamSoundInternal(const std::string& filename, int myIndex, 
 					}
 
 					m_stream[myIndex].sourceVoice->Start();
-					if (currentVolume < VOL_THIRD) {
-						currentVolume += 0.1f;
+					if (currentVolume < volume) {
+						currentVolume += (0.1f * volume);
 						m_stream[myIndex].sourceVoice->SetVolume(currentVolume);
 					}
 
@@ -955,10 +951,7 @@ void AudioEngine::streamSoundInternal(const std::string& filename, int myIndex, 
 					WaitForSingleObject(voiceContext.hBufferEndEvent, INFINITE);
 				}
 
-				//
-				// At this point we have a buffer full of audio and enough room to submit it, so
-				// let's submit it and get another read request going.
-				//
+				// Submit buffer full of audio and get another read request going.
 				XAUDIO2_BUFFER buf = { 0 };
 				buf.AudioBytes = cbValid;
 				buf.pAudioData = buffers[currentDiskReadBuffer].get();
@@ -985,9 +978,8 @@ void AudioEngine::streamSoundInternal(const std::string& filename, int myIndex, 
 			m_stream[myIndex].sourceVoice->Stop();
 		}
 	}
-	//
+	
 	// Clean up
-	//
 	if (m_stream[myIndex].sourceVoice != nullptr) {
 		m_stream[myIndex].sourceVoice->Stop();
 		m_stream[myIndex].sourceVoice->DestroyVoice();

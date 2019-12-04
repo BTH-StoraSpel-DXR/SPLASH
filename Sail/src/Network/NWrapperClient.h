@@ -22,7 +22,8 @@ private:
 	void sendMyNameToHost();
 	void updatePlayerList(std::list<Player>& playerList);
 
-	virtual void requestTeam(char team);
+	virtual void requestTeam(char team) override;
+	virtual void requestTeamColor(char teamColorID) override;
 
 	virtual void updateStateLoadStatus(States::ID state, char status) override;
 

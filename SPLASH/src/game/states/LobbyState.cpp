@@ -11,6 +11,7 @@
 
 #include "Sail/events/types/NetworkPlayerChangedTeam.h"
 #include "Sail/events/types/NetworkPlayerRequestedTeamChange.h"
+#include "Sail/events/types/NetworkTeamColorRequest.h"
 
 #include "Network/NWrapperSingleton.h"
 #include "Network/NWrapper.h"
@@ -50,6 +51,7 @@ LobbyState::LobbyState(StateStack& stack)
 	EventDispatcher::Instance().subscribe(Event::Type::NETWORK_DISCONNECT, this);
 	EventDispatcher::Instance().subscribe(Event::Type::NETWORK_PLAYER_REQUESTED_TEAM_CHANGE, this);
 	EventDispatcher::Instance().subscribe(Event::Type::NETWORK_PLAYER_CHANGED_TEAM, this);
+	EventDispatcher::Instance().subscribe(Event::Type::NETWORK_TEAM_REQUESTED_COLOR_CHANGE, this);
 	EventDispatcher::Instance().subscribe(Event::Type::SETTINGS_UPDATED, this);
 
 	m_ready = false;
@@ -99,9 +101,9 @@ LobbyState::~LobbyState() {
 
 	EventDispatcher::Instance().unsubscribe(Event::Type::NETWORK_JOINED, this);
 	EventDispatcher::Instance().unsubscribe(Event::Type::NETWORK_DISCONNECT, this);
-
 	EventDispatcher::Instance().unsubscribe(Event::Type::NETWORK_PLAYER_REQUESTED_TEAM_CHANGE, this);
 	EventDispatcher::Instance().unsubscribe(Event::Type::NETWORK_PLAYER_CHANGED_TEAM, this);
+	EventDispatcher::Instance().unsubscribe(Event::Type::NETWORK_TEAM_REQUESTED_COLOR_CHANGE, this);
 	EventDispatcher::Instance().unsubscribe(Event::Type::SETTINGS_UPDATED, this);
 }
 
@@ -219,6 +221,7 @@ bool LobbyState::onEvent(const Event& event) {
 	case Event::Type::NETWORK_JOINED:		onPlayerJoined((const NetworkJoinedEvent&)event); break;
 	case Event::Type::NETWORK_DISCONNECT:	onPlayerDisconnected((const NetworkDisconnectEvent&)event); break;
 	case Event::Type::NETWORK_PLAYER_REQUESTED_TEAM_CHANGE:	onPlayerTeamRequest((const NetworkPlayerRequestedTeamChange&)event); break;
+	case Event::Type::NETWORK_TEAM_REQUESTED_COLOR_CHANGE:	onTeamColorRequest((const NetworkTeamColorRequest&)event); break;
 	case Event::Type::NETWORK_PLAYER_CHANGED_TEAM:	onPlayerTeamChanged((const NetworkPlayerChangedTeam&)event); break;
 	case Event::Type::SETTINGS_UPDATED:	onSettingsChanged(); break;
 
@@ -261,6 +264,16 @@ bool LobbyState::onPlayerTeamRequest(const NetworkPlayerRequestedTeamChange& eve
 		NWrapperSingleton::getInstance().getNetworkWrapper()->setTeamOfPlayer(event.team, event.playerID);
 	}
 
+	return true;
+}
+
+bool LobbyState::onTeamColorRequest(const NetworkTeamColorRequest& event) {
+	if (NWrapperSingleton::getInstance().isHost()) {
+		//TODO: Check if teamcolor is free to use
+		//if so, set teamcolor
+		m_app->getSettings().gameSettingsStatic["team" + std::to_string(event.team)]["color"].setSelected(event.teamColorID);
+		m_settingsChanged = true;
+	}
 	return true;
 }
 
@@ -404,9 +417,7 @@ void LobbyState::renderPlayerList() {
 
 			//Color
 			ImGui::SameLine(x[1]);
-			//Keep
-			/*if (currentplayer.id == myID || myID == HOST_ID) {*/
-			if (myID == HOST_ID) {
+			if (currentplayer.id == myID || myID == HOST_ID) {
 				std::string unique = "##ColorLABEL" + std::to_string(currentplayer.id);
 				int team = (int)currentplayer.team;
 				int index = m_settings->teamColorIndex(team);
@@ -424,6 +435,7 @@ void LobbyState::renderPlayerList() {
 				ImGui::SetNextItemWidth(27);
 				if (ImGui::BeginCombo(unique.c_str(), std::string("##"+m_settings->gameSettingsStatic["team" + std::to_string(team)]["color"].getSelected().name).c_str())) {
 					ImGui::PopStyleColor();
+					int selectedIndex = 0;
 					for (auto const& key : m_settings->gameSettingsStatic["team" + std::to_string(team)]["color"].options) {
 						std::string name = key.name + unique;
 						col = ImVec4(
@@ -434,19 +446,16 @@ void LobbyState::renderPlayerList() {
 						);
 						ImGui::PushStyleColor(ImGuiCol_Text, col);
 						if (ImGui::Selectable(name.c_str(), index == (char)key.value)) {
-							if (currentplayer.id == myID) {
-								m_settings->gameSettingsStatic["team" + std::to_string(team)]["color"].setSelected((int)key.value);
-
+							if (NWrapperSingleton::getInstance().isHost()) {
+								m_settings->gameSettingsStatic["team" + std::to_string(team)]["color"].setSelected(selectedIndex);
 								m_settingsChanged = true;
-							}
-							else {
-								m_settings->gameSettingsStatic["team" + std::to_string(team)]["color"].setSelected((int)key.value);
-								SAIL_LOG(std::to_string(key.value));
-
-								m_settingsChanged = true;
+							} else {
+								//This is called by clients and will trigger the "NETWORK_TEAM_REQUESTED_COLOR_CHANGE" event on the host
+								NWrapperSingleton::getInstance().getNetworkWrapper()->requestTeamColor(selectedIndex);
 							}
 						}
 						ImGui::PopStyleColor();
+						selectedIndex++;
 					}
 					ImGui::EndCombo();
 				}

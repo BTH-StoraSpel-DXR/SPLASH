@@ -11,6 +11,7 @@
 #include "Sail/events/types/NetworkUpdateStateLoadStatus.h"
 #include "Sail/events/types/NetworkPlayerRequestedTeamChange.h"
 #include "Sail/events/types/NetworkPlayerChangedTeam.h"
+#include "Sail/events/types/NetworkTeamColorRequest.h"
 
 #include "Sail/events/types/NetworkUpdateStateLoadStatus.h"
 
@@ -212,6 +213,15 @@ void NWrapperHost::decodeMessage(NetworkEvent nEvent) {
 		Netcode::PlayerID playerID = m_connectionsMap[nEvent.from_tcp_id];
 		EventDispatcher::Instance().emit(NetworkPlayerRequestedTeamChange(playerID, team));
 	}
+	break;
+	case ML_TEAMCOLOR_REQUEST:
+	{
+		char teamColorId = nEvent.data->Message.rawMsg[1];
+		char playerID = m_connectionsMap[nEvent.from_tcp_id];
+		char teamID = NWrapperSingleton::getInstance().getPlayer(playerID)->team;
+		EventDispatcher::Instance().emit(NetworkTeamColorRequest(playerID, teamID, teamColorId));
+	}
+	break;
 	default:
 		break;
 	}

@@ -94,7 +94,7 @@ public:
 
 	virtual void requestTeam(char team) {};
 	virtual void setTeamOfPlayer(char team, Netcode::PlayerID playerID, bool dispatch = true) {};
-
+	virtual void requestTeamColor(char teamColorID) {};
 protected:
 	enum MessageLetter : char {
 		ML_NULL = 0,
@@ -108,6 +108,7 @@ protected:
 		ML_UPDATE_STATE_LOAD_STATUS,
 		ML_UPDATE_SETTINGS,
 		ML_TEAM_REQUEST,
+		ML_TEAMCOLOR_REQUEST,
 	};
 
 protected:
