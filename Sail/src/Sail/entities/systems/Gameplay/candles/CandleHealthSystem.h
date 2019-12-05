@@ -21,5 +21,4 @@ public:
 private:
 	// TODO: Replace using game settings when that is implemented
 	int m_maxNumRespawns = 2;
-
 };

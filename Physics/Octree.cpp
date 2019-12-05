@@ -233,8 +233,8 @@ void Octree::updateRec(Node* currentNode, std::vector<Entity*>* entitiesToReAdd)
 	}
 }
 
-void Octree::getCollisionData(const BoundingBox* entityBoundingBox, Entity* meshEntity, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, std::vector<CollisionInfo>* outCollisionData) {
-	if (Intersection::AabbWithTriangle(entityBoundingBox->getPosition(), entityBoundingBox->getHalfSize(), v0, v1, v2)) {
+void Octree::getCollisionData(const BoundingBox* entityBoundingBox, Entity* meshEntity, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, std::vector<CollisionInfo>* outCollisionData, const bool checkBackfaces) {
+	if (Intersection::AabbWithTriangle(entityBoundingBox->getPosition(), entityBoundingBox->getHalfSize(), v0, v1, v2, checkBackfaces)) {
 		outCollisionData->emplace_back();
 		outCollisionData->back().entity = meshEntity;
 		outCollisionData->back().shape = SAIL_NEW CollisionTriangle(v0, v1, v2, glm::normalize(glm::cross(glm::vec3(v0 - v1), glm::vec3(v0 - v2))));
@@ -243,7 +243,7 @@ void Octree::getCollisionData(const BoundingBox* entityBoundingBox, Entity* mesh
 }
 
 // Shouldn't modify any components
-void Octree::getCollisionsRec(Entity* entity, const BoundingBox* entityBoundingBox, Node* currentNode, std::vector<CollisionInfo>* outCollisionData, const bool doSimpleCollisions) {
+void Octree::getCollisionsRec(Entity* entity, const BoundingBox* entityBoundingBox, Node* currentNode, std::vector<CollisionInfo>* outCollisionData, const bool doSimpleCollisions, const bool checkBackfaces) {
 	const BoundingBox* nodeBoundingBox = currentNode->bbEntity->getComponent<BoundingBoxComponent>()->getBoundingBox();
 
 	// Early exit if Bounding box doesn't collide with the current node
@@ -285,7 +285,7 @@ void Octree::getCollisionsRec(Entity* entity, const BoundingBox* entityBoundingB
 						v0 = glm::vec3(transformMatrix * glm::vec4(meshData.positions[meshData.indices[k]].vec, 1.0f));
 						v1 = glm::vec3(transformMatrix * glm::vec4(meshData.positions[meshData.indices[k + 1]].vec, 1.0f));
 						v2 = glm::vec3(transformMatrix * glm::vec4(meshData.positions[meshData.indices[k + 2]].vec, 1.0f));
-						getCollisionData(entityBoundingBox, currentNode->entities[i], v0, v1, v2, outCollisionData);
+						getCollisionData(entityBoundingBox, currentNode->entities[i], v0, v1, v2, outCollisionData, checkBackfaces);
 					}
 				} else { //Does not have indices
 					for (unsigned int k = 0; k < meshData.numVertices; k += 3) {
@@ -293,7 +293,7 @@ void Octree::getCollisionsRec(Entity* entity, const BoundingBox* entityBoundingB
 						v0 = glm::vec3(transformMatrix * glm::vec4(meshData.positions[k].vec, 1.0f));
 						v1 = glm::vec3(transformMatrix * glm::vec4(meshData.positions[k + 1].vec, 1.0f));
 						v2 = glm::vec3(transformMatrix * glm::vec4(meshData.positions[k + 2].vec, 1.0f));
-						getCollisionData(entityBoundingBox, currentNode->entities[i], v0, v1, v2, outCollisionData);
+						getCollisionData(entityBoundingBox, currentNode->entities[i], v0, v1, v2, outCollisionData, checkBackfaces);
 					}
 				}
 			}
@@ -312,12 +312,12 @@ void Octree::getCollisionsRec(Entity* entity, const BoundingBox* entityBoundingB
 
 	//Check for children
 	for (unsigned int i = 0; i < currentNode->childNodes.size(); i++) {
-		getCollisionsRec(entity, entityBoundingBox, &currentNode->childNodes[i], outCollisionData, doSimpleCollisions);
+		getCollisionsRec(entity, entityBoundingBox, &currentNode->childNodes[i], outCollisionData, doSimpleCollisions, checkBackfaces);
 	}
 }
 
-void Octree::getIntersectionData(const glm::vec3& rayStart, const glm::vec3& rayDir, Entity* meshEntity, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, RayIntersectionInfo* outIntersectionData, float padding) {
-	float intersectionDistance = Intersection::RayWithPaddedTriangle(rayStart, rayDir, v1, v2, v3, padding);
+void Octree::getIntersectionData(const glm::vec3& rayStart, const glm::vec3& rayDir, Entity* meshEntity, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, RayIntersectionInfo* outIntersectionData, float padding, const bool checkBackfaces) {
+	float intersectionDistance = Intersection::RayWithPaddedTriangle(rayStart, rayDir, v1, v2, v3, padding, checkBackfaces);
 
 	if (intersectionDistance >= 0.0f) {// && (intersectionDistance <= outIntersectionData->closestHit || outIntersectionData->closestHit < 0.0f)) {
 		//Save closest hit
@@ -333,10 +333,10 @@ void Octree::getIntersectionData(const glm::vec3& rayStart, const glm::vec3& ray
 	}
 }
 
-void Octree::getRayIntersectionRec(const glm::vec3& rayStart, const glm::vec3& rayDir, Node* currentNode, RayIntersectionInfo* outIntersectionData, Entity* ignoreThis, float padding, const bool doSimpleIntersections) {
+void Octree::getRayIntersectionRec(const glm::vec3& rayStart, const glm::vec3& rayDir, Node* currentNode, RayIntersectionInfo* outIntersectionData, Entity* ignoreThis, float padding, const bool doSimpleIntersections, const bool checkBackfaces) {
 	
 	const BoundingBox* nodeBoundingBox = currentNode->bbEntity->getComponent<BoundingBoxComponent>()->getBoundingBox();
-	float nodeIntersectionDistance = Intersection::RayWithPaddedAabb(rayStart, rayDir, nodeBoundingBox->getPosition(), nodeBoundingBox->getHalfSize(), padding);
+	float nodeIntersectionDistance = Intersection::RayWithPaddedAabb(rayStart, rayDir, nodeBoundingBox->getPosition(), nodeBoundingBox->getHalfSize(), padding, nullptr);
 
 	// Early exit if ray doesn't intersect with the current node closer than the closest hit
 	// Note: commented out code is a possible future optimization
@@ -380,7 +380,7 @@ void Octree::getRayIntersectionRec(const glm::vec3& rayStart, const glm::vec3& r
 									v0 = glm::vec3(transformMatrix * glm::vec4(meshData.positions[meshData.indices[k]].vec, 1.0f));
 									v1 = glm::vec3(transformMatrix * glm::vec4(meshData.positions[meshData.indices[k + 1]].vec, 1.0f));
 									v2 = glm::vec3(transformMatrix * glm::vec4(meshData.positions[meshData.indices[k + 2]].vec, 1.0f));
-									getIntersectionData(rayStart, rayDir, currentNode->entities[i], v0, v1, v2, outIntersectionData, padding);
+									getIntersectionData(rayStart, rayDir, currentNode->entities[i], v0, v1, v2, outIntersectionData, padding, checkBackfaces);
 								}
 							}
 							else { //Does not have indices
@@ -389,7 +389,7 @@ void Octree::getRayIntersectionRec(const glm::vec3& rayStart, const glm::vec3& r
 									v0 = glm::vec3(transformMatrix * glm::vec4(meshData.positions[k].vec, 1.0f));
 									v1 = glm::vec3(transformMatrix * glm::vec4(meshData.positions[k + 1].vec, 1.0f));
 									v2 = glm::vec3(transformMatrix * glm::vec4(meshData.positions[k + 2].vec, 1.0f));
-									getIntersectionData(rayStart, rayDir, currentNode->entities[i], v0, v1, v2, outIntersectionData, padding);
+									getIntersectionData(rayStart, rayDir, currentNode->entities[i], v0, v1, v2, outIntersectionData, padding, checkBackfaces);
 								}
 							}
 						}
@@ -411,7 +411,7 @@ void Octree::getRayIntersectionRec(const glm::vec3& rayStart, const glm::vec3& r
 
 	//Check for children
 	for (unsigned int i = 0; i < currentNode->childNodes.size(); i++) {
-		getRayIntersectionRec(rayStart, rayDir, &currentNode->childNodes[i], outIntersectionData, ignoreThis, padding, doSimpleIntersections);
+		getRayIntersectionRec(rayStart, rayDir, &currentNode->childNodes[i], outIntersectionData, ignoreThis, padding, doSimpleIntersections, checkBackfaces);
 	}
 }
 
@@ -508,12 +508,12 @@ void Octree::update() {
 	pruneTreeRec(&m_baseNode);
 }
 
-void Octree::getCollisions(Entity* entity, const BoundingBox* entityBoundingBox, std::vector<CollisionInfo>* outCollisionData, const bool doSimpleCollisions) {
-	getCollisionsRec(entity, entityBoundingBox, &m_baseNode, outCollisionData, doSimpleCollisions);
+void Octree::getCollisions(Entity* entity, const BoundingBox* entityBoundingBox, std::vector<CollisionInfo>* outCollisionData, const bool doSimpleCollisions, const bool checkBackfaces) {
+	getCollisionsRec(entity, entityBoundingBox, &m_baseNode, outCollisionData, doSimpleCollisions, checkBackfaces);
 }
 
-void Octree::getRayIntersection(const glm::vec3& rayStart, const glm::vec3& rayDir, RayIntersectionInfo* outIntersectionData, Entity* ignoreThis, float padding, const bool doSimpleIntersections) {
-	getRayIntersectionRec(rayStart, rayDir, &m_baseNode, outIntersectionData, ignoreThis, padding, doSimpleIntersections);
+void Octree::getRayIntersection(const glm::vec3& rayStart, const glm::vec3& rayDir, RayIntersectionInfo* outIntersectionData, Entity* ignoreThis, float padding, const bool doSimpleIntersections, const bool checkBackfaces) {
+	getRayIntersectionRec(rayStart, rayDir, &m_baseNode, outIntersectionData, ignoreThis, padding, doSimpleIntersections, checkBackfaces);
 }
 
 int Octree::frustumCulledDraw(Camera& camera) {

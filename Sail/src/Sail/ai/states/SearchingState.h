@@ -16,11 +16,13 @@ public:
 
 private:
 
-	void findRandomNodeIndex();
+	void findRandomNodeIndex(int currNodeIndex);
 
 	NodeSystem* m_nodeSystem;
 
 	// This needs to be changed when playing with multiple players / bots
 	float m_distToHost;
 	int m_targetNode;
+
+	float m_searchingClock;
 };

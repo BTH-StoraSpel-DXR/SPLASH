@@ -4,14 +4,20 @@
 #include "Network/NWrapperSingleton.h"
 #include "Sail/utils/Utils.h"
 #include "Sail/utils/GameDataTracker.h"
+#include "Sail/events/types/StartKillCamEvent.h"
+#include "Sail/events/types/StopKillCamEvent.h"
 
 #include "../SPLASH/src/game/states/GameState.h"
 
-NetworkReceiverSystemHost::NetworkReceiverSystemHost() 
-{}
+NetworkReceiverSystemHost::NetworkReceiverSystemHost() {
+	EventDispatcher::Instance().subscribe(Event::Type::START_KILLCAM, this);
+	EventDispatcher::Instance().subscribe(Event::Type::STOP_KILLCAM, this);
+}
 
-NetworkReceiverSystemHost::~NetworkReceiverSystemHost() 
-{}
+NetworkReceiverSystemHost::~NetworkReceiverSystemHost() {
+	EventDispatcher::Instance().unsubscribe(Event::Type::START_KILLCAM, this);
+	EventDispatcher::Instance().unsubscribe(Event::Type::STOP_KILLCAM, this);
+}
 
 
 void NetworkReceiverSystemHost::handleIncomingData(const std::string& data) {
@@ -19,6 +25,11 @@ void NetworkReceiverSystemHost::handleIncomingData(const std::string& data) {
 
 	// The host will also save the data in the sender system so that it can be forwarded to all other clients
 	m_netSendSysPtr->pushDataToBuffer(data);
+}
+
+void NetworkReceiverSystemHost::stop() {
+	m_startEndGameTimer = false;
+	m_finalKillCamOver = true;
 }
 
 #ifdef DEVELOPMENT
@@ -40,7 +51,9 @@ void NetworkReceiverSystemHost::endMatchAfterTimer(const float dt) {
 	if (m_startEndGameTimer) {
 		endGameClock += dt;
 	}
-	if (endGameClock > 2.0f) {
+ 
+	// Wait until the final killcam has ended or until 2 seconds has passed
+	if (m_finalKillCamOver && endGameClock > 2.0f) {
 		NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
 			Netcode::MessageType::ENDGAME_STATS,
 			nullptr,
@@ -77,6 +90,27 @@ void NetworkReceiverSystemHost::prepareEndScreen(const Netcode::PlayerID sender,
 	// Send data back in Netcode::MessageType::ENDGAME_STATS
 	endGame(); // Starts the end game timer. Runs only for the host
 
+}
+
+bool NetworkReceiverSystemHost::onEvent(const Event& event) {
+	NetworkReceiverSystem::onEvent(event);
+
+	switch (event.type) {
+	case Event::Type::START_KILLCAM:
+		if (((const StartKillCamEvent&)event).finalKillCam) {
+ 			m_finalKillCamOver = false;
+		}
+		break;
+	case Event::Type::STOP_KILLCAM:
+		if (((const StopKillCamEvent&)event).isFinalKill) {
+			m_finalKillCamOver = true;
+		}
+		break;
+	default: 
+		break;
+	}
+
+	return true;
 }
 
 void NetworkReceiverSystemHost::mergeHostsStats() {

@@ -7,6 +7,7 @@
 
 class AnimationChangerSystem;
 class AudioSystem;
+class AiSystem;
 class BeginEndFrameSystem;
 class BoundingboxSubmitSystem;
 class CandleHealthSystem;
@@ -63,6 +64,7 @@ class MovementPostCollisionSystem;
 struct Systems {
 	AnimationChangerSystem*    animationChangerSystem    = nullptr;
 	AudioSystem*               audioSystem               = nullptr;
+	AiSystem*				   aiSystem					 = nullptr;
 	BeginEndFrameSystem*       beginEndFrameSystem       = nullptr;
 	BoundingboxSubmitSystem*   boundingboxSubmitSystem   = nullptr;
 	CandleHealthSystem*        candleHealthSystem        = nullptr;

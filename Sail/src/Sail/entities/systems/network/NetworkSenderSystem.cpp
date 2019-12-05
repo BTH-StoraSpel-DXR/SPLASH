@@ -443,6 +443,7 @@ void NetworkSenderSystem::writeEventToArchive(NetworkSenderEvent* event, Netcode
 
 		ar(data->playerWhoDied); // Send
 		ar(data->killingEntity);
+		ar(data->isFinalKill);
 	}
 	break;
 	case Netcode::MessageType::PLAYER_JUMPED:

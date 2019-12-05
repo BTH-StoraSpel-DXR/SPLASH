@@ -10,4 +10,5 @@ namespace Netcode {
 	   3: used for the player's torch's ComponentID
 	*/
 	std::atomic<ComponentID> gNetworkIDCounter = RESET_VALUE;
+	ComponentID gNetworkBotIDCounter = 0U;
 }

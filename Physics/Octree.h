@@ -73,10 +73,10 @@ private:
 	bool addEntityRec(Entity* newEntity, Node* currentNode);
 	bool removeEntityRec(Entity* entityToRemove, Node* currentNode);
 	void updateRec(Node* currentNode, std::vector<Entity*>* entitiesToReAdd);
-	void getCollisionData(const BoundingBox* entityBoundingBox, Entity* meshEntity, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, std::vector<Octree::CollisionInfo>* outCollisionData);
-	void getCollisionsRec(Entity* entity, const BoundingBox* entityBoundingBox, Node* currentNode, std::vector<Octree::CollisionInfo>* outCollisionData, const bool doSimpleCollisions);
-	void getIntersectionData(const glm::vec3& rayStart, const glm::vec3& rayDir, Entity* meshEntity, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, RayIntersectionInfo* outIntersectionData, float padding);
-	void getRayIntersectionRec(const glm::vec3& rayStart, const glm::vec3& rayDir, Node* currentNode, RayIntersectionInfo* outIntersectionData, Entity* ignoreThis, float padding, const bool doSimpleIntersections);
+	void getCollisionData(const BoundingBox* entityBoundingBox, Entity* meshEntity, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, std::vector<Octree::CollisionInfo>* outCollisionData, const bool checkBackfaces = false);
+	void getCollisionsRec(Entity* entity, const BoundingBox* entityBoundingBox, Node* currentNode, std::vector<Octree::CollisionInfo>* outCollisionData, const bool doSimpleCollisions, const bool checkBackfaces = false);
+	void getIntersectionData(const glm::vec3& rayStart, const glm::vec3& rayDir, Entity* meshEntity, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, RayIntersectionInfo* outIntersectionData, float padding, const bool checkBackfaces = false);
+	void getRayIntersectionRec(const glm::vec3& rayStart, const glm::vec3& rayDir, Node* currentNode, RayIntersectionInfo* outIntersectionData, Entity* ignoreThis, float padding, const bool doSimpleIntersections, const bool checkBackfaces);
 	int pruneTreeRec(Node* currentNode);
 	int frustumCulledDrawRec(const Frustum& frustum, Node* currentNode);
 
@@ -92,8 +92,8 @@ public:
 
 	void update();
 
-	void getCollisions(Entity* entity, const BoundingBox* entityBoundingBox, std::vector<CollisionInfo>* outCollisionData, const bool doSimpleCollisions = false);
-	void getRayIntersection(const glm::vec3& rayStart, const glm::vec3& rayDir, RayIntersectionInfo* outIntersectionData, Entity* ignoreThis = nullptr, float padding = 0.0f, const bool doSimpleIntersections = false);
+	void getCollisions(Entity* entity, const BoundingBox* entityBoundingBox, std::vector<CollisionInfo>* outCollisionData, const bool doSimpleCollisions = false, const bool checkBackfaces = false);
+	void getRayIntersection(const glm::vec3& rayStart, const glm::vec3& rayDir, RayIntersectionInfo* outIntersectionData, Entity* ignoreThis = nullptr, float padding = 0.0f, const bool doSimpleIntersections = false, const bool checkBackfaces = false);
 
 	int frustumCulledDraw(Camera& camera);
 };

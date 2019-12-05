@@ -8,6 +8,7 @@ public:
 	virtual ~NetworkReceiverSystemHost();
 
 	void handleIncomingData(const std::string& data) override;
+	virtual void stop() override;
 
 #ifdef DEVELOPMENT
 	unsigned int getByteSize() const override;
@@ -19,7 +20,9 @@ private:
 	void mergeHostsStats()                  override; // Host adds its data to global statistics before waiting for clients
 	void prepareEndScreen(const Netcode::PlayerID sender, const EndScreenInfo& info) override;
 
+	bool onEvent(const Event& event) override;
 
 private:
 	bool m_startEndGameTimer = false;
+	bool m_finalKillCamOver = true;
 };

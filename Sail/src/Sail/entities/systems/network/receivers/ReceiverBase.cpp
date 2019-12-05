@@ -88,12 +88,12 @@ void ReceiverBase::processData(float dt, std::queue<std::string>& data, const bo
 	Netcode::PlayerID    senderID    = 0; // The playerID of the person who sent the message
 	Netcode::EntityType  entityType  = Netcode::EntityType::INVALID_ENTITY; // Entity that sent a message
 	Netcode::MessageType messageType = Netcode::MessageType::EMPTY;
-	Netcode::ComponentID compID = 0;
+	Netcode::ComponentID compID      = 0;
 
 	// Commonly used types within messages/events:
 	glm::vec3 vector;
 	glm::quat quaternion;
-	float lowPassFrequency = -1;
+	float lowPassFrequency = -1.f;
 
 
 	// Process all messages in the buffer
@@ -249,40 +249,33 @@ void ReceiverBase::processData(float dt, std::queue<std::string>& data, const bo
 			case Netcode::MessageType::ENDGAME_STATS:
 			{
 				// create temporary variables to hold data when reading message
-				GameDataForOthersInfo info;
 				size_t nrOfPlayers;
-				Netcode::PlayerID pID;
-				int placement = 0;
-				int nKills = -1;
-				int nDeaths = -1;
-				int damage = -1;
-				int damageTaken = -1;
+				PlayerStatsInfo playerStats;
+				GameDataForOthersInfo gameData;
 
 				ar(nrOfPlayers);
 
 				// Get all per player data from the Host
-				for (int k = 0; k < nrOfPlayers; k++) {
-					ar(pID);
-					ar(placement);
-					ar(nKills);
-					ar(nDeaths);
-					ar(damage);
-					ar(damageTaken);
+				for (size_t k = 0; k < nrOfPlayers; k++) {
+					ar(playerStats.player);
+					ar(playerStats.placement);
+					ar(playerStats.nrOfKills);
+					ar(playerStats.nDeaths);
+					ar(playerStats.damage);
+					ar(playerStats.damageTaken);
 
-					setPlayerStats(pID, nKills, placement, nDeaths, damage, damageTaken);
+					setPlayerStats(playerStats);
 				}
 
 				// Get all specific data from the Host
-				ar(info.bulletsFired);
-				ar(info.bulletsFiredID);
-
-				ar(info.distanceWalked);
-				ar(info.distanceWalkedID);
-
-				ar(info.jumpsMade);
-				ar(info.jumpsMadeID);
+				ar(gameData.bulletsFired);
+				ar(gameData.bulletsFiredID);
+				ar(gameData.distanceWalked);
+				ar(gameData.distanceWalkedID);
+				ar(gameData.jumpsMade);
+				ar(gameData.jumpsMadeID);
 				
-				endMatch(info);
+				endMatch(gameData);
 			}
 			break;
 			case Netcode::MessageType::EXTINGUISH_CANDLE:
@@ -316,12 +309,13 @@ void ReceiverBase::processData(float dt, std::queue<std::string>& data, const bo
 			break;
 			case Netcode::MessageType::PLAYER_DIED:
 			{
-				Netcode::ComponentID killerID;
+				KillInfo info;
 
 				ar(compID);
-				ar(killerID);
+				ar(info.killerCompID);
+				ar(info.isFinal);
 				
-				playerDied(compID, killerID);
+				playerDied(compID, info);
 			}
 			break;
 			case Netcode::MessageType::PLAYER_JUMPED:

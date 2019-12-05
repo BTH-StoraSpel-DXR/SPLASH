@@ -60,6 +60,20 @@ protected:
 		int jumpsMade;
 		Netcode::PlayerID jumpsMadeID;
 	};
+
+	struct PlayerStatsInfo {
+		Netcode::PlayerID player;
+		int nrOfKills;
+		int placement;
+		int nDeaths;
+		int damage;
+		int damageTaken;
+	};
+
+	struct KillInfo {
+		Netcode::ComponentID killerCompID;
+		bool isFinal;
+	};
 #pragma endregion
 
 protected: // Functions
@@ -72,14 +86,14 @@ protected: // Functions
 	virtual void hitBySprinkler  (const Netcode::ComponentID candleOwnerID)                                  = 0;
 	virtual void igniteCandle    (const Netcode::ComponentID candleID)                                       = 0;
 	virtual void matchEnded      ()                                                                          = 0;
-	virtual void playerDied      (const Netcode::ComponentID id, const Netcode::ComponentID killerID)        = 0;
+	virtual void playerDied      (const Netcode::ComponentID id, const KillInfo& info)                       = 0;
 	virtual void setAnimation    (const Netcode::ComponentID id, const AnimationInfo& info)                  = 0;
 	virtual void setCandleHealth (const Netcode::ComponentID candleID, const float health)                   = 0;
 	virtual void setCandleState  (const Netcode::ComponentID id, const bool isHeld)                          = 0;
 	virtual void setLocalPosition(const Netcode::ComponentID id, const glm::vec3& pos)                       = 0;
 	virtual void setLocalRotation(const Netcode::ComponentID id, const glm::vec3& rot)                       = 0;
 	virtual void setLocalRotation(const Netcode::ComponentID id, const glm::quat& rot)                       = 0;
-	virtual void setPlayerStats  (Netcode::PlayerID player, int nrOfKills, int placement, int nDeaths, int damage, int damageTaken)                    = 0;
+	virtual void setPlayerStats  (const PlayerStatsInfo& info)                                               = 0;
 	virtual void updateProjectile(const Netcode::ComponentID id, const glm::vec3& pos, const glm::vec3& vel) = 0;
 	virtual void updateSanity    (const Netcode::ComponentID id, const float sanity)                         = 0;
 	virtual void spawnProjectile (const ProjectileInfo& info)                                                = 0;

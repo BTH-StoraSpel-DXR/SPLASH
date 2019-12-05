@@ -37,12 +37,8 @@ void CandleHealthSystem::update(float dt) {
 
 		// Scale fire particles with health
 		auto particles = e->getComponent<ParticleEmitterComponent>();
-		if (candle->health <= 0.f) {
-			particles->spawnRate = 1000000.0f;
-		}
-		else {
-			particles->spawnRate = 0.01f * (MAX_HEALTH / glm::max(candle->health, 1.f));
-		}
+		particles->spawnRate = (candle->health <= 0.f) ? 1000000.0f : 0.01f * (MAX_HEALTH / glm::max(candle->health, 1.f));
+		
 
 #pragma region HOST_ONLY_STUFF
 		if (isHost && candle->isLit) {
@@ -57,58 +53,36 @@ void CandleHealthSystem::update(float dt) {
 						SAIL_NEW Netcode::MessageSetCandleHealth{
 							e->getComponent<NetworkReceiverComponent>()->m_id,
 							candle->health
-						},
-						false // Host already knows the candle's health so don't send to ourselves
+						}, false // Host already knows the candle's health so don't send to ourselves
 					);
 					candle->wasHitThisTick = false;
 				}
 			} else { // If candle used to be lit but has lost all its health
 				candle->wasJustExtinguished = true;
 
-				if (candle->respawns < m_maxNumRespawns) {
-					// Candle has lost all its health so extinguish it
-					NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
-						Netcode::MessageType::EXTINGUISH_CANDLE,
-						SAIL_NEW Netcode::MessageExtinguishCandle{
-							e->getComponent<NetworkReceiverComponent>()->m_id,
-							candle->wasHitByPlayerID
-						},
-						true
-					);
-
-					// If the player has no more respawns kill them
-				} else {
+				// If the player has no more respawns kill them
+				if (candle->respawns >= m_maxNumRespawns) {
+					const Netcode::PlayerID deadPlayerID = Netcode::getComponentOwner(e->getComponent<NetworkReceiverComponent>()->m_id);
 
 					if (candle->wasHitByPlayerID < Netcode::NONE_PLAYER_ID_START && candle->wasHitByPlayerID != candle->playerEntityID) {
-						
+						GameDataTracker::getInstance().logEnemyKilled(candle->wasHitByPlayerID);
 					}
+					GameDataTracker::getInstance().logDeath(deadPlayerID);
+					GameDataTracker::getInstance().logPlacement(deadPlayerID);
 
-					livingCandles--;
+					// Only one living candle left and number of players in the game is greater than one
+					const bool wasFinalKill = (--livingCandles <= 1) && (entities.size() > 1);
 
 					NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
 						Netcode::MessageType::PLAYER_DIED,
 						SAIL_NEW Netcode::MessagePlayerDied{
 							e->getParent()->getComponent<NetworkReceiverComponent>()->m_id,
-							candle->wasHitByEntity
-						},
-						true
+							candle->wasHitByEntity,
+							wasFinalKill
+						}, true
 					);
 
-					if (candle->wasHitByPlayerID < Netcode::NONE_PLAYER_ID_START && candle->wasHitByPlayerID != candle->playerEntityID) {
-						GameDataTracker::getInstance().logEnemyKilled(candle->wasHitByPlayerID);
-
-					}
-					GameDataTracker::getInstance().logDeath(e->getComponent<NetworkReceiverComponent>()->m_id >> 18);
-
-
-					// Save the placement for the player who lost
-					GameDataTracker::getInstance().logPlacement(
-						Netcode::getComponentOwner(e->getParent()->getComponent<NetworkReceiverComponent>()->m_id)
-					);
-
-					// Only one living candle left and number of players in the game is greater than one
-					if (livingCandles < 2 && entities.size() > 1) {
-
+					if (wasFinalKill) {
 						for (auto e2 : entities) {
 							NetworkReceiverComponent* cc = e2->getParent()->getComponent<NetworkReceiverComponent>();
 							if (cc->m_id != e->getParent()->getComponent<NetworkReceiverComponent>()->m_id) {
@@ -120,10 +94,18 @@ void CandleHealthSystem::update(float dt) {
 						}
 
 						NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
-							Netcode::MessageType::MATCH_ENDED,
-							nullptr
+							Netcode::MessageType::MATCH_ENDED, nullptr, true
 						);
 					}
+				} else {
+					// Candle has lost all its health so extinguish it
+					NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
+						Netcode::MessageType::EXTINGUISH_CANDLE,
+						SAIL_NEW Netcode::MessageExtinguishCandle{
+							e->getComponent<NetworkReceiverComponent>()->m_id,
+							candle->wasHitByPlayerID
+						}, true
+					);
 				}
 			}
 		}

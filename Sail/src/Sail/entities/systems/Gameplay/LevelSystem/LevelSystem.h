@@ -6,10 +6,10 @@ class Scene;
 class Model;
 
 struct Rect {
-	int posx;
-	int posy;
-	int sizex;
-	int sizey;
+	int posx=0;
+	int posy=0;
+	int sizex=0;
+	int sizey=0;
 	int doors = 0;
 	bool isCloning = false;
 };
@@ -73,9 +73,8 @@ public:
 	void createWorld(const std::vector<Model*>& tileModels, Model* bb);
 	void destroyWorld();
 	void addClutterModel(const std::vector<Model*>& clutterModels, Model* bb);
-
+	glm::vec3 getPowerUpPosition(int index);
 	glm::vec3 getSpawnPoint();
-
 	void stop();
 	const int getAreaType(float posX, float posY);
 	const int getRoomIDFromWorldPos(float posX, float posY);
@@ -108,6 +107,7 @@ public:
 
 	std::vector<glm::vec3> spawnPoints;
 	std::vector<glm::vec3> extraSpawnPoints;
+	std::vector<glm::vec3> powerUpSpawnPoints;
 private:
 	std::queue<Rect> chunks;
 	std::queue<Rect> blocks;

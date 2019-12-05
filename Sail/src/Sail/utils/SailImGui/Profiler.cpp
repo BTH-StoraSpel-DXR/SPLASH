@@ -4,6 +4,7 @@
 #include "Sail/Application.h"
 
 #include "Network/NWrapperSingleton.h"
+#include "Sail/entities/systems/Gameplay/ai/AiSystem.h"
 
 Profiler::Profiler(bool showWindow) 
 	: SailImGuiWindow(showWindow)
@@ -232,6 +233,11 @@ void Profiler::renderWindow() {
 			if (ImGui::CollapsingHeader("ECS Memory Graph")) {
 				header = "\n\n\n" + m_ecsMB + "(MB)";
 				ImGui::PlotLines(header.c_str(), m_ecsSizeMBHistory, 100, 0, "", 0.f, 250.f, ImVec2(0, 100));
+			}
+
+			if (ImGui::CollapsingHeader("Ai System")) {
+				ImGui::Text(("Average path search time: " + std::to_string(ECS::Instance()->getSystem<AiSystem>()->getAveragePathSearchTime()/1000.f) + "ms").c_str());
+				ImGui::Text(("Average update time: " + std::to_string(ECS::Instance()->getSystem<AiSystem>()->getAverageAiUpdateTime()/1000.f) + "ms").c_str());
 			}
 #endif
 

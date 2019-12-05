@@ -36,7 +36,7 @@ bool Intersection::AabbWithAabb(const glm::vec3& aabb1Pos, const glm::vec3& aabb
 	return true;
 }
 
-bool Intersection::AabbWithTriangle(const glm::vec3& aabbPos, const glm::vec3& aabbHalfSize, const glm::vec3& triPos1, const glm::vec3& triPos2, const glm::vec3& triPos3) {
+bool Intersection::AabbWithTriangle(const glm::vec3& aabbPos, const glm::vec3& aabbHalfSize, const glm::vec3& triPos1, const glm::vec3& triPos2, const glm::vec3& triPos3, const bool checkBackfaces) {
 	//Calculate normal for triangle
 	glm::vec3 triNormal = glm::normalize(glm::cross(glm::vec3(triPos1 - triPos2), glm::vec3(triPos1 - triPos3)));
 
@@ -45,8 +45,8 @@ bool Intersection::AabbWithTriangle(const glm::vec3& aabbPos, const glm::vec3& a
 	glm::vec3 newV2 = triPos2 - aabbPos;
 	glm::vec3 newV3 = triPos3 - aabbPos;
 
-	//Don't intersect with triangles faceing away from the boundingBox
-	if (glm::dot(newV1, triNormal) > 0.0f) {
+	//Don't intersect with triangles facing away from the boundingBox
+	if (glm::dot(newV1, triNormal) > 0.0f && !checkBackfaces) {
 		return false;
 	}
 
@@ -605,12 +605,12 @@ float Intersection::RayWithPaddedAabb(const glm::vec3& rayStart, const glm::vec3
 	return returnValue;
 }
 
-float Intersection::RayWithPaddedTriangle(const glm::vec3& rayStart, const glm::vec3& rayDir, const glm::vec3& triPos1, const glm::vec3& triPos2, const glm::vec3& triPos3, float padding) {
+float Intersection::RayWithPaddedTriangle(const glm::vec3& rayStart, const glm::vec3& rayDir, const glm::vec3& triPos1, const glm::vec3& triPos2, const glm::vec3& triPos3, float padding, const bool checkBackfaces) {
 	float returnValue = -1.0f;
 
 	glm::vec3 triangleNormal = glm::normalize(glm::cross(glm::vec3(triPos1 - triPos2), glm::vec3(triPos1 - triPos3)));
 
-	if (glm::dot(triPos1 - rayStart, triangleNormal) < 0.0f) {
+	if (glm::dot(triPos1 - rayStart, triangleNormal) < 0.0f || checkBackfaces) {
 		//Only check if triangle is facing ray start
 		if (padding != 0.0f) {
 			glm::vec3 oldV[3];

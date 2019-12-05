@@ -43,7 +43,8 @@ private:
 	bool onPlayerDropped(const NetworkDroppedEvent& event);
 	void onPlayerStateStatusChanged(const NetworkUpdateStateLoadStatus& event);
 	bool onPlayerJoined(const NetworkJoinedEvent& event);
-	void onToggleKillCam(const ToggleKillCamEvent& event);
+	void onStartKillCam(const StartKillCamEvent& event);
+	void onStopKillCam(const StopKillCamEvent& event);
 
 	void shutDownGameState();
 
@@ -54,7 +55,7 @@ private:
 	void runSystem(float dt, BaseComponentSystem* toRun);
 
 	void createTestLevel(Shader* shader, Model* boundingBoxModel);
-	void createBots(Model* boundingBoxModel, const std::string& characterModel, Model* projectileModel, Model* lightModel);
+	void createBots();
 	void createLevel(Shader* shader, Model* boundingBoxModel);
 	const std::string createCube(const glm::vec3& position);
 	const std::string teleportToMap();
@@ -108,7 +109,7 @@ private:
 	bool m_wasDropped = false;
 
 	bool m_isInKillCamMode = false;
-	std::string m_wasKilledBy = {};
+	std::string m_killCamText = {};
 
 #ifdef _PERFORMANCE_TEST
 	void populateScene(Model* lightModel, Model* bbModel, Model* projectileModel, Shader* shader);
