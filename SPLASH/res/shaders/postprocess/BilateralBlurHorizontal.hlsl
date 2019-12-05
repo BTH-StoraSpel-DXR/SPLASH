@@ -21,7 +21,7 @@ void CSMain(int3 groupThreadID : SV_GroupThreadID,
 	uint numElements;
 	inoutTexture.GetDimensions(inputSize.x, inputSize.y, numElements);
 
-	for (uint lightIndex = 0; lightIndex < NUM_SHADOW_TEXTURES; lightIndex++) {
+	for (uint lightIndex = 0; lightIndex < numElements; lightIndex++) {
 		// This thread group runs N threads.  To get the extra 2*BlurRadius pixels, 
 		// have 2*BlurRadius threads sample an extra pixel.
 		if(groupThreadID.x < blurRadius) {

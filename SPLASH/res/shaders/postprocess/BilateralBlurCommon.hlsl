@@ -13,7 +13,7 @@ static const int blurRadius = 10;
 #define HLSL
 #include "../dxr/Common_hlsl_cpp.hlsl"
 
-#define N 256
+#define N 128
 #define cacheSize (N + 2 * blurRadius)
 groupshared float2 cache[NUM_SHADOW_TEXTURES][cacheSize];
 

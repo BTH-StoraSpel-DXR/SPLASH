@@ -13,8 +13,8 @@ BilateralBlurVertical::BilateralBlurVertical()
 	m_settings.numInputTextures = 0;
 	m_settings.numOutputTextures = 0;
 
-	// Compute shader runs 256 x threads, therefore divide resolution by that when dispatching
-	m_settings.threadGroupYScale = 1.f / 256.f;
+	// Compute shader runs 128 x threads, therefore divide resolution by that when dispatching
+	m_settings.threadGroupYScale = 1.f / 128.f;
 
 	m_output = std::make_unique<PostProcessPipeline::PostProcessOutput>();
 }

@@ -297,6 +297,9 @@ void rayGen() {
 	// float totalShadowAmount = 0.f;
 	float2 reprojectedTexCoord = screenTexCoord - motionVector;
 
+	// Cast packed array
+	float shadowTwo[NUM_SHADOW_TEXTURES] = (float[NUM_SHADOW_TEXTURES])finalPayload.shadowTwo;
+	
 	uint shadowTextureIndex = 0;
 	int lightIndex = 0;
 	while (shadowTextureIndex < CB_SceneData.numShadowTextures) {
@@ -308,7 +311,7 @@ void rayGen() {
 
 		float2 cLast = InputShadowsLastFrame.SampleLevel(motionSS, float3(reprojectedTexCoord, shadowTextureIndex), 0).rg;
 		// float2 cLast = 0.0f;
-		float2 shadow = float2(firstBounceShadow, finalPayload.shadowTwo[shadowTextureIndex]);
+		float2 shadow = float2(firstBounceShadow, shadowTwo[shadowTextureIndex]);
 		shadow = alpha * (1.0f - shadow) + (1.0f - alpha) * cLast;
 		lOutputShadows[uint3(launchIndex, shadowTextureIndex)] = shadow;
 		// totalShadowAmount += firstBounceShadow;
@@ -421,6 +424,9 @@ void closestHitTriangle(inout RayPayload payload, in BuiltInTriangleIntersection
 	
 	// Initialize a random seed
 	uint randSeed = Utils::initRand( DispatchRaysIndex().x + DispatchRaysIndex().y * DispatchRaysDimensions().x, CB_SceneData.frameCount );
+
+	// Cast packed array
+	float shadowTwo[NUM_SHADOW_TEXTURES] = (float[NUM_SHADOW_TEXTURES])payload.shadowTwo;
 	
 	if (!CB_SceneData.doHardShadows) {
 		// Soft shadows only
@@ -434,12 +440,12 @@ void closestHitTriangle(inout RayPayload payload, in BuiltInTriangleIntersection
 				// No more lights available!
 				break;
 			}
-			payload.shadowTwo[shadowTextureIndex] = shadowAmount;
+			shadowTwo[shadowTextureIndex] = shadowAmount;
 			shadowTextureIndex++;
 		}
 	}
 
-	payload.albedoTwo.rgb = albedoColor.rgb; // TODO: store alpha and use as team color amount
+	payload.albedoTwo.rgb = albedoColor.rgb;
 	payload.normalTwo = normalInWorldSpace;
 	payload.metalnessRoughnessAOTwo = metalnessRoughnessAO;
 	payload.worldPositionTwo = worldPosition;

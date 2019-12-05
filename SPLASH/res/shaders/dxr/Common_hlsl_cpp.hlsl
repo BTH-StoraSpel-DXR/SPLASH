@@ -31,13 +31,13 @@ namespace DXRShaderCommon {
 #define MAX_INSTANCES 400
 #define NUM_POINT_LIGHTS 12
 #define NUM_SPOT_LIGHTS 12
-#define NUM_TOTAL_LIGHTS NUM_POINT_LIGHTS + NUM_SPOT_LIGHTS
+#define NUM_TOTAL_LIGHTS (NUM_POINT_LIGHTS + NUM_SPOT_LIGHTS)
 #define NUM_TEAM_COLORS 12
 #define MAX_NUM_METABALLS 500
 #define MAX_NUM_METABALL_GROUPS 16
 #define METABALL_RADIUS 0.12f
-#define NUM_SHADOW_TEXTURES 14
-#define LIGHT_RADIUS 0.08 // TODO: tweak this!
+#define NUM_SHADOW_TEXTURES NUM_TOTAL_LIGHTS
+#define LIGHT_RADIUS 0.05 // TODO: tweak this!
 
 static const uint MESH_NO_FLAGS				 			= 	0;
 static const uint MESH_USE_INDICES 						= 	1 << 0;
@@ -51,6 +51,7 @@ static const uint MESH_HAS_METALNESS_ROUGHNESS_AO_TEX	= 	1 << 3;
 
 struct RayPayload {
 	float4 albedoOne;
+	float4 shadowTwo[NUM_SHADOW_TEXTURES/4]; // float4 for hlsl packing rules, is casted to float array on use
 	float4 albedoTwo;
 	float3 normalOne;
 	float3 normalTwo;
@@ -58,7 +59,6 @@ struct RayPayload {
 	float4 metalnessRoughnessAOTwo;
 	float3 worldPositionOne;
 	float3 worldPositionTwo;
-	float shadowTwo[NUM_SHADOW_TEXTURES];
 	uint recursionDepth;
 	float closestTvalue;
 };
