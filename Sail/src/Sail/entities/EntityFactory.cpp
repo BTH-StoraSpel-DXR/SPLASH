@@ -48,9 +48,10 @@ void EntityFactory::CreateCandle(Entity::SPtr& candle, const glm::vec3& lightPos
 	particleEmitterComp->constantVelocity = { 0.0f, 0.2f, 0.0f };
 	particleEmitterComp->acceleration = { 0.0f, 1.0f, 0.0f };
 	particleEmitterComp->spread = { 0.1f, 0.1f, 0.1f };
-	particleEmitterComp->spawnRate = 0.001f;
+	particleEmitterComp->spawnRate = 0.01f;
 	particleEmitterComp->lifeTime = 0.13f;
 	std::string particleTextureName = "particles/animFire.dds";
+	particleEmitterComp->atlasSize = glm::uvec2(8U, 4U);
 	if (!Application::getInstance()->getResourceManager().hasTexture(particleTextureName)) {
 		Application::getInstance()->getResourceManager().loadTexture(particleTextureName);
 	}
@@ -125,6 +126,9 @@ Entity::SPtr EntityFactory::CreateMyPlayer(Netcode::PlayerID playerID, size_t li
 	myPlayer->addComponent<RealTimeComponent>();
 	myPlayer->addComponent<ThrowingComponent>();
 	myPlayer->addComponent<RenderInActiveGameComponent>();
+	myPlayer->addComponent<PowerUpComponent>();
+
+
 
 	AnimationComponent* ac = myPlayer->getComponent<AnimationComponent>();
 

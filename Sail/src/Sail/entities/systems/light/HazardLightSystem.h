@@ -4,10 +4,10 @@
 class LightSetup;
 class PerspectiveCamera;
 
-class SpotLightSystem final : public BaseComponentSystem {
+class HazardLightSystem final : public BaseComponentSystem {
 public:
-	SpotLightSystem();
-	~SpotLightSystem();
+	HazardLightSystem();
+	~HazardLightSystem();
 
 	void updateLights(LightSetup* lightSetup, float alpha, float dt);
 	void toggleONOFF();

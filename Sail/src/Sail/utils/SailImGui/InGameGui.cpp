@@ -74,7 +74,7 @@ void InGameGui::renderWindow() {
 				color = ImVec4(0.5, 0.5, 0.5, 1);
 			}
 			else {
-				val = 1 - (c2->sprintTimer / MAX_SPRINT_TIME);
+				val = 1 - (c2->sprintTimer / c2->sprintDuration);
 				val_inv = 1 - val;
 				color = ImVec4(1 - val_inv * 0.3, 0.6 - val_inv * 0.6, 0, 1);
 			}

@@ -30,6 +30,7 @@
 #include "OnlineOwnerComponent.h"
 #include "ParticleEmitterComponent.h"
 #include "PlayerComponent.h"
+#include "PowerUpComponent.h"
 #include "ProjectileComponent.h"
 #include "RagdollComponent.h"
 #include "RealTimeComponent.h"

@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "SpotLightSystem.h"
+#include "HazardLightSystem.h"
 
 #include "Sail.h"
 #include "Sail/entities/components/SpotlightComponent.h"
@@ -9,24 +9,42 @@
 #include "Sail/entities/ECS.h"
 #include "Sail/graphics/light/LightSetup.h"
 #include "Sail/utils/Storage/SettingStorage.h"
+#include "Sail/entities/systems/Gameplay/LevelSystem/LevelSystem.h"
 
-SpotLightSystem::SpotLightSystem() : BaseComponentSystem() {
+HazardLightSystem::HazardLightSystem() : BaseComponentSystem() {
 	registerComponent<SpotlightComponent>(true, true, true);
 	registerComponent<TransformComponent>(true, true, false);
+	registerComponent<ParticleEmitterComponent>(true, true, true);
 }
 
-SpotLightSystem::~SpotLightSystem() {
+HazardLightSystem::~HazardLightSystem() {
 }
 
 
 //check and update all lights for all entities
-void SpotLightSystem::updateLights(LightSetup* lightSetup, float alpha, float dt) {
+void HazardLightSystem::updateLights(LightSetup* lightSetup, float alpha, float dt) {
 	int id = 0;
 	lightSetup->getSLs().clear();
 	for (auto e : entities) {
 		SpotlightComponent* sc = e->getComponent<SpotlightComponent>();
 		MovementComponent* mc = e->getComponent<MovementComponent>();
+		ParticleEmitterComponent* emitter = e->getComponent<ParticleEmitterComponent>();
 		mc->rotation.y = 0.f;
+
+		// Set particle emitter settings
+		if (emitter) {
+			auto* level = ECS::Instance()->getSystem<LevelSystem>();
+			auto& roomSize = level->getRoomInfo(sc->roomID).size;
+			float sprinklerXspread = roomSize.x * level->tileSize * 0.8f;
+			float sprinklerZspread = roomSize.y * level->tileSize * 0.8f;
+
+			emitter->size = 0.1f;
+			emitter->constantVelocity = { 0.0f, -3.0f, 0.0f };
+			emitter->acceleration = { 0.0f, -40.0f, 0.0f };
+			emitter->spread = { sprinklerXspread, 0.0f, sprinklerZspread };
+			emitter->spawnRate = 1.f / (80.f * roomSize.x * roomSize.y);
+			emitter->lifeTime = 1.0f;
+		}
 
 		// Update active lights
 		if (!sc->isOn) {
@@ -62,14 +80,14 @@ void SpotLightSystem::updateLights(LightSetup* lightSetup, float alpha, float dt
 	}
 }
 
-void SpotLightSystem::toggleONOFF() {
+void HazardLightSystem::toggleONOFF() {
 	for (auto e : entities) {
 		SpotlightComponent* sc = e->getComponent<SpotlightComponent>();
 		sc->isOn = !sc->isOn;
 	}
 }
 
-void SpotLightSystem::enableHazardLights(std::vector<int> activeRooms) {
+void HazardLightSystem::enableHazardLights(std::vector<int> activeRooms) {
 	for (auto e : entities) {
 		SpotlightComponent* sc = e->getComponent<SpotlightComponent>();
 		std::vector<int>::iterator it = std::find(activeRooms.begin(), activeRooms.end(), sc->roomID);

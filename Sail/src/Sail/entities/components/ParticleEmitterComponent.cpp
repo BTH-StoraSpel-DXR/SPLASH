@@ -3,6 +3,7 @@
 
 #include "Sail/Application.h"
 #include "Sail/graphics/shader/compute/ParticleComputeShader.h"
+#include "API/DX12/shader/DX12ConstantBuffer.h"
 #include "API/DX12/DX12Utils.h"
 #include "API/DX12/DX12VertexBuffer.h"
 #include "API/DX12/resources/DescriptorHeap.h"
@@ -21,6 +22,7 @@ ParticleEmitterComponent::ParticleEmitterComponent()
 	lifeTime = 1.0f;
 	spawnRate = 0.1f;
 	spawnTimer = 0.0f;
+	atlasSize = glm::uvec2(1U, 1U);
 
 	init();
 }
@@ -87,6 +89,16 @@ const std::string& ParticleEmitterComponent::getTextureName() const {
 }
 
 void ParticleEmitterComponent::spawnParticles(int particlesToSpawn) {
+	int maxCount = 0;
+
+	for (unsigned int i = 0; i < DX12API::NUM_GPU_BUFFERS; i++) {
+		if ((int) m_cpuOutput->newParticles.size() > maxCount) {
+			maxCount = m_cpuOutput->newParticles.size();
+		}
+	}
+
+	particlesToSpawn = glm::min(particlesToSpawn, (int) (m_maxParticlesSpawnPerFrame - maxCount));
+
 	//Spawn particles for all swap buffers
 	for (int j = 0; j < particlesToSpawn; j++) {
 		//Get random spread
@@ -117,7 +129,7 @@ void ParticleEmitterComponent::updateTimers(float dt) {
 		int particlesToSpawn = (int)glm::floor(spawnTimer / glm::max(spawnRate, 0.0001f));
 		spawnParticles(particlesToSpawn);
 		//Decrease timer
-		spawnTimer -= spawnRate * particlesToSpawn;
+		spawnTimer -= glm::max(spawnRate, 0.0001f) * particlesToSpawn;
 	}
 	spawnTimer += dt;
 }
@@ -143,6 +155,7 @@ void ParticleEmitterComponent::updateOnGPU(ID3D12GraphicsCommandList4* cmdList, 
 		float elapsedTime = m_timer.getTimeSince<float>(m_startTime) - m_cpuOutput[context->getSwapIndex()].lastFrameTime;
 		m_inputData.frameTime = elapsedTime;
 		m_inputData.size = size;
+		m_inputData.atlasSize = atlasSize;
 
 		//Update timer for this buffer
 		m_cpuOutput[context->getSwapIndex()].lastFrameTime += elapsedTime;
@@ -176,7 +189,8 @@ void ParticleEmitterComponent::updateOnGPU(ID3D12GraphicsCommandList4* cmdList, 
 			m_inputData.particles[i].spawnTime = m_cpuOutput[context->getSwapIndex()].lastFrameTime - newParticle_i->spawnTime;
 		}
 
-		data.particleShader->getPipeline()->setCBufferVar("inputBuffer", &m_inputData, sizeof(ComputeInput));
+		data.inputConstantBuffer->updateData_new(&m_inputData, sizeof(ComputeInput), 0);
+		data.inputConstantBuffer->bind_new(cmdList, 0, true);
 		//--------------------------------------
 
 		auto& cdh = context->getComputeGPUDescriptorHeap()->getCurentCPUDescriptorHandle();
@@ -205,7 +219,7 @@ void ParticleEmitterComponent::updateOnGPU(ID3D12GraphicsCommandList4* cmdList, 
 
 		dispatcher.dispatch(*data.particleShader, Shader::ComputeShaderInput(), cmdList);
 
-		context->getComputeGPUDescriptorHeap()->getAndStepIndex(11);
+		context->getComputeGPUDescriptorHeap()->getAndStepIndex(12);
 
 		// Transition to Cbuffer usage
 		DX12Utils::SetResourceTransitionBarrier(cmdList, data.outputVertexBuffer->getBuffer(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
@@ -216,7 +230,7 @@ void ParticleEmitterComponent::updateOnGPU(ID3D12GraphicsCommandList4* cmdList, 
 		// Update nr of particles in this buffer and erase added and removed emitters from the queues
 		m_cpuOutput[context->getSwapIndex()].previousNrOfParticles = glm::min(m_cpuOutput[context->getSwapIndex()].previousNrOfParticles + numPart - numPartRem, data.outputVertexBufferSize / 6);
 
-		m_cpuOutput[context->getSwapIndex()].newParticles.erase(m_cpuOutput[context->getSwapIndex()].newParticles.begin(), m_cpuOutput[context->getSwapIndex()].newParticles.begin() + numPart);
+		m_cpuOutput[context->getSwapIndex()].newParticles.clear();
 		m_cpuOutput[context->getSwapIndex()].toRemove.clear();
 	}
 }

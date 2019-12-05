@@ -5,6 +5,7 @@
 #include "Sail/utils/Storage/SettingStorage.h"
 
 class Octree;
+class Entity;
 
 struct Sprinkler {
 	int roomID;
@@ -48,5 +49,5 @@ private:
 	std::vector<int> m_roomsToBeActivated;
 	std::vector<Sprinkler> m_sprinklers;
 
-	void addSprinkler(int x, int y);
+	void addSprinkler(int x, int y, Entity* ownerEntity);
 };

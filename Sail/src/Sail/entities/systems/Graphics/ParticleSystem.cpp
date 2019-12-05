@@ -117,11 +117,11 @@ void ParticleSystem::submitAll() const {
 void ParticleSystem::initEmitter(Entity* owner, ParticleEmitterComponent* component) {
 	ParticleEmitterComponent::EmitterData& emitter = m_emitters.insert({owner, ParticleEmitterComponent::EmitterData()}).first->second;
 	
-	emitter.particleShader = std::make_unique<ParticleComputeShader>();
+	emitter.particleShader = &Application::getInstance()->getResourceManager().getShaderSet<ParticleComputeShader>();
 	auto& gbufferShader = Application::getInstance()->getResourceManager().getShaderSet<GBufferOutShader>();
 	auto& inputLayout = gbufferShader.getPipeline()->getInputLayout();
 
-	emitter.outputVertexBufferSize = 6 * 1700;
+	emitter.outputVertexBufferSize = 6 * 300;
 	auto& noDepthShader = Application::getInstance()->getResourceManager().getShaderSet<GBufferOutShaderNoDepth>();
 	emitter.model = std::make_unique<Model>(emitter.outputVertexBufferSize, &noDepthShader);
 
@@ -129,13 +129,19 @@ void ParticleSystem::initEmitter(Entity* owner, ParticleEmitterComponent* compon
 
 	auto* context = Application::getInstance()->getAPI<DX12API>();
 
-	emitter.particlePhysicsSize = 9 * 4; // 9 floats times 4 bytes
+	emitter.particlePhysicsSize = 11 * 4; // 11 floats times 4 bytes
 
 	emitter.physicsBufferDefaultHeap = SAIL_NEW wComPtr<ID3D12Resource>[DX12API::NUM_GPU_BUFFERS];
 	for (UINT i = 0; i < DX12API::NUM_GPU_BUFFERS; i++) {
 		emitter.physicsBufferDefaultHeap[i].Attach(DX12Utils::CreateBuffer(context->getDevice(), emitter.outputVertexBufferSize / 6 * emitter.particlePhysicsSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, DX12Utils::sDefaultHeapProps));
 		emitter.physicsBufferDefaultHeap[i]->SetName(L"Particle Physics Default Resource Heap");
 	}
+
+	emitter.inputConstantBufferSize = (12 * 312 + 312 + 11) * 4;
+	void* scrapData = malloc(emitter.inputConstantBufferSize);
+	emitter.inputConstantBuffer = std::make_unique<ShaderComponent::DX12ConstantBuffer>(scrapData, emitter.inputConstantBufferSize, ShaderComponent::CS, 0);
+	free(scrapData);
+
 
 	component->setAsCreatedInSystem();
 }

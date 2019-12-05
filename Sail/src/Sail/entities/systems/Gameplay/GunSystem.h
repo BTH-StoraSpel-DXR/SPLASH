@@ -3,6 +3,7 @@
 
 class GameDataTracker;
 class GunComponent;
+class PowerUpComponent;
 class Octree;
 
 class GunSystem final : public BaseComponentSystem {
@@ -27,7 +28,7 @@ private:
 
 	void alterProjectileSpeed(GunComponent* gun);
 
-	void fireGun(Entity* e, GunComponent* gun);
+	void fireGun(Entity* e, GunComponent* gun, PowerUpComponent* powC = nullptr);
 	void overloadGun(Entity* e, GunComponent* gun);
 
 	void setGunStateSTART(Entity* e, GunComponent* gun);

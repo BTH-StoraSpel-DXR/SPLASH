@@ -16,6 +16,7 @@
 #include "Gameplay/LevelSystem/LevelSystem.h"
 #include "Gameplay/lifetime/LifeTimeSystem.h"
 #include "Gameplay/PlayerSystem.h"
+#include "Gameplay/PowerUps/PowerUpUpdateSystem.h"
 #include "Gameplay/ProjectileSystem.h"
 #include "Gameplay/sanitySoundSystem.h"
 #include "Gameplay/SanitySystem.h"
@@ -32,7 +33,7 @@
 
 #include "light/LightSystem.h"
 #include "light/LightListSystem.h"
-#include "light/SpotLightSystem.h"
+#include "light/HazardLightSystem.h"
 
 #include "network/receivers/KillCamReceiverSystem.h"
 

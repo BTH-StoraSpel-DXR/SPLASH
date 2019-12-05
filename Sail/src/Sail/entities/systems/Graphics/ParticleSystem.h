@@ -21,6 +21,6 @@ private:
 private:
 	std::unique_ptr<ComputeShaderDispatcher> m_dispatcher;
 
-	std::map<Entity*, ParticleEmitterComponent::EmitterData> m_emitters;
+	std::unordered_map<Entity*, ParticleEmitterComponent::EmitterData> m_emitters;
 
 };

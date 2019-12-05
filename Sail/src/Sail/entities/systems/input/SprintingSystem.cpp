@@ -6,6 +6,7 @@
 #include "Sail/entities/components/SpeedLimitComponent.h"
 #include "Sail/entities/components/AnimationComponent.h"
 #include "Sail/entities/components/CrosshairComponent.h"
+#include "Sail/entities/components/PowerUpComponent.h"
 
 SprintingSystem::SprintingSystem() {
 	registerComponent<SprintingComponent>(true, true, true);
@@ -17,13 +18,34 @@ SprintingSystem::~SprintingSystem() {}
 void SprintingSystem::update(float dt, float alpha) {
 	for (auto& e : entities) {
 		auto sprintComp = e->getComponent<SprintingComponent>();
+		if (auto powC = e->getComponent<PowerUpComponent>()) {
+			if (powC->powerUps[PowerUpComponent::PowerUps::STAMINA].time > 0.0f) {
+				sprintComp->sprintDuration = sprintComp->defaultSprintDuration * 2.0f;
+			}
+			else {
+				sprintComp->sprintDuration = sprintComp->defaultSprintDuration;
+			}
+
+			if (powC->powerUps[PowerUpComponent::PowerUps::RUNSPEED].time > 0.0f) {
+				sprintComp->sprintSpeedModifier = sprintComp->defaultSprintSpeedModifier * 1.5f;
+			}
+			else {
+				sprintComp->sprintSpeedModifier = sprintComp->defaultSprintSpeedModifier;
+			}
+
+		}
+		else {
+			sprintComp->sprintSpeedModifier = sprintComp->defaultSprintSpeedModifier;
+			sprintComp->sprintDuration = sprintComp->defaultSprintDuration;
+		}
+
 
 		// Downtime of sprint is active
 		if (!sprintComp->sprintedLastFrame) {
 			sprintComp->downTimer += dt;
 			// If we have stopped sprinting and didn't get exhausted, reduce sprint timer
 			if (sprintComp->downTimer > RECOVERY_TIME && !sprintComp->exhausted) {
-				sprintComp->sprintTimer = glm::clamp(sprintComp->sprintTimer - dt, 0.f, MAX_SPRINT_TIME);
+				sprintComp->sprintTimer = glm::clamp(sprintComp->sprintTimer - dt, 0.f, sprintComp->sprintDuration);
 
 			}
 			// else if we haven't sprinted for m_maxDownTime, then reset the sprint 
@@ -53,7 +75,7 @@ void SprintingSystem::update(float dt, float alpha) {
 			}
 		}
 
-		if (sprintComp->sprintTimer < MAX_SPRINT_TIME) {
+		if (sprintComp->sprintTimer < sprintComp->sprintDuration) {
 			sprintComp->canSprint = true;
 		} else {
 			sprintComp->canSprint = false;

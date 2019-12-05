@@ -8,6 +8,7 @@
 #include "Sail/entities/components/GunComponent.h"
 #include "Sail/entities/components/NetworkSenderComponent.h"
 #include "Sail/entities/components/MovementComponent.h"
+#include "Sail/entities/components/PowerUpComponent.h"
 
 #include "Sail/utils/GameDataTracker.h"
 #include "../Sail/src/Network/NWrapperSingleton.h"
@@ -26,6 +27,7 @@ GunSystem::GunSystem() : BaseComponentSystem() {
 	registerComponent<MovementComponent>(true, true, false);
 	registerComponent<NetworkSenderComponent>(false, true, true);
 	registerComponent<NetworkReceiverComponent>(true, true, false);
+	registerComponent<PowerUpComponent>(false, true, false);
 
 	m_gameDataTracker = &GameDataTracker::getInstance();
 }
@@ -41,21 +43,31 @@ void GunSystem::setOctree(Octree* octree) {
 void GunSystem::update(float dt) {
 	for (auto& e : entities) {
 		GunComponent* gun = e->getComponent<GunComponent>();
-		
 		// Gun is firing and is not overloaded
 		if (gun->firing && gun->gunOverloadTimer <= 0) {
 			// SHOOT
 			if (gun->projectileSpawnTimer <= 0.f) {
 					// Determine projectileSpeed based on how long the gun has been firing continuously
-					alterProjectileSpeed(gun);
-
-					m_gameDataTracker->logWeaponFired();
-					fireGun(e, gun);
+				PowerUpComponent* powC = e->getComponent<PowerUpComponent>();
+				if (powC) {
+					if (powC->powerUps[PowerUpComponent::PowerUps::POWERWASH].time > 0) {
+						gun->projectileSpeed = gun->baseProjectileSpeed * 2;
+					}
+					else {
+						alterProjectileSpeed(gun);
+					}
 				}
-				// DO NOT SHOOT (Cooldown between shots)
 				else {
-					gun->firingContinuously = false;
+					alterProjectileSpeed(gun);
 				}
+
+				m_gameDataTracker->logWeaponFired();
+				fireGun(e, gun, powC);
+			}
+			// DO NOT SHOOT (Cooldown between shots)
+			else {
+				gun->firingContinuously = false;
+			}
 
 			// Overload the gun if necessary
 			if ((gun->gunOverloadvalue += dt) > gun->gunOverloadThreshold) {
@@ -94,7 +106,7 @@ void GunSystem::alterProjectileSpeed(GunComponent* gun) {
 	gun->projectileSpeed = gun->baseProjectileSpeed + (gun->projectileSpeedRange * (gun->gunOverloadvalue/gun->gunOverloadThreshold));
 }
 
-void GunSystem::fireGun(Entity* e, GunComponent* gun) {
+void GunSystem::fireGun(Entity* e, GunComponent* gun, PowerUpComponent* powC) {
 	gun->projectileSpawnTimer = gun->m_projectileSpawnCooldown;
 
 	// If this is the first shot in this "burst" of projectiles...
@@ -117,17 +129,37 @@ void GunSystem::fireGun(Entity* e, GunComponent* gun) {
 	Netcode::PlayerID myPlayerID = Netcode::getComponentOwner(e->getComponent<NetworkSenderComponent>()->m_id);
 
 	// Tell yours and everybody else's NetworkReceiverSystem to spawn the projectile
-	for (int i = 0; i < 2; i++) {
-		constexpr float randomSpread = 0.05;
-		const glm::vec3 velocity = gun->direction * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity;
-		glm::vec3 randPos;
+	std::vector<glm::vec3> vel;
+	vel.push_back(gun->direction * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
+	constexpr float randomSpread = 0.05f;
+	if (powC) {
+		if (powC->powerUps[PowerUpComponent::PowerUps::SHOWER].time > 0.0f) {
+			glm::vec3 right = glm::normalize(glm::cross(gun->direction, glm::vec3(0.0f, 1.0f, 0.0f)));
+			glm::vec3 up = glm::normalize(glm::cross(vel.front(), right));
 
-		randPos.r = Utils::rnd() * randomSpread * 2 - randomSpread;
-		randPos.g = Utils::rnd() * randomSpread * 2 - randomSpread;
-		randPos.b = Utils::rnd() * randomSpread * 2 - randomSpread;
+			vel.push_back(glm::normalize(gun->direction + 0.3f*right + 0.3f*up) * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
+			vel.push_back(glm::normalize(gun->direction - 0.3f*right + 0.3f*up) * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
+			vel.push_back(glm::normalize(gun->direction + 0.3f*right - 0.3f*up ) * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
+			vel.push_back(glm::normalize(gun->direction - 0.3f*right - 0.3f*up) * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
+		}
+		else {
+			vel.push_back(gun->direction * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
+		}
+	}
+	else {
+		vel.push_back(gun->direction * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
+	}
+
+	for (auto& velocity : vel) {
+
+		
+		glm::vec3 randPos;
+		randPos.r = (Utils::rnd() * randomSpread * 2 - randomSpread);
+		randPos.g = (Utils::rnd() * randomSpread * 2 - randomSpread);
+		randPos.b = (Utils::rnd() * randomSpread * 2 - randomSpread);
 
 		randPos += glm::normalize(velocity) * (Utils::rnd() * randomSpread * 2 - randomSpread) * 5.0f;
-
+		
 		auto rayFrom = e->getComponent<TransformComponent>()->getTranslation();
 		rayFrom.y = gun->position.y;
 		Octree::RayIntersectionInfo rayInfo;
@@ -149,6 +181,7 @@ void GunSystem::fireGun(Entity* e, GunComponent* gun) {
 			);
 		}
 	}
+	
 }
 
 void GunSystem::overloadGun(Entity* e, GunComponent* gun) {

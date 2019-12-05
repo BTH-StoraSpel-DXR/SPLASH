@@ -4,7 +4,6 @@
 #include "Component.h"
 
 // TODO: Replace with game settings
-constexpr auto MAX_SPRINT_TIME = 5.f;
 constexpr auto MAX_SPRINT_DOWN_TIME = 5.f;
 constexpr auto RECOVERY_TIME = 0.5f;
 
@@ -20,7 +19,7 @@ public:
 	void imguiRender(Entity** selected) {
 		SprintingComponent* sprintC = this;
 		ImGui::SliderFloat("speedModifier", &sprintC->sprintSpeedModifier, 0.f, 2.f);
-		ImGui::SliderFloat("sprintTimer", &sprintC->sprintTimer, 0.f, MAX_SPRINT_TIME);
+		ImGui::SliderFloat("sprintTimer", &sprintC->sprintTimer, 0.f, sprintDuration);
 		ImGui::SliderFloat("downTimer", &sprintC->downTimer, 0.f, MAX_SPRINT_DOWN_TIME);
 		ImGui::Checkbox("Exhausted", &sprintC->exhausted);
 		ImGui::Checkbox("Can sprint", &sprintC->canSprint);
@@ -29,7 +28,10 @@ public:
 #endif
 
 public:
+	const float defaultSprintSpeedModifier = 1.6f;
 	float sprintSpeedModifier = 1.6f;
+	float sprintDuration = 5.0f;
+	const float defaultSprintDuration = 5.0f;
 	float sprintTimer = 0.f;
 	float downTimer = 0.f;
 	

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "LevelSystem.h"
+#include "Sail/Application.h"
 #include "Sail/entities/ECS.h"
 #include "Sail/entities/components/Components.h"
 #include "Sail/entities/components/MapComponent.h"
@@ -1756,8 +1757,8 @@ void LevelSystem::addClutterModel(const std::vector<Model*>& clutterModels, Mode
 		auto e2 = EntityFactory::CreateStaticMapObject("Saftblandare", clutterModels[ClutterModel::SAFTBLANDARE], bb, glm::vec3((room.posx + (room.sizex / 2.f)-0.5f)*tileSize, 0, (room.posy + (room.sizey / 2.f)-0.5f)*tileSize),glm::vec3(0.f),glm::vec3(1.f,tileHeight,1.f));
 
 		MovementComponent* mc = e2->addComponent<MovementComponent>();
-		SpotlightComponent* sc = e2->addComponent<SpotlightComponent>();
 		AudioComponent* ac = e2->addComponent<AudioComponent>();
+		SpotlightComponent* sc = e2->addComponent<SpotlightComponent>();
 		sc->light.setColor(glm::vec3(1.0f, 0.2f, 0.0f));
 		sc->light.setPosition(glm::vec3(0, tileHeight * 5 - 0.05, 0));
 		sc->light.setAttenuation(1.f, 0.01f, 0.01f);
@@ -1767,6 +1768,23 @@ void LevelSystem::addClutterModel(const std::vector<Model*>& clutterModels, Mode
 		sc->isOn = false;
 #ifdef _PERFORMANCE_TEST
 		sc->isOn = true;
+#endif
+
+#ifdef DEVELOPMENT
+		auto* particleEmitterComp = e2->addComponent<ParticleEmitterComponent>();
+		particleEmitterComp->size = 1.0f;
+		particleEmitterComp->offset = { 0, tileHeight * 6, 0 };
+		particleEmitterComp->constantVelocity = { 0.0f, -0.7f, 0.0f };
+		particleEmitterComp->acceleration = { 0.0f, -0.4f, 0.0f };
+		particleEmitterComp->spread = { 5.22f, 1.0f, 5.22f };
+		particleEmitterComp->spawnRate = 1.f / 100.f;
+		particleEmitterComp->lifeTime = 2.0f;
+		particleEmitterComp->atlasSize = glm::uvec2(8U, 3U);
+		std::string particleTextureName = "particles/animSmoke.dds";
+		if (!Application::getInstance()->getResourceManager().hasTexture(particleTextureName)) {
+			Application::getInstance()->getResourceManager().loadTexture(particleTextureName);
+		}
+		particleEmitterComp->setTexture(particleTextureName);
 #endif
 	}
 }

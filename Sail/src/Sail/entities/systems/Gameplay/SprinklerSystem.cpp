@@ -46,23 +46,23 @@ void SprinklerSystem::update(float dt) {
 		if (m_enableSprinklers) {
 			m_endGameTimer += dt;
 
-			for (auto& e : entities) {
-				// Randomize a water spot with a ray for each active sprinkler
-				for (int i = 0; i < m_sprinklers.size(); i++) {
-					if (m_sprinklers[i].active) {
-						Octree::RayIntersectionInfo tempInfo;
+			// Randomize a water spot with a ray for each active sprinkler
+			for (int i = 0; i < m_sprinklers.size(); i++) {
+				if (m_sprinklers[i].active) {
+					Octree::RayIntersectionInfo tempInfo;
 
-						float sprinklerXspread = (m_sprinklers[i].size.x * 0.5f) * m_map->tileSize;
-						float sprinklerZspread = (m_sprinklers[i].size.y * 0.5f) * m_map->tileSize;
+					float sprinklerXspread = (m_sprinklers[i].size.x * 0.5f) * m_map->tileSize;
+					float sprinklerZspread = (m_sprinklers[i].size.y * 0.5f) * m_map->tileSize;
 
-						glm::vec3 waterDir = glm::vec3(((2.f * Utils::rnd()) - 1.0f) *sprinklerXspread, -m_sprinklers[i].pos.y, ((2.f * Utils::rnd()) - 1.0f)*sprinklerZspread) + m_sprinklers[i].pos;
-						waterDir = glm::normalize(waterDir - m_sprinklers[i].pos);
-						m_octree->getRayIntersection(m_sprinklers[i].pos, waterDir, &tempInfo);
-						glm::vec3 hitPos = m_sprinklers[i].pos + waterDir * tempInfo.closestHit;
-						Application::getInstance()->getRenderWrapper()->getCurrentRenderer()->submitWaterPoint(hitPos);
-					}
-
+					glm::vec3 waterDir = glm::vec3(((2.f * Utils::rnd()) - 1.0f) * sprinklerXspread, -m_sprinklers[i].pos.y, ((2.f * Utils::rnd()) - 1.0f) * sprinklerZspread) + m_sprinklers[i].pos;
+					waterDir = glm::normalize(waterDir - m_sprinklers[i].pos);
+					m_octree->getRayIntersection(m_sprinklers[i].pos, waterDir, &tempInfo);
+					glm::vec3 hitPos = m_sprinklers[i].pos + waterDir * tempInfo.closestHit;
+					Application::getInstance()->getRenderWrapper()->getCurrentRenderer()->submitWaterPoint(hitPos);
 				}
+			}
+
+			for (auto& e : entities) {
 
 				// Locate player candle
 				CandleComponent* candle = e->getComponent<CandleComponent>();
@@ -115,25 +115,25 @@ void SprinklerSystem::update(float dt) {
 				switch (m_mapSide) {
 				case 1:
 					for (int x = 0 + m_xMinIncrement; x < m_map->xsize - m_xMaxIncrement; x++) {
-						addSprinkler(x, m_yMinIncrement);
+						addSprinkler(x, m_yMinIncrement, nullptr);
 					}
 					m_yMinIncrement++;
 					break;
 				case 2:
 					for (int x = 0 + m_xMinIncrement; x < m_map->xsize - m_xMaxIncrement; x++) {
-						addSprinkler(x, m_map->ysize - 1 - m_yMaxIncrement);
+						addSprinkler(x, m_map->ysize - 1 - m_yMaxIncrement, nullptr);
 					}
 					m_yMaxIncrement++;
 					break;
 				case 3:
 					for (int y = 0 + m_yMinIncrement; y < m_map->ysize - m_yMaxIncrement; y++) {
-						addSprinkler(m_xMinIncrement, y);
+						addSprinkler(m_xMinIncrement, y, nullptr);
 					}
 					m_xMinIncrement++;
 					break;
 				case 4:
 					for (int y = 0 + m_yMinIncrement; y < m_map->ysize - m_yMaxIncrement; y++) {
-						addSprinkler(m_map->xsize - 1 - m_xMaxIncrement, y);
+						addSprinkler(m_map->xsize - 1 - m_xMaxIncrement, y, nullptr);
 					}
 					m_xMaxIncrement++;
 					break;
@@ -174,7 +174,7 @@ const std::vector<int>& SprinklerSystem::getActiveRooms() const
 	return m_activeRooms;
 }
 
-void SprinklerSystem::addSprinkler(int x, int y) {
+void SprinklerSystem::addSprinkler(int x, int y, Entity* ownerEntity) {
 	int room = m_map->getRoomID(x, y);
 	if (room != 0) {
 		std::vector<int>::iterator itRooms = std::find(m_activeRooms.begin(), m_activeRooms.end(), room);
@@ -183,13 +183,11 @@ void SprinklerSystem::addSprinkler(int x, int y) {
 			m_roomsToBeActivated.push_back(room);
 			
 			// Save sprinkler worldPos, room size, and room ID
-			Sprinkler sprinkler;
+			Sprinkler& sprinkler = m_sprinklers.emplace_back();
 			sprinkler.roomID = room;
 			sprinkler.pos = m_map->getRoomInfo(room).center;
 			sprinkler.pos.y = (m_map->tileSize * m_map->tileHeight) - 0.2f;
 			sprinkler.size = m_map->getRoomInfo(room).size;
-			
-			m_sprinklers.push_back(sprinkler);
 		}
 	}
 }

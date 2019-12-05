@@ -2,7 +2,7 @@
 #include "Component.h"
 #include "../../graphics/light/PointLight.h"
 
-class SpotLightSystem;
+class HazardLightSystem;
 
 
 class SpotlightComponent final : public Component<SpotlightComponent> {
@@ -94,6 +94,6 @@ public:
 private:
 	SpotLight m_lightEntityRotated; //This one will be updated with entity transformations and submited to the renderer
 
-	friend class SpotLightSystem;
+	friend class HazardLightSystem;
 	
 };
