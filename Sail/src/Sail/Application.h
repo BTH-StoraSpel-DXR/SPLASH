@@ -95,7 +95,7 @@ public:
 	const UINT getFPS() const;
 	float getDelta() const;
 	float getFixedUpdateDelta() const;
-
+	bool isRunning() const;
 private:
 
 	static Application* s_instance;

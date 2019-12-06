@@ -4,7 +4,7 @@
 #include "Sail/api/shader/ShaderPipeline.h"
 #include "Sail/api/Mesh.h"
 #include "API/DX12/resources/DX12DDSTexture.h"
-
+#include "Sail/Application.h"
 #include <filesystem>
 
 const std::string ResourceManager::SAIL_DEFAULT_MODEL_LOCATION = "res/models/";
@@ -86,6 +86,10 @@ bool ResourceManager::hasTextureData(const std::string& filename) {
 //
 
 void ResourceManager::loadTexture(const std::string& filename) {
+	if (!Application::getInstance()->isRunning()) {
+		return;
+	}
+
 	auto path = std::filesystem::path(SAIL_DEFAULT_TEXTURE_LOCATION + filename);
 	if (path.has_extension() && std::filesystem::exists(path)) {
 		if (path.extension().compare(".tga") == 0 || path.extension().compare(".dds") == 0) {
@@ -126,6 +130,9 @@ void ResourceManager::addModel(const std::string& modelName, Model* model) {
 }
 
 bool ResourceManager::loadModel(const std::string& filename, Shader* shader, const ImporterType type) {
+	if (!Application::getInstance()->isRunning()) {
+		return false;
+	}
 	// Insert the new model
 	Shader* shaderToUse = shader ? shader : m_defaultShader;
 

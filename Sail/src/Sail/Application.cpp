@@ -285,3 +285,7 @@ float Application::getFixedUpdateDelta() const {
 	return m_fixedUpdateDelta;
 }
 
+bool Application::isRunning() const {
+	return s_isRunning;
+}
+
