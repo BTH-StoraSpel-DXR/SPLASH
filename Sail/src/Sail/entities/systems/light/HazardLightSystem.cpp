@@ -14,7 +14,7 @@
 HazardLightSystem::HazardLightSystem() : BaseComponentSystem() {
 	registerComponent<SpotlightComponent>(true, true, true);
 	registerComponent<TransformComponent>(true, true, false);
-	registerComponent<ParticleEmitterComponent>(true, true, true);
+	registerComponent<ParticleEmitterComponent>(false, true, true);
 }
 
 HazardLightSystem::~HazardLightSystem() {
