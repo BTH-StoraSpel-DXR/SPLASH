@@ -6,7 +6,7 @@ AnimationComponent::AnimationComponent(AnimationStack* animationStack) :
 	computeUpdate(true),
 	animationTime(0),
 	animationIndex(0),
-	animationSpeed(1.0f),
+	animationSpeed(0.0f),
 	animationName(""),
 	currentAnimation(nullptr),
 	nextAnimation(nullptr),

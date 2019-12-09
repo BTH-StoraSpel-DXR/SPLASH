@@ -76,7 +76,7 @@ template <typename T>
 void AnimationSystem<T>::updateTransforms(const float dt) { 
 	for (auto& e : entities) {
 		AnimationComponent* animationC = e->getComponent<AnimationComponent>();
-
+		animationC->currentAnimation = animationC->getAnimationStack()->getAnimation(12);
 		if (!animationC->currentAnimation) {
 #if defined(_DEBUG)
 			SAIL_LOG_WARNING("AnimationComponent without animation set");
@@ -85,9 +85,9 @@ void AnimationSystem<T>::updateTransforms(const float dt) {
 		}
 
 		//transition update
-		if (animationC->currentTransition.to != nullptr) {
+		/*if (animationC->currentTransition.to != nullptr) {
 			if (animationC->currentTransition.done) {
-				//transitions complete
+				transitions complete
 				if (animationC->currentTransition.transpiredTime >= animationC->currentTransition.transitionTime) {
 					animationC->currentAnimation = animationC->currentTransition.to;
 					animationC->animationTime = animationC->currentTransition.transpiredTime;
@@ -108,19 +108,21 @@ void AnimationSystem<T>::updateTransforms(const float dt) {
 						animationC->currentTransition.transpiredTime += dt;
 					}
 				} else if (animationC->currentTransition.transpiredTime >= animationC->currentTransition.transitionTime) {
-					// Transition done
+					 Transition done
 					animationC->currentTransition.done = true;
 				} else {
-					// Transition transpiring
+					 Transition transpiring
 					animationC->currentTransition.transpiredTime += dt;
 				}
 			}
 		}
-
+	*/
 		if (animationC->updateDT) {
 			addTime(animationC, dt);
 		}
 		
+
+
 		const unsigned int frame00 = animationC->currentAnimation->getFrameAtTime(animationC->animationTime, Animation::BEHIND);
 		const unsigned int frame01 = animationC->currentAnimation->getFrameAtTime(animationC->animationTime, Animation::INFRONT); // TODO: make getNextFrame function.
 		const unsigned int frame10 = animationC->nextAnimation ? animationC->nextAnimation->getFrameAtTime(animationC->currentTransition.transpiredTime,
@@ -192,7 +194,10 @@ void AnimationSystem<T>::updateTransforms(const float dt) {
 			const float frame1Time = animationC->currentAnimation->getTimeAtFrame(frame01);
 			// weight = time - time(0) / time(1) - time(0)
 
-			const float w = (animationC->animationTime - frame0Time) / (frame1Time - frame0Time);
+			float w = (animationC->animationTime - frame0Time) / (frame1Time - frame0Time);
+			if (frame00 == frame01) {
+				w = 0;
+			}
 			for (unsigned int transformIndex = 0; transformIndex < transformSize; transformIndex++) {
 				interpolate(animationC->transforms[transformIndex], transforms00[transformIndex], transforms01[transformIndex], w);
 				// Rotate the upper body in relation to camera pitch

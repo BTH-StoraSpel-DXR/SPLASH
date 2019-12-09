@@ -380,17 +380,17 @@ void EntityFactory::CreateGenericPlayer(Entity::SPtr playerEntity, size_t lightI
 	ac->rightHandPosition = glm::translate(ac->rightHandPosition, glm::vec3(-0.596f, 1.026f, 0.055f));
 	ac->rightHandPosition = ac->rightHandPosition * glm::toMat4(glm::quat(glm::vec3(1.178f, 0.646f, -0.300f)));
 
-	auto gun = CreateWaterGun(playerEntity->getName() + "WaterGun");
-	if (doNotAddToSystems) {
-		gun->tryToAddToSystems = false;
-	}
-	playerEntity->addChildEntity(gun.get());
-
-	// Attach the candle to the player's left hand
-	ac->leftHandEntity = gun.get();
-	ac->leftHandPosition = glm::identity<glm::mat4>();
-	ac->leftHandPosition = glm::translate(ac->leftHandPosition, glm::vec3(0.563f, 1.059f, 0.110f));
-	ac->leftHandPosition = ac->leftHandPosition * glm::toMat4(glm::quat(glm::vec3(1.178f, -0.462f, 0.600f)));
+//	auto gun = CreateWaterGun(playerEntity->getName() + "WaterGun");
+//	if (doNotAddToSystems) {
+//		gun->tryToAddToSystems = false;
+//	}
+//	playerEntity->addChildEntity(gun.get());
+//
+//	// Attach the candle to the player's left hand
+//	ac->leftHandEntity = gun.get();
+//	ac->leftHandPosition = glm::identity<glm::mat4>();
+//	ac->leftHandPosition = glm::translate(ac->leftHandPosition, glm::vec3(0.563f, 1.059f, 0.110f));
+//	ac->leftHandPosition = ac->leftHandPosition * glm::toMat4(glm::quat(glm::vec3(1.178f, -0.462f, 0.600f)));
 }
 
 Entity::SPtr EntityFactory::CreatePowerUp(glm::vec3& spawn, const int type, Netcode::ComponentID comID) {

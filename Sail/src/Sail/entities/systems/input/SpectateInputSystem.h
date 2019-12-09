@@ -37,4 +37,6 @@ private:
 	CameraController* m_cam = nullptr;
 	float m_yaw, m_pitch, m_roll;
 	float m_lookSensitivityMouse = 0.1f;
+
+	float currentMoveSpeed = 1.0f;
 };

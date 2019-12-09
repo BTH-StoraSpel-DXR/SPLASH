@@ -8,6 +8,7 @@
 
 #include "../../../api/Input.h"
 #include "Sail/KeyBinds.h"
+#include "Sail/KeyCodes.h"
 
 
 SpectateInputSystem::SpectateInputSystem() : BaseComponentSystem(){
@@ -63,6 +64,14 @@ void SpectateInputSystem::processKeyboardInput(const float& dt) {
 
 		SpectateMovement playerMovement = getPlayerMovementInput(e);
 		glm::vec3 forward = m_cam->getCameraDirection();
+
+		if (Input::IsKeyPressed(SAIL_KEY_OEM_PLUS)) {
+			currentMoveSpeed *= 1.1f;
+		}
+		if (Input::IsKeyPressed(SAIL_KEY_OEM_MINUS)) {
+			currentMoveSpeed /= 1.1f;
+		}
+		playerMovement.speedModifier = currentMoveSpeed;
 
 		if (playerMovement.forwardMovement != 0.f || playerMovement.rightMovement != 0.f || playerMovement.upMovement != 0.f) {
 			forward = glm::normalize(forward);
