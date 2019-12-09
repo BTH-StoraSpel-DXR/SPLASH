@@ -109,7 +109,7 @@ void CandleThrowingSystem::update(float dt) {
 					throwC->direction = Application::getInstance()->getCurrentCamera()->getDirection();
 
 					moveC->velocity = throwC->direction * throwC->throwingTimer * throwC->throwChargeMultiplier + e->getComponent<MovementComponent>()->velocity;
-					moveC->constantAcceleration = glm::vec3(0.f, -9.82f, 0.f);
+					moveC->constantAcceleration = glm::vec3(0.f, 0.0f, 0.f);
 
 					// Making sure the torch isn't dropped inside an object
 					auto rayFrom = parTranslation;
@@ -138,7 +138,7 @@ void CandleThrowingSystem::update(float dt) {
 
 					// Throw the torch
 					moveC->velocity = throwC->direction * throwC->throwingTimer * throwC->throwChargeMultiplier + e->getComponent<MovementComponent>()->velocity;
-					moveC->constantAcceleration = glm::vec3(0.f, -9.82f, 0.f);
+					moveC->constantAcceleration = glm::vec3(0.f, 0.f, 0.f);
 					//throwC->direction.y = 0.f;
 					auto rotationAxis = glm::normalize(glm::cross(throwC->direction, glm::vec3(0.f, 1.f, 0.f)));
 					moveC->rotation = rotationAxis * -6.14f * 2.0f;

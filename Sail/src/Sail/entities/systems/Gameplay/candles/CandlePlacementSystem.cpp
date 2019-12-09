@@ -66,7 +66,7 @@ void CandlePlacementSystem::toggleCandlePlacement(Entity* e) {
 			e->removeComponent<CollisionComponent>();
 			if (e->hasComponent<MovementComponent>()) {
 				auto moveC = e->getComponent<MovementComponent>();
-				moveC->constantAcceleration = glm::vec3(0.f);
+				moveC->constantAcceleration = glm::vec3{ 0, 0, 0 };
 				moveC->velocity = glm::vec3(0.f);
 				moveC->oldVelocity = glm::vec3(0.f);
 			}
@@ -142,7 +142,7 @@ bool CandlePlacementSystem::onEvent(const Event& event) {
 			if (candle->hasComponent<MovementComponent>()) {
 				if (candle->hasComponent<MovementComponent>()) {
 					auto moveC = candle->getComponent<MovementComponent>();
-					moveC->constantAcceleration = glm::vec3(0.f);
+					moveC->constantAcceleration = glm::vec3{ 0.0f, 0.0f, 0.0f };
 					moveC->velocity = glm::vec3(0.f);
 					moveC->oldVelocity = glm::vec3(0.f);
 				}

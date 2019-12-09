@@ -229,12 +229,14 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 
 			movement->relVel.x = glm::dot(movement->velocity, forward);
 			movement->relVel.z = glm::dot(movement->velocity, right);
-			movement->relVel.y = glm::dot(movement->velocity, glm::vec3(0.f, 1.f, 0.f));
+			movement->relVel.y = glm::dot(movement->velocity, glm::vec3(0.f, 0.1f, 0.f));
 
 			m_soundSwitchTimer += dt;
 
 			// Prevent division by zero
 			if ( playerMovement.forwardMovement != 0.0f || playerMovement.rightMovement != 0.0f ) {
+
+				speedLimit->maxSpeed = 1.0f;
 
 				// Calculate total movement
 				float acceleration = 70.0f - ( glm::length(movement->velocity) / speedLimit->maxSpeed ) * 20.0f;

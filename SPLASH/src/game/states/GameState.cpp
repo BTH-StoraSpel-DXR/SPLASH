@@ -193,6 +193,19 @@ GameState::GameState(StateStack& stack)
 		}
 	}
 
+
+	for (int i = 0; i < CANDLE_COUNT; i++) {
+		this->extraCandles[i] = ECS::Instance()->createEntity("Extra_Candle " + std::to_string(i));
+		EntityFactory::CreateCandle(this->extraCandles[i], { 0.f, 0.f, 0.f }, m_currLightIndex++);
+		this->extraCandles[i]->addComponent<MovementComponent>();
+		this->extraCandles[i]->getComponent<MovementComponent>()->constantAcceleration = { 0.0f, 0.0f, 0.0f };
+		extraCandles[i]->addComponent<CandleComponent>();
+		extraCandles[i]->addComponent<RealTimeComponent>(); // The player's candle is updated each frame
+		extraCandles[i]->addComponent<MovementComponent>();
+		extraCandles[i]->addComponent<RenderInActiveGameComponent>();
+		//this->m_player->addChildEntity(this->extraCandles[i].get());
+	}
+
 	
 	m_componentSystems.networkReceiverSystem->setPlayer(m_player);
 	m_componentSystems.networkReceiverSystem->setGameState(this);

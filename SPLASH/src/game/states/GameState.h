@@ -11,6 +11,8 @@
 #include "../events/NetworkWelcomeEvent.h"
 #include "Sail/entities/systems/SystemDeclarations.h"
 
+#define CANDLE_COUNT 10
+
 class DX12DDSTexture;
 
 class GameState final : public State {
@@ -72,6 +74,8 @@ private:
 
 	// TODO: Only used for AI, should be removed once AI can target player in a better way.
 	Entity* m_player;
+
+	Entity::SPtr extraCandles[CANDLE_COUNT];
 
 	Entity* m_gameMusic = nullptr;
 	Entity* m_ambiance = nullptr;

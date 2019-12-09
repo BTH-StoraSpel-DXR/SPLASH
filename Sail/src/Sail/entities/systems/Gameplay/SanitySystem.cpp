@@ -57,8 +57,8 @@ void SanitySystem::update(float dt) {
 				dist = glm::min(glm::distance(playerTransformComp->getTranslation(), candleTransformComp->getTranslation()), 25.f);
 			}
 
-			sanityComp->sanity -= (dist - 1) * dt * 0.5f;
-			sanityComp->sanity = std::clamp(sanityComp->sanity, m_minSanity, m_maxSanity);
+			//sanityComp->sanity -= (dist - 1) * dt * 0.5f;
+			//sanityComp->sanity = std::clamp(sanityComp->sanity, m_minSanity, m_maxSanity);
 			if (sanityComp->sanity <= 0) {
 				candleComp->kill(CandleComponent::DamageSource::INSANE, Netcode::INSANITY_COMP_ID);
 			}

@@ -371,7 +371,7 @@ void EntityFactory::CreateGenericPlayer(Entity::SPtr playerEntity, size_t lightI
 	if (doNotAddToSystems) {
 		candle->tryToAddToSystems = false;
 	}
-	CreateCandle(candle, glm::vec3(0.f, 0.f, 0.f), lightIndex);
+	CreateCandle(candle, glm::vec3(3.f, 1.f, 1.f), lightIndex);
 	playerEntity->addChildEntity(candle.get());
 
 	// Attach the something to the player's right hand
