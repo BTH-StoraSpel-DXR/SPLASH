@@ -72,6 +72,7 @@ Application::Application(int windowWidth, int windowHeight, const char* windowTi
 	ECS::Instance()->createSystem<ModelSubmitSystem<RenderInActiveGameComponent>>();
 	ECS::Instance()->createSystem<GUISubmitSystem>();
 	ECS::Instance()->createSystem<LevelSystem>()->generateMap();
+	m_settingStorage.gameSettingsDynamic["map"]["count"].maxVal = ECS::Instance()->getSystem<LevelSystem>()->powerUpSpawnPoints.size();
 
 
 

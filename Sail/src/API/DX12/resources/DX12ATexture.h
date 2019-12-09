@@ -13,7 +13,7 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE getUavCDH(int frameIndex = -1) const;
 	//void resetStates(const std::thread::id& resetTo);
 	//void setStartState(D3D12_RESOURCE_STATES state);
-	void transitionStateTo(ID3D12GraphicsCommandList4* cmdList, D3D12_RESOURCE_STATES newState);
+	void transitionStateTo(ID3D12GraphicsCommandList4* cmdList, D3D12_RESOURCE_STATES newState, int frameIndex = -1);
 	bool isRenderable() const;
 	void renameBuffer(const std::string& name) const;
 

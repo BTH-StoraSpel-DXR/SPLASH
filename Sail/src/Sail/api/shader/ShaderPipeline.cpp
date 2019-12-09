@@ -262,7 +262,8 @@ void ShaderPipeline::parseRWTexture(const char* source) {
 	}
 	free(lineCopy);
 
-	parsedData.renderableTextures.emplace_back(ShaderResource(name, slot), format);
+	std::string nameSuffix(" File: " + filename + " slot " + std::to_string(slot));
+	parsedData.renderableTextures.emplace_back(ShaderResource(name, slot), format, nameSuffix);
 }
 
 void ShaderPipeline::parseStructuredBuffer(const char* source, bool isRW) {
@@ -434,12 +435,14 @@ UINT ShaderPipeline::getSizeOfType(const std::string& typeName) const {
 	if (typeName == "Material") { return 48; }
 	if (typeName == "DirectionalLight") { return 32; }
 	if (typeName == "PointLight") { return 32; }
-	if (typeName == "PointLightInput") { return 272; }
-	if (typeName == "DeferredPointLightData") { return 48; }
+	if (typeName == "PointlightInput") { return 32 * 12; }
+	if (typeName == "SpotlightInput") { return 12 * 4 * 12; }
+	if (typeName == "DeferredPointLightData") { return 32; }
 	if (typeName == "DeferredDirLightData") { return 32; }
 	if (typeName == "Vertex") { return 4 * 14; }
 	if (typeName == "VertConnections") { return 4 + 4*5 + 4*5; }
-	if (typeName == "ParticleInput") { return (12 * 312 + 312 + 11) * 4; }
+	if (typeName == "ParticleInput") { return (12 * 312 + 312 + 12) * 4; }
+	if (typeName == "IndexMap") { return 4 * 4 * 12 * 2; } // NUM_POINT_LIGHTS * 2 * int
 
 	SAIL_LOG_ERROR("Found shader variable type with unknown size (" + typeName + ")");
 	return 0;

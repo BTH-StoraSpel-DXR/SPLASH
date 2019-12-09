@@ -45,8 +45,9 @@ struct Event {
 		TORCH_NOT_HELD,
 		START_THROWING,
 		STOP_THROWING,
-
 		SANITY_SYSTEM_UPDATE_SANITY,
+		SPAWN_POWERUP,
+		DESTROY_POWERUP,
 		NR_OF_EVENTS		// Needs to be last, and no type above can set their values manually
 	};
 

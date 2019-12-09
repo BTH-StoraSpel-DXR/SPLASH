@@ -8,16 +8,10 @@ struct VSIn {
 	float3 bitangent : BINORMAL0;
 };
 
-struct GSIn {
-    float4 position : SV_Position;
-	float4 posVS : POSVS;
-    float3 normal : NORMAL0;
-    float2 texCoords : TEXCOORD0;
-    float3x3 tbn : TBN;
-};
-
 struct PSIn {
     float4 position : SV_Position;
+    float4 clipPos : POS0;
+    float4 clipPosLastFrame : POS1;
     float3 normal : NORMAL0;
     float2 texCoords : TEXCOORD0;
     float3x3 tbn : TBN;
@@ -27,27 +21,28 @@ cbuffer VSSystemCBuffer : register(b0) {
     matrix sys_mWorld;
     matrix sys_mView;
     matrix sys_mProj;
+    matrix sys_mWVPLastFrame;
 }
 
 cbuffer PSSystemCBuffer : register(b1) {
     Material sys_material_pbr;
 }
-
 cbuffer PSSystemCBuffer_2 : register(b1, space1) {
 	float3 teamColor;
 }
 
-GSIn VSMain(VSIn input) {
-    GSIn output;
+PSIn VSMain(VSIn input) {
+    PSIn output;
 
     matrix wv = mul(sys_mView, sys_mWorld);
 
 	output.texCoords = input.texCoords;
 	input.position.w = 1.f;
+	// Convert position into clip space
 	output.position = mul(wv, input.position);
-	output.posVS = output.position;
-	// Convert position into projection space
     output.position = mul(sys_mProj, output.position);
+    output.clipPos = output.position;
+    output.clipPosLastFrame = mul(sys_mWVPLastFrame, input.position);
     
 	// Convert normal into world space and normalize
 	output.normal = mul((float3x3) sys_mWorld, input.normal);
@@ -63,27 +58,6 @@ GSIn VSMain(VSIn input) {
 	return output;
 }
 
-// Geometry shader only used to cull back-facing triangles
-[maxvertexcount(3)]
-void GSMain(triangle GSIn input[3], inout TriangleStream<PSIn> output) {
-    float3 edge1 = input[1].posVS.xyz - input[0].posVS.xyz;
-    float3 edge2 = input[2].posVS.xyz - input[0].posVS.xyz;
-    float3 normal = normalize(cross(edge1, edge2));
-
-    // Append triangle to output if normal is facing the screen
-    if (dot(-normalize(input[0].posVS.xyz), normal) > 0) {
-        for (uint i = 0; i < 3; i++) {
-            PSIn psin;
-            // Copy input to output
-            psin.position = input[i].position;
-            psin.normal = input[i].normal;
-            psin.texCoords = input[i].texCoords;
-            psin.tbn = input[i].tbn;
-            output.Append(psin);
-        }
-    }
-}
-
 // TODO: check if it is worth the extra VRAM to write diffuse and specular gbuffers instead of sampling them in the raytracing shaders
 //       The advantage is that mip map level can be calculated automatically here
 //      
@@ -93,9 +67,10 @@ Texture2D sys_texMetalnessRoughnessAO   : register(t2);
 SamplerState PSss;
 
 struct GBuffers {
-	float4 normal  : SV_Target0;
-	float4 albedo : SV_Target1;
+	float4 normal               : SV_Target0;
+	float4 albedo               : SV_Target1;
 	float4 metalnessRoughnessAO : SV_Target2;
+    float2 motionVector         : SV_Target3;
 };
 
 GBuffers PSMain(PSIn input) {
@@ -118,12 +93,15 @@ GBuffers PSMain(PSIn input) {
 		} else {
 			gbuffers.albedo *= albedo;
 		}
-
 	}
 
     gbuffers.metalnessRoughnessAO = float4(sys_material_pbr.metalnessScale, sys_material_pbr.roughnessScale, sys_material_pbr.aoScale, 1.0f);
 	if (sys_material_pbr.hasMetalnessRoughnessAOTexture)
 		gbuffers.metalnessRoughnessAO *= sys_texMetalnessRoughnessAO.Sample(PSss, input.texCoords);
+
+    float2 position = input.clipPos.xy / input.clipPos.w * 0.5f + 0.5f;
+    float2 positionLastFrame = input.clipPosLastFrame.xy / input.clipPosLastFrame.w * 0.5f + 0.5f;
+    gbuffers.motionVector = (position - positionLastFrame) * 0.5f + 0.5f;
 
     return gbuffers;
 }

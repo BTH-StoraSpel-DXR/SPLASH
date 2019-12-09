@@ -33,7 +33,8 @@ void ModelSubmitSystem<T>::submitAll(const float alpha) {
 
 		renderer->submit(
 			model->getModel(), 
-			e->hasComponent<RealTimeComponent>() ? transform->getMatrixWithUpdate() : transform->getRenderMatrix(alpha), 
+			e->hasComponent<RealTimeComponent>() ? transform->getMatrixWithUpdate() : transform->getRenderMatrix(alpha),
+			transform->getRenderMatrixLastFrame(),
 			flags,
 			model->teamColorID
 		);

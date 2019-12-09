@@ -7,7 +7,7 @@ class LightComponent : public Component<LightComponent> {
 public:
 	//create point light
 	LightComponent(PointLight pl) : defaultColor(pl.getColor()) {
-		m_pointLight.setAttenuation(pl.getAttenuation().constant,pl.getAttenuation().linear,pl.getAttenuation().quadratic);
+		m_pointLight.setRadius(pl.getRadius());
 		m_pointLight.setColor(pl.getColor());
 		m_pointLight.setPosition(pl.getPosition());
 		m_pointLight.setIndex(pl.getIndex());
@@ -44,36 +44,15 @@ public:
 		ImGui::Text(std::string("Position").c_str()); ImGui::NextColumn();
 
 
-		float constant = m_pointLight.getAttenuation().constant;
-		float linear = m_pointLight.getAttenuation().linear;
-		float quadratic = m_pointLight.getAttenuation().quadratic;
+		float reachRadius = m_pointLight.getRadius();
 		bool changed = false;
 
-		if (ImGui::DragFloat("##constant", &constant, 0.01f)) {
+		if (ImGui::DragFloat("##radius", &reachRadius, 0.01f)) {
 			changed = true;
 		} 
 		ImGui::NextColumn();
-		ImGui::Text(std::string("constant").c_str()); ImGui::NextColumn();
-
-		if(ImGui::DragFloat("##linear", &linear, 0.01f)) {
-			changed = true;
-		}
-		ImGui::NextColumn();
-		ImGui::Text(std::string("linear").c_str()); ImGui::NextColumn();
-
-		if(ImGui::DragFloat("##quadratic", &quadratic, 0.01f)) {
-			changed = true;
-		}
-		ImGui::NextColumn();
-		ImGui::Text(std::string("quadratic").c_str()); ImGui::NextColumn();
-		if (changed) {
-			m_pointLight.setAttenuation(constant, linear, quadratic);
-		}
+		ImGui::Text(std::string("Radius").c_str()); ImGui::NextColumn();
 		ImGui::Columns(1);
-
-
-
-
 	}
 #endif
 

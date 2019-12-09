@@ -63,31 +63,14 @@ public:
 		ImGui::NextColumn();
 		ImGui::Text(std::string("Angle").c_str()); ImGui::NextColumn();
 
-		float constant = light.getAttenuation().constant;
-		float linear = light.getAttenuation().linear;
-		float quadratic = light.getAttenuation().quadratic;
+		float reachRadius = light.getRadius();
 		bool changed = false;
 
-		if (ImGui::DragFloat("##constant", &constant, 0.01f)) {
+		if (ImGui::DragFloat("##radius", &reachRadius, 0.01f)) {
 			changed = true;
 		}
 		ImGui::NextColumn();
-		ImGui::Text(std::string("constant").c_str()); ImGui::NextColumn();
-
-		if (ImGui::DragFloat("##linear", &linear, 0.01f)) {
-			changed = true;
-		}
-		ImGui::NextColumn();
-		ImGui::Text(std::string("linear").c_str()); ImGui::NextColumn();
-
-		if (ImGui::DragFloat("##quadratic", &quadratic, 0.01f)) {
-			changed = true;
-		}
-		ImGui::NextColumn();
-		ImGui::Text(std::string("quadratic").c_str()); ImGui::NextColumn();
-		if (changed) {
-			light.setAttenuation(constant, linear, quadratic);
-		}
+		ImGui::Text(std::string("Radius").c_str()); ImGui::NextColumn();
 		ImGui::Columns(1);
 	}
 #endif

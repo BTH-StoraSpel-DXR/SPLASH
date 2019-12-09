@@ -28,15 +28,20 @@ void DX12HybridRaytracerRenderer::submit(Mesh* mesh, const glm::mat4& modelMatri
 	}
 }
 
+void DX12HybridRaytracerRenderer::submit(Mesh* mesh, const glm::mat4& modelMatrix, const glm::mat4& modelMatrixLastFrame, RenderFlag flags, int teamColorID, bool castShadows) {
+	if (flags & RenderFlag::IS_VISIBLE_ON_SCREEN) {
+		m_rendererGbuffer->submit(mesh, modelMatrix, modelMatrixLastFrame, flags, teamColorID, castShadows);
+	}
+	if (!(flags & RenderFlag::HIDE_IN_DXR)) {
+		m_rendererRaytrace->submit(mesh, modelMatrix, flags, teamColorID, castShadows);
+	}
+}
+
 void DX12HybridRaytracerRenderer::submitMetaball(RenderCommandType type, Material* material, const glm::vec3& pos, RenderFlag flags, int group) {
 	if (flags & RenderFlag::IS_VISIBLE_ON_SCREEN) {
 		m_rendererGbuffer->submitMetaball(type, material, pos, flags, group);
 	}
 	m_rendererRaytrace->submitMetaball(type, material, pos, flags, group);
-}
-
-void DX12HybridRaytracerRenderer::submitDecal(const glm::vec3& pos, const glm::mat3& rot, const glm::vec3& halfSize) {
-	m_rendererRaytrace->submitDecal(pos, rot, halfSize);
 }
 
 void DX12HybridRaytracerRenderer::submitWaterPoint(const glm::vec3& pos) {

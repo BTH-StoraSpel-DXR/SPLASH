@@ -23,6 +23,9 @@ ParticleEmitterComponent::ParticleEmitterComponent()
 	spawnRate = 0.1f;
 	spawnTimer = 0.0f;
 	atlasSize = glm::uvec2(1U, 1U);
+	drag = 0.0f;
+	maxNumberOfParticles = 300;
+
 
 	init();
 }
@@ -156,6 +159,7 @@ void ParticleEmitterComponent::updateOnGPU(ID3D12GraphicsCommandList4* cmdList, 
 		m_inputData.frameTime = elapsedTime;
 		m_inputData.size = size;
 		m_inputData.atlasSize = atlasSize;
+		m_inputData.drag = drag;
 
 		//Update timer for this buffer
 		m_cpuOutput[context->getSwapIndex()].lastFrameTime += elapsedTime;

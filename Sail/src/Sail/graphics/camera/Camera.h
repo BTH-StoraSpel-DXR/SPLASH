@@ -49,13 +49,13 @@ public:
 		}
 
 		if (m_updateVPMatrix) {
-			VPMatrix = getProjectionMatrix() * viewMatrix;
+			vpMatrix = getProjectionMatrix() * viewMatrix;
 			// Update frustum planes
-			m_frustum.extractPlanes(VPMatrix);
+			m_frustum.extractPlanes(vpMatrix);
 			m_updateVPMatrix = false;
 		}
 
-		return VPMatrix;
+		return vpMatrix;
 	}
 
 	const glm::mat4& getViewMatrix() {
@@ -94,12 +94,23 @@ public:
 		return farZDst;
 	}
 
+	void newFrame() {
+		// Store last used vp matrix
+		m_viewMatrixLastFrame = getViewMatrix();
+		m_projMatrixLastFrame = getProjectionMatrix();
+	}
+
+	glm::mat4 getViewProjectionLastFrame() const {
+		return m_projMatrixLastFrame * m_viewMatrixLastFrame;
+	}
+
 private:
 	virtual const glm::mat4& getProjectionMatrix() = 0;
 
 protected:
-	glm::mat4 VPMatrix;
+	glm::mat4 vpMatrix;
 	glm::mat4 viewMatrix;
+
 
 	float nearZDst;
 	float farZDst;
@@ -107,6 +118,8 @@ protected:
 private:
 	bool m_updateVPMatrix, m_updateViewMatrix;
 	bool m_updateUp;
+	glm::mat4 m_viewMatrixLastFrame;
+	glm::mat4 m_projMatrixLastFrame;
 
 	glm::vec3 m_pos;
 	glm::vec3 m_direction;

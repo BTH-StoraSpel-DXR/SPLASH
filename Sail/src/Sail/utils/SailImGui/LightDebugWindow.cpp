@@ -38,19 +38,44 @@ void LightDebugWindow::renderWindow() {
 
 				glm::vec3 color = pl.getColor(); // = 1.0f
 				glm::vec3 position = pl.getPosition(); // (12.f, 4.f, 0.f);
-				float attConstant = pl.getAttenuation().constant; // 0.312f;
-				float attLinear = pl.getAttenuation().linear; // 0.0f;
-				float attQuadratic = pl.getAttenuation().quadratic; // 0.0009f;
+				float reachRadius = pl.getRadius(); // 10.f;
 
 				ImGui::SliderFloat3("Color##", &color[0], 0.f, 1.0f);
 				ImGui::SliderFloat3("Position##", &position[0], -15.f, 15.0f);
-				ImGui::SliderFloat("AttConstant##", &attConstant, 0.f, 1.f);
-				ImGui::SliderFloat("AttLinear##", &attLinear, 0.f, 1.f);
-				ImGui::SliderFloat("AttQuadratic##", &attQuadratic, 0.f, 0.2f);
+				ImGui::SliderFloat("Radius##", &reachRadius, 0.f, 50.f);
 
-				pl.setAttenuation(attConstant, attLinear, attQuadratic);
+				pl.setRadius(reachRadius);
 				pl.setColor(color);
 				pl.setPosition(position);
+
+			}
+			i++;
+			ImGui::PopID();
+		}
+		i = 0;
+		for (auto& sl : m_lightSetup->getSLs()) {
+			ImGui::PushID(i);
+			std::string label("Spot light ");
+			label += std::to_string(i);
+			if (ImGui::CollapsingHeader(label.c_str())) {
+
+				glm::vec3 color = sl.getColor();
+				glm::vec3 position = sl.getPosition();
+				float reachRadius = sl.getRadius(); // 10.f;
+				float angle = sl.getAngle();
+				glm::vec3 direction = sl.getDirection();
+
+				ImGui::SliderFloat3("Color##", &color[0], 0.f, 1.0f);
+				ImGui::SliderFloat3("Position##", &position[0], -15.f, 15.0f);
+				ImGui::SliderFloat3("Direction##", &direction[0], -1.f, 1.f);
+				ImGui::SliderFloat("Angle##", &angle, 0.f, glm::two_pi<float>());
+				ImGui::SliderFloat("Radius##", &reachRadius, 0.f, 50.f);
+
+				sl.setRadius(reachRadius);
+				sl.setColor(color);
+				sl.setPosition(position);
+				sl.setAngle(angle);
+				sl.setDirection(direction);
 
 			}
 			i++;

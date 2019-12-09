@@ -39,7 +39,7 @@ namespace EntityFactory {
 	void CreateGenericPlayer(Entity::SPtr playerEntity, size_t lightIndex, glm::vec3 spawnLocation, Netcode::PlayerID playerID, bool doNotAddToSystems = false);
 	Entity::SPtr CreateMySpectator(Netcode::PlayerID playerID, size_t lightIndex, glm::vec3 spawnLocation);
 	
-
+	Entity::SPtr CreatePowerUp(glm::vec3& spawn, const int type, Netcode::ComponentID comID = 0);
 
 	Entity::SPtr CreateBot(Model* boundingBoxModel, Model* characterModel, const glm::vec3& pos, Model* lightModel, size_t lightIndex, NodeSystem* ns);
 	Entity::SPtr CreateCleaningBot(const glm::vec3& pos, NodeSystem* ns);

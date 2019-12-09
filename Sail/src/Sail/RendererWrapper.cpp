@@ -22,7 +22,7 @@ void RendererWrapper::initialize() {
 
 	m_postProcessPipeline = std::make_shared<PostProcessPipeline>();
 
-	m_doPostProcessing = true;
+	m_doPostProcessing = true; // Should always be true, will cause dx errors if not
 }
 
 /*

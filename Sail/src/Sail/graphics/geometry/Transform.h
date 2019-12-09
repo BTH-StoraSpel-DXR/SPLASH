@@ -37,6 +37,7 @@ public:
 	void setParent(Transform* parent);
 	void removeParent();
 
+	void prepareFixedUpdate();
 	void prepareUpdate();
 	TransformSnapshot getCurrentTransformState() const;
 	TransformSnapshot getPreviousTransformState() const;
@@ -95,6 +96,7 @@ public:
 
 	// Matrix used to render
 	glm::mat4 getRenderMatrix(float alpha = 1.0f);
+	const glm::mat4& getRenderMatrixLastFrame() const;
 
 private:
 	TransformFrame m_data;
@@ -109,6 +111,7 @@ private:
 	// Used for rendering
 	// At most updated once per frame
 	glm::mat4 m_renderMatrix;
+	glm::mat4 m_renderMatrixLastFrame;
 	glm::mat4 m_localRenderMatrix;
 
 	bool m_parentUpdated;

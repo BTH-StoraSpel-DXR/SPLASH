@@ -39,7 +39,6 @@ void LightListSystem::addPointLightToDebugEntity(LightSetup* lightSetup, Perspec
 	PointLight pl;
 	pl.setColor(glm::vec3(Utils::rnd(), Utils::rnd(), Utils::rnd()));
 	pl.setPosition(cam->getPosition());
-	pl.setAttenuation(.0f, 0.1f, 0.02f);
 
 	if (m_debugLightListEntity) {
 		LightListComponent* llc = m_debugLightListEntity->getComponent<LightListComponent>();

@@ -250,7 +250,7 @@ const bool CollisionSystem::handleRagdollCollisions(Entity* e, std::vector<Octre
 			Octree::RayIntersectionInfo tempInfo;
 			m_octree->getRayIntersection(globalCenterOfMass, glm::normalize(offsetVector), &tempInfo, e, 0.0f, collision->doSimpleCollisions);
 
-			if (tempInfo.closestHit < glm::length(offsetVector)) {
+			if (tempInfo.closestHit >= 0.0f && tempInfo.closestHit < glm::length(offsetVector)) {
 				glm::vec3 translation = (tempInfo.closestHit - glm::length(offsetVector)) * 1.1f * glm::normalize(offsetVector);
 				transComp->translate(translation);
 				for (size_t j = 0; j < ragdollComp->contactPoints.size(); j++) {

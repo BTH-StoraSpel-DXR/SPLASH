@@ -29,9 +29,6 @@ void RenderSettingsWindow::renderWindow() {
 	ImGui::Checkbox("Enable post processing",
 		&(*Application::getInstance()->getRenderWrapper()).getDoPostProcessing()
 	);
-	/*bool interpolate = ECS::Instance()->getSystem<AnimationSystem<RenderInActiveGameComponent>>()->getInterpolation();
-	ImGui::Checkbox("enable animation interpolation", &interpolate);
-	ECS::Instance()->getSystem<AnimationSystem<RenderInActiveGameComponent>>()->setInterpolation(interpolate);*/
 	static Entity* pickedEntity = nullptr;
 	static float metalness = 1.0f;
 	static float roughness = 1.0f;

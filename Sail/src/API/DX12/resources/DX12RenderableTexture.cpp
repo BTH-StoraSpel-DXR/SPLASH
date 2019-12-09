@@ -4,19 +4,22 @@
 #include "Sail/api/Window.h"
 #include "../DX12Utils.h"
 
-RenderableTexture* RenderableTexture::Create(unsigned int width, unsigned int height, const std::string& name, Texture::FORMAT format, bool createDepthStencilView, bool createOnlyDSV) {
-	return SAIL_NEW DX12RenderableTexture(1, width, height, format, createDepthStencilView, createOnlyDSV, 0U, 0U, name);
+RenderableTexture* RenderableTexture::Create(unsigned int width, unsigned int height, const std::string& name, Texture::FORMAT format, bool createDepthStencilView, bool createOnlyDSV, unsigned int arraySize) {
+	return SAIL_NEW DX12RenderableTexture(1, width, height, format, createDepthStencilView, createOnlyDSV, 0U, 0U, name, arraySize);
 }
 
-DX12RenderableTexture::DX12RenderableTexture(UINT aaSamples, unsigned int width, unsigned int height, Texture::FORMAT format, bool createDepthStencilView, bool createOnlyDSV, UINT bindFlags, UINT cpuAccessFlags, const std::string& name)
+DX12RenderableTexture::DX12RenderableTexture(UINT aaSamples, unsigned int width, unsigned int height, Texture::FORMAT format, bool createDepthStencilView, bool createOnlyDSV, UINT bindFlags, UINT cpuAccessFlags, const std::string& name, unsigned int arraySize)
 	: m_width(width)
 	, m_height(height)
 	, m_cpuRtvDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, Application::getInstance()->getAPI<DX12API>()->getNumGPUBuffers())
 	, m_cpuDsvDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, Application::getInstance()->getAPI<DX12API>()->getNumGPUBuffers())
 	, m_hasDepthTextures(createDepthStencilView)
+	, m_arraySize(arraySize)
 {
 	isRenderableTex = true;
 	context = Application::getInstance()->getAPI<DX12API>();
+
+	m_name = name;
 
 	m_format = convertFormat(format);
 
@@ -31,7 +34,6 @@ DX12RenderableTexture::DX12RenderableTexture(UINT aaSamples, unsigned int width,
 		m_dsvHeapCDHs[i] = m_cpuDsvDescHeap.getCPUDescriptorHandleForIndex(i);
 	}
 	createTextures();
-	renameBuffer(name);
 }
 
 DX12RenderableTexture::~DX12RenderableTexture() {
@@ -89,8 +91,9 @@ void DX12RenderableTexture::resize(int width, int height) {
 	createTextures();
 }
 
-ID3D12Resource* DX12RenderableTexture::getResource() const {
-	return textureDefaultBuffers[context->getSwapIndex()].Get();
+ID3D12Resource* DX12RenderableTexture::getResource(int frameIndex) const {
+	int i = (frameIndex == -1) ? context->getSwapIndex() : frameIndex;
+	return textureDefaultBuffers[i].Get();
 }
 
 ID3D12Resource* DX12RenderableTexture::getDepthResource() const {
@@ -148,7 +151,7 @@ void DX12RenderableTexture::createTextures() {
 		textureDesc.Format = m_format;
 		textureDesc.Width = m_width;
 		textureDesc.Height = m_height;
-		textureDesc.DepthOrArraySize = 1;
+		textureDesc.DepthOrArraySize = m_arraySize;
 		textureDesc.MipLevels = 1;
 		textureDesc.SampleDesc.Count = 1;
 		textureDesc.SampleDesc.Quality = 0;
@@ -161,20 +164,33 @@ void DX12RenderableTexture::createTextures() {
 		state[i] = D3D12_RESOURCE_STATE_COMMON;
 		// A texture rarely updates its data, if at all, so it is stored in a default heap
 		ThrowIfFailed(context->getDevice()->CreateCommittedResource(&DX12Utils::sDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &textureDesc, state[i], &clearValue, IID_PPV_ARGS(&textureDefaultBuffers[i])));
-		textureDefaultBuffers[i]->SetName(L"Renderable texture default buffer");
+
+		std::wstring stemp = std::wstring(m_name.begin(), m_name.end());
+		textureDefaultBuffers[i]->SetName(stemp.c_str());
 
 		// Create a shader resource view (descriptor that points to the texture and describes it)
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		if (m_arraySize > 1) {
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+			srvDesc.Texture2DArray.ArraySize = m_arraySize;
+			srvDesc.Texture2DArray.MipLevels = 1;
+		} else {
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+			srvDesc.Texture2D.MipLevels = 1;
+		}
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		srvDesc.Format = textureDesc.Format;
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Texture2D.MipLevels = 1;
 		context->getDevice()->CreateShaderResourceView(textureDefaultBuffers[i].Get(), &srvDesc, srvHeapCDHs[i]);
 
 		// Create a unordered access view
 		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+		if (m_arraySize > 1) {
+			uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+			uavDesc.Texture2DArray.ArraySize = m_arraySize;
+		} else {
+			uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+		}
 		uavDesc.Format = textureDesc.Format;
-		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 		context->getDevice()->CreateUnorderedAccessView(textureDefaultBuffers[i].Get(), nullptr, &uavDesc, uavHeapCDHs[i]);
 
 		// Create a render target view

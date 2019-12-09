@@ -252,22 +252,30 @@ void SettingStorage::createGameDefaultStructure() {
 void SettingStorage::createGameDefaultMap() {
 
 
-	auto& gameSettingD = gameSettingsDynamic["map"] = std::unordered_map<std::string, DynamicSetting>();
-	gameSettingD["sizeX"] =   DynamicSetting(6.0f,	2.0f,	30.0f);
-	gameSettingD["sizeY"] =   DynamicSetting(6.0f,	2.0f,	30.0f);
-	gameSettingD["tileSize"] =	DynamicSetting(7.0f, 1.0f, 30.0f);
-	gameSettingD["clutter"] = DynamicSetting(0.85f,	0.0f,	1.0f);
-	gameSettingD["seed"] =    DynamicSetting(0.0f,	0.0f,	1000000.0f);
-	gameSettingD["sprinklerTime"] = DynamicSetting(75.0f, 0.0f, 600.0f);
-	gameSettingD["sprinklerIncrement"] = DynamicSetting(30.0f, 5.0f, 300.0f);
-
-	gameSettingsStatic["map"] = std::unordered_map<std::string, Setting>();
-	gameSettingsStatic["map"]["sprinkler"] = Setting(0, std::vector<Setting::Option>({
+	auto& gameSettingMapD = gameSettingsDynamic["map"] = std::unordered_map<std::string, DynamicSetting>();
+	auto& gameSettingMapS = gameSettingsStatic["map"] = std::unordered_map<std::string, Setting>();
+	gameSettingMapD["sizeX"] =   DynamicSetting(6.0f,	2.0f,	30.0f);
+	gameSettingMapD["sizeY"] =   DynamicSetting(6.0f,	2.0f,	30.0f);
+	gameSettingMapD["tileSize"] =	DynamicSetting(7.0f, 1.0f, 30.0f);
+	gameSettingMapD["clutter"] = DynamicSetting(0.85f,	0.0f,	1.0f);
+	gameSettingMapD["seed"] =    DynamicSetting(0.0f,	0.0f,	1000000.0f);
+	
+	gameSettingMapS["sprinkler"] = Setting(0, std::vector<Setting::Option>({
 		{ "on", 0.0f },
 		{ "off",1.0f }
 	}));
+	gameSettingMapD["sprinklerTime"] = DynamicSetting(75.0f, 0.0f, 600.0f);
+	gameSettingMapD["sprinklerIncrement"] = DynamicSetting(30.0f, 5.0f, 300.0f);
 
+	gameSettingsStatic["map"]["Powerup"] = Setting(0, std::vector<Setting::Option>({
+		{ "on", 0.0f },
+		{ "off",1.0f }
+	}));
+	gameSettingsDynamic["powerup"] = std::unordered_map<std::string, DynamicSetting>();
 
+	gameSettingsDynamic["powerup"]["duration"] = DynamicSetting(15.0f, 5.0f, 60.0f);
+	gameSettingsDynamic["powerup"]["respawnTime"] = DynamicSetting(30.0f, 5.0f, 300.0f);
+	gameSettingsDynamic["powerup"]["count"] = DynamicSetting(1.0f, 1.0f, 1.0f);
 
 
 	defaultMaps["Deathmatch"] = Setting(0, std::vector<Setting::Option>({
@@ -280,8 +288,8 @@ void SettingStorage::createGameDefaultMap() {
 		{"Cologne",		5},
 		{"Frankfurt",	6},
 		{"Bremen",		7},
-		{"Flensburg",			8},
-		{"Hanover",			9},
+		{"Flensburg",	8},
+		{"Hanover",		9},
 		{"Wasserburg",	10}, // Alex - Hanslin/Hansburg/
 		{"Lubeck",		11}, // Fred - /
 	}));

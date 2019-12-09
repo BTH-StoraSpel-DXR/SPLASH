@@ -8,28 +8,27 @@
 class LightSetup {
 public:
 
-	static const UINT MAX_POINTLIGHTS_FORWARD_RENDERING = 12;  // Max number of lights as set in shader
+	// Max number of lights as set in shader
+	static const UINT MAX_POINTLIGHTS_RENDERING = 12;
+	static const UINT MAX_SPOTLIGHTS_RENDERING = 12; 
 
 	struct PointLightStruct {
 		glm::vec3 color = glm::vec3(0.f);
 		float padding;
 		glm::vec3 position = glm::vec3(0.f);
-		float attConstant = 0.f;
-		float attLinear;
-		float attQuadratic;
-		float padding1, padding2;
+		float reachRadius = 10.f;
 	};
 
 	struct SpotlightStruct {
+		// This part must match point light input
+		// (all lights are casted to PointLightInput during shading)
 		glm::vec3 color = glm::vec3(0.f);
-		float attConstant = 0.f;
+		float padding;
 		glm::vec3 position = glm::vec3(0.f);
-		float attLinear;
+		float reachRadius = 10.f;
+		// This part can be unique for each light type
 		glm::vec3 direction = glm::vec3(1.f, 0.0f, 0.0f);
-		float attQuadratic;
-		
 		float angle;
-		float padding1, padding2, padding3;
 	};
 
 	struct DirLightBuffer {
@@ -42,12 +41,12 @@ public:
 
 	struct PointLightsBuffer {
 		PointLightsBuffer() { };
-		PointLightStruct pLights[MAX_POINTLIGHTS_FORWARD_RENDERING];
+		PointLightStruct pLights[MAX_POINTLIGHTS_RENDERING];
 	};
 
 	struct SpotlightBuffer {
 		SpotlightBuffer() {};
-		SpotlightStruct sLights[MAX_POINTLIGHTS_FORWARD_RENDERING];
+		SpotlightStruct sLights[MAX_SPOTLIGHTS_RENDERING];
 	};
 
 

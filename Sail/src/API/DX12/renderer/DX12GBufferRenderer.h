@@ -11,7 +11,7 @@ class PostProcessPipeline;
 
 class DX12GBufferRenderer final : public Renderer {
 public:
-	static const int NUM_GBUFFERS = 3;
+	static const int NUM_GBUFFERS = 4;
 
 public:
 	DX12GBufferRenderer();

@@ -11,10 +11,11 @@ BeginEndFrameSystem::~BeginEndFrameSystem() {
 }
 
 void BeginEndFrameSystem::renderNothing() {
-	Renderer* renderer = Application::getInstance()->getRenderWrapper()->getCurrentRenderer();
+	RendererWrapper* renderWrapper = Application::getInstance()->getRenderWrapper();
+	Renderer* renderer = renderWrapper->getCurrentRenderer();
 	renderer->begin(nullptr);
 	renderer->end();
-	renderer->present();
+	renderer->present((renderWrapper->getDoPostProcessing()) ? renderWrapper->getPostProcessPipeline() : nullptr);
 }
 
 void BeginEndFrameSystem::beginFrame(Camera& camera) {

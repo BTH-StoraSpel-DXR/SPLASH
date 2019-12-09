@@ -8,7 +8,7 @@
 #include "Sail/entities/components/GunComponent.h"
 #include "Sail/entities/components/NetworkSenderComponent.h"
 #include "Sail/entities/components/MovementComponent.h"
-#include "Sail/entities/components/PowerUpComponent.h"
+#include "Sail/entities/components/PowerUp/PowerUpComponent.h"
 
 #include "Sail/utils/GameDataTracker.h"
 #include "../Sail/src/Network/NWrapperSingleton.h"
@@ -50,7 +50,7 @@ void GunSystem::update(float dt) {
 					// Determine projectileSpeed based on how long the gun has been firing continuously
 				PowerUpComponent* powC = e->getComponent<PowerUpComponent>();
 				if (powC) {
-					if (powC->powerUps[PowerUpComponent::PowerUps::POWERWASH].time > 0) {
+					if (powC->powerUps[PowerUps::POWERWASH].time > 0) {
 						gun->projectileSpeed = gun->baseProjectileSpeed * 2;
 					}
 					else {
@@ -133,7 +133,7 @@ void GunSystem::fireGun(Entity* e, GunComponent* gun, PowerUpComponent* powC) {
 	vel.push_back(gun->direction * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
 	constexpr float randomSpread = 0.05f;
 	if (powC) {
-		if (powC->powerUps[PowerUpComponent::PowerUps::SHOWER].time > 0.0f) {
+		if (powC->powerUps[PowerUps::SHOWER].time > 0.0f) {
 			glm::vec3 right = glm::normalize(glm::cross(gun->direction, glm::vec3(0.0f, 1.0f, 0.0f)));
 			glm::vec3 up = glm::normalize(glm::cross(vel.front(), right));
 

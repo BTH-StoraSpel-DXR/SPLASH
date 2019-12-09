@@ -234,12 +234,12 @@ void DX12API::createGlobalRootSignature() {
 	descRangeSrvUav[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	// TODO: autogen from other data
-	m_globalRootSignatureRegisters["t0"] = GlobalRootParam::DT_SRV_0TO9_UAV_10TO20;
-	m_globalRootSignatureRegisters["t1"] = GlobalRootParam::DT_SRV_0TO9_UAV_10TO20;
-	m_globalRootSignatureRegisters["t2"] = GlobalRootParam::DT_SRV_0TO9_UAV_10TO20;
-	m_globalRootSignatureRegisters["u10"] = GlobalRootParam::DT_SRV_0TO9_UAV_10TO20;
-	m_globalRootSignatureRegisters["u11"] = GlobalRootParam::DT_SRV_0TO9_UAV_10TO20;
-	m_globalRootSignatureRegisters["u12"] = GlobalRootParam::DT_SRV_0TO9_UAV_10TO20;
+	for (unsigned int i = 0; i <= 9; i++) {
+		m_globalRootSignatureRegisters["t"+std::to_string(i)] = GlobalRootParam::DT_SRV_0TO9_UAV_10TO20;
+	}
+	for (unsigned int i = 10; i <= 20; i++) {
+		m_globalRootSignatureRegisters["u" + std::to_string(i)] = GlobalRootParam::DT_SRV_0TO9_UAV_10TO20;
+	}
 
 	// Create descriptor table
 	D3D12_ROOT_DESCRIPTOR_TABLE dtSrvUav;
@@ -267,6 +267,10 @@ void DX12API::createGlobalRootSignature() {
 	m_globalRootSignatureRegisters["b0"] = GlobalRootParam::CBV_TRANSFORM;
 	m_globalRootSignatureRegisters["b1"] = GlobalRootParam::CBV_DIFFUSE_TINT;
 	m_globalRootSignatureRegisters["b2"] = GlobalRootParam::CBV_CAMERA;
+	m_globalRootSignatureRegisters["t10"] = GlobalRootParam::SRV_GENERAL10;
+	m_globalRootSignatureRegisters["t11"] = GlobalRootParam::SRV_GENERAL11;
+	m_globalRootSignatureRegisters["u0"] = GlobalRootParam::UAV_GENERAL0;
+	m_globalRootSignatureRegisters["u1"] = GlobalRootParam::UAV_GENERAL1;
 
 	// Create root parameters
 	D3D12_ROOT_PARAMETER rootParam[GlobalRootParam::SIZE];

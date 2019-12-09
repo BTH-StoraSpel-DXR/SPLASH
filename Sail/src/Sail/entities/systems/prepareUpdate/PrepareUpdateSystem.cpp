@@ -15,6 +15,12 @@ PrepareUpdateSystem::~PrepareUpdateSystem() {
 
 }
 
+void PrepareUpdateSystem::fixedUpdate() {
+	for (auto e : entities) {
+		e->getComponent<TransformComponent>()->prepareFixedUpdate();
+	}
+}
+
 void PrepareUpdateSystem::update() {
 	for (auto e : entities) {
 		e->getComponent<TransformComponent>()->prepareUpdate();

@@ -6,5 +6,6 @@ class PrepareUpdateSystem : public BaseComponentSystem {
 public:
 	PrepareUpdateSystem();
 	~PrepareUpdateSystem();
+	void fixedUpdate();
 	void update();
 };

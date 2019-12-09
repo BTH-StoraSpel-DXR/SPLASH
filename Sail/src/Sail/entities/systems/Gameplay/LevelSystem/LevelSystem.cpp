@@ -1761,7 +1761,7 @@ void LevelSystem::addClutterModel(const std::vector<Model*>& clutterModels, Mode
 		SpotlightComponent* sc = e2->addComponent<SpotlightComponent>();
 		sc->light.setColor(glm::vec3(1.0f, 0.2f, 0.0f));
 		sc->light.setPosition(glm::vec3(0, tileHeight * 5 - 0.05, 0));
-		sc->light.setAttenuation(1.f, 0.01f, 0.01f);
+		sc->light.setRadius(30.f);
 		sc->light.setDirection(glm::vec3(1, 0, 0));
 		sc->light.setAngle(0.5);
 		sc->roomID = getRoomID(room.posx, room.posy);
@@ -1772,14 +1772,20 @@ void LevelSystem::addClutterModel(const std::vector<Model*>& clutterModels, Mode
 
 #ifdef DEVELOPMENT
 		auto* particleEmitterComp = e2->addComponent<ParticleEmitterComponent>();
-		particleEmitterComp->size = 1.0f;
+
+		float sprinklerXspread = room.sizex * tileSize * 1.3f;
+		float sprinklerZspread = room.sizey * tileSize * 1.3f;
+
+		particleEmitterComp->size = 0.1f;
 		particleEmitterComp->offset = { 0, tileHeight * 6, 0 };
-		particleEmitterComp->constantVelocity = { 0.0f, -0.7f, 0.0f };
-		particleEmitterComp->acceleration = { 0.0f, -0.4f, 0.0f };
-		particleEmitterComp->spread = { 5.22f, 1.0f, 5.22f };
-		particleEmitterComp->spawnRate = 1.f / 100.f;
-		particleEmitterComp->lifeTime = 2.0f;
+		particleEmitterComp->constantVelocity = { 0.0f, -0.5f, 0.0f };
+		particleEmitterComp->acceleration = { 0.0f, -30.0f, 0.0f };
+		particleEmitterComp->spread = { sprinklerXspread, 0.5f, sprinklerZspread };
+		particleEmitterComp->spawnRate = 1.f / (100.f * room.sizex * room.sizey);
+		particleEmitterComp->lifeTime = 0.5f;
 		particleEmitterComp->atlasSize = glm::uvec2(8U, 3U);
+		particleEmitterComp->drag = 30.0f;
+		particleEmitterComp->maxNumberOfParticles = (int)glm::ceil((1.0f / particleEmitterComp->spawnRate) * particleEmitterComp->lifeTime);
 		std::string particleTextureName = "particles/animSmoke.dds";
 		if (!Application::getInstance()->getResourceManager().hasTexture(particleTextureName)) {
 			Application::getInstance()->getResourceManager().loadTexture(particleTextureName);

@@ -24,6 +24,9 @@
 #include "API/DX12/renderer/DX12HybridRaytracerRenderer.h"
 #include "API/DX12/dxr/DXRBase.h"
 #include "../Sail/src/API/Audio/AudioEngine.h"
+#include "Sail/graphics/shader/postprocess/BilateralBlurHorizontal.h"
+#include "Sail/graphics/shader/postprocess/BilateralBlurVertical.h"
+#include "Sail/graphics/shader/dxr/ShadePassShader.h"
 
 
 
@@ -126,9 +129,6 @@ GameState::GameState(StateStack& stack)
 	m_app->getRenderWrapper()->getCurrentRenderer()->setLightSetup(&m_lights);
 
 	m_lightDebugWindow.setLightSetup(&m_lights);
-
-	// Disable culling for testing purposes
-	m_app->getAPI()->setFaceCulling(GraphicsAPI::NO_CULLING);
 
 	auto* shader = &m_app->getResourceManager().getShaderSet<GBufferOutShader>();
 
@@ -326,7 +326,6 @@ bool GameState::processInput(float dt) {
 		m_showcaseProcGen = m_lightDebugWindow.isManualOverrideOn();
 		if (m_showcaseProcGen) {
 			m_lights.getPLs()[0].setPosition(glm::vec3(100.f, 20.f, 100.f));
-			m_lights.getPLs()[0].setAttenuation(0.2f, 0.f, 0.f);
 		} else {
 			m_cam.setPosition(glm::vec3(0.f, 1.f, 0.f));
 		}
@@ -352,16 +351,6 @@ bool GameState::processInput(float dt) {
 		}
 	}
 
-	if (Input::WasKeyJustPressed(KeyBinds::SPRAY)) {
-		Octree::RayIntersectionInfo tempInfo;
-		m_octree->getRayIntersection(m_cam.getPosition(), m_cam.getDirection(), &tempInfo);
-		if (tempInfo.closestHit >= 0.0f) {
-			// size (the size you want) = 0.3
-			// halfSize = (1 / 0.3) * 0.5 = 1.667
-			m_app->getRenderWrapper()->getCurrentRenderer()->submitDecal(m_cam.getPosition() + m_cam.getDirection() * tempInfo.closestHit, glm::identity<glm::mat4>(), glm::vec3(1.667f));
-		}
-	}
-
 	//Test frustum culling
 	if (Input::IsKeyPressed(KeyBinds::TEST_FRUSTUMCULLING)) {
 		int nrOfDraws = m_octree->frustumCulledDraw(m_cam);
@@ -377,6 +366,9 @@ bool GameState::processInput(float dt) {
 	// Reload shaders
 	if (Input::WasKeyJustPressed(KeyBinds::RELOAD_SHADER)) {
 		m_app->getAPI<DX12API>()->waitForGPU();
+		m_app->getResourceManager().reloadShader<ShadePassShader>();
+		m_app->getResourceManager().reloadShader<BilateralBlurHorizontal>();
+		m_app->getResourceManager().reloadShader<BilateralBlurVertical>();
 		m_app->getResourceManager().reloadShader<BlendShader>();
 		m_app->getResourceManager().reloadShader<GaussianBlurHorizontal>();
 		m_app->getResourceManager().reloadShader<GaussianBlurVertical>();
@@ -436,7 +428,6 @@ bool GameState::processInput(float dt) {
 void GameState::initSystems(const unsigned char playerID) {
 	m_componentSystems.teamColorSystem = ECS::Instance()->createSystem<TeamColorSystem>();
 	m_componentSystems.movementSystem = ECS::Instance()->createSystem<MovementSystem<RenderInActiveGameComponent>>();
-	m_componentSystems.powerUpUpdateSystem = ECS::Instance()->createSystem<PowerUpUpdateSystem>();
 
 	m_componentSystems.collisionSystem = ECS::Instance()->createSystem<CollisionSystem>();
 	m_componentSystems.collisionSystem->provideOctree(m_octree);
@@ -530,6 +521,11 @@ void GameState::initSystems(const unsigned char playerID) {
 	m_componentSystems.audioSystem = ECS::Instance()->createSystem<AudioSystem>();
 
 	m_componentSystems.playerSystem = ECS::Instance()->createSystem<PlayerSystem>();
+	m_componentSystems.powerUpUpdateSystem = ECS::Instance()->createSystem<PowerUpUpdateSystem>();
+	m_componentSystems.powerUpCollectibleSystem = ECS::Instance()->createSystem<PowerUpCollectibleSystem>();
+	m_componentSystems.powerUpCollectibleSystem->init(m_componentSystems.playerSystem->getPlayers());
+
+
 
 	//Create particle system
 	m_componentSystems.particleSystem = ECS::Instance()->createSystem<ParticleSystem>();
@@ -938,9 +934,10 @@ void GameState::updatePerTickComponentSystems(float dt) {
 	m_componentSystems.gameInputSystem->fixedUpdate(dt);
 	m_componentSystems.spectateInputSystem->fixedUpdate(dt);
 
-	m_componentSystems.prepareUpdateSystem->update(); // HAS TO BE RUN BEFORE OTHER SYSTEMS WHICH USE TRANSFORM
+	m_componentSystems.prepareUpdateSystem->fixedUpdate(); // HAS TO BE RUN BEFORE OTHER SYSTEMS WHICH USE TRANSFORM
 	m_componentSystems.lightSystem->prepareFixedUpdate();
 
+	
 	// Update entities with info from the network and from ourself
 	// DON'T MOVE, should happen at the start of each tick
 	m_componentSystems.networkReceiverSystem->update(dt);
@@ -951,6 +948,7 @@ void GameState::updatePerTickComponentSystems(float dt) {
 	m_componentSystems.collisionSystem->update(dt);
 	m_componentSystems.movementPostCollisionSystem->update(dt);
 	m_componentSystems.powerUpUpdateSystem->update(dt);
+	m_componentSystems.powerUpCollectibleSystem->update(dt);
 	// TODO: Investigate this
 	// Systems sent to runSystem() need to override the update(float dt) in BaseComponentSystem
 	runSystem(dt, m_componentSystems.aiSystem);
@@ -986,6 +984,10 @@ void GameState::updatePerFrameComponentSystems(float dt, float alpha) {
 	const float killCamDelta = m_componentSystems.killCamReceiverSystem->getKillCamDelta(dt);
 
 	// TODO? move to its own thread
+	
+	m_cam.newFrame(); // Has to run before the camera update
+	m_componentSystems.prepareUpdateSystem->update(); // HAS TO BE RUN BEFORE OTHER SYSTEMS WHICH USE TRANSFORM
+	
 	m_componentSystems.sprintingSystem->update(dt, alpha);
 
 	m_componentSystems.gameInputSystem->processMouseInput(dt);
@@ -999,6 +1001,7 @@ void GameState::updatePerFrameComponentSystems(float dt, float alpha) {
 	// Updates keyboard/mouse input and the camera
 	m_componentSystems.gameInputSystem->updateCameraPosition(alpha);
 	m_componentSystems.spectateInputSystem->update(dt, alpha);
+
 
 	// There is an imgui debug toggle to override lights
 	if (!m_lightDebugWindow.isManualOverrideOn()) {
@@ -1216,6 +1219,9 @@ void GameState::createBots() {
 		glm::vec3 spawnLocation = m_componentSystems.levelSystem->getSpawnPoint();
 		if (spawnLocation.x != -1000.f) {
 			auto e = EntityFactory::CreateCleaningBot(spawnLocation, m_componentSystems.aiSystem->getNodeSystem());
+			if (NWrapperSingleton::getInstance().isHost()) {	
+				m_componentSystems.powerUpCollectibleSystem->spawnPowerUp(glm::vec3(0, 1, 0), 0, 0, 0, e.get());
+			}
 		}
 		else {
 			SAIL_LOG_ERROR("Bot not spawned because all spawn points are already used for this map.");
@@ -1388,6 +1394,23 @@ void GameState::createLevel(Shader* shader, Model* boundingBoxModel) {
 	m_componentSystems.levelSystem->createWorld(tileModels, boundingBoxModel);
 	m_componentSystems.levelSystem->addClutterModel(clutterModels, boundingBoxModel);
 	m_componentSystems.gameInputSystem->m_mapPointer = m_componentSystems.levelSystem;
+
+	// SPAWN POWERUPS IF ENABLED
+	if (settings.gameSettingsStatic["map"]["Powerup"].getSelected().value == 0.0f) {
+
+
+		m_componentSystems.powerUpCollectibleSystem->setSpawnPoints(m_componentSystems.levelSystem->powerUpSpawnPoints);
+		m_componentSystems.powerUpCollectibleSystem->
+			setDuration(settings.gameSettingsDynamic["powerup"]["duration"].value);
+		m_componentSystems.powerUpCollectibleSystem->setRespawnTime(settings.gameSettingsDynamic["powerup"]["respawnTime"].value);
+		if (NWrapperSingleton::getInstance().isHost()) {
+			m_componentSystems.powerUpCollectibleSystem->spawnPowerUps(settings.gameSettingsDynamic["powerup"]["count"].value);
+		}
+	}
+
+
+
+
 }
 
 #ifdef _PERFORMANCE_TEST

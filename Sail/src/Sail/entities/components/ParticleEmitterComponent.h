@@ -30,9 +30,11 @@ public:
 	glm::vec3 velocity;
 	glm::vec3 acceleration;
 	glm::uvec2 atlasSize;
+	float drag;
 	float lifeTime;
 	float spawnRate;
 	float spawnTimer;
+	int maxNumberOfParticles;
 
 
 #ifdef DEVELOPMENT
@@ -130,6 +132,7 @@ private:
 		float frameTime;
 		float size;
 		glm::uvec2 atlasSize;
+		float drag;
 	};
 
 	ComputeInput m_inputData;

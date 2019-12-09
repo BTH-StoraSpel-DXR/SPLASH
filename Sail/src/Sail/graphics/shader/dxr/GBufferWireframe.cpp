@@ -13,7 +13,7 @@ GBufferWireframe::GBufferWireframe()
 	shaderPipeline->getInputLayout().create(shaderPipeline->getVsBlob());
 	setWireframe(true);
 
-	static_cast<DX12ShaderPipeline*>(shaderPipeline)->setNumRenderTargets(3);
+	shaderPipeline->setNumRenderTargets(4);
 
 	// Finish the shader creation
 	finish();

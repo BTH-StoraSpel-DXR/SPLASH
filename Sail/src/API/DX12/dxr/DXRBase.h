@@ -15,16 +15,17 @@
 
 class DXRBase final : public EventReceiver {
 public:
-	// TODO: somehow allow this to change from different DXRBase instances
-	struct RayPayload {
-		glm::vec4 color;
-		UINT recursionDepth;
-		int hit;
-	};
-
 	struct Metaball {
 		glm::vec3 pos;
 		float distToCamera;
+	};
+	struct BounceOutput {
+		std::unique_ptr<DX12RenderableTexture> albedo; // RGB
+		std::unique_ptr<DX12RenderableTexture> normal; // RGB
+		std::unique_ptr<DX12RenderableTexture> metalnessRoughnessAO; // RGB
+		std::unique_ptr<DX12RenderableTexture> shadows; // RG - first and second bounce shadows
+		std::unique_ptr<DX12RenderableTexture> positionsOne; // RGB - first bounce world positions
+		std::unique_ptr<DX12RenderableTexture> positionsTwo; // RGB - second bounce world positions
 	};
 
 	struct MetaballGroup {
@@ -40,17 +41,17 @@ public:
 
 	void setGBufferInputs(DX12RenderableTexture** inputs);
 
-	void updateAccelerationStructures(const std::vector<Renderer::RenderCommand>& sceneGeometry, ID3D12GraphicsCommandList4* cmdList, const std::vector<DXRBase::MetaballGroup*>& metaballGroups);
+	void updateAccelerationStructures(const std::vector<Renderer::RenderCommand>& sceneGeometry, const std::vector<DXRBase::MetaballGroup*>& metaballGroups, ID3D12GraphicsCommandList4* cmdList);
 
-	void updateSceneData(Camera& cam, LightSetup& lights, const std::vector<DXRBase::MetaballGroup*>& metaballGroups, const std::vector<glm::vec3>& teamColors, bool doToneMapping = true);
-	void updateDecalData(DXRShaderCommon::DecalData* decals, size_t size);
+	void updateSceneData(Camera* cam, LightSetup* lights, const std::vector<DXRBase::MetaballGroup*>& metaballGroups, const std::vector<glm::vec3>& teamColors);
 	void addWaterAtWorldPosition(const glm::vec3& position);
 	bool checkWaterAtWorldPosition(const glm::vec3& position);
 	void updateWaterData();
-	void dispatch(DX12RenderableTexture* outputTexture, DX12RenderableTexture* outputBloomTexture, ID3D12GraphicsCommandList4* cmdList);
-	void simulateWater(float dt);
+	void dispatch(BounceOutput& output, DX12RenderableTexture* outputBloomTexture, DX12RenderableTexture* shadowsLastFrameInput, ID3D12GraphicsCommandList4* cmdList);
 
+	void simulateWater(float dt);
 	void rebuildWater();
+	ShaderComponent::DX12StructuredBuffer* getWaterVoxelSBuffer();
 
 	void resetWater();
 	void reloadShaders();
@@ -111,20 +112,17 @@ private:
 	void initMetaballBuffers();
 	void updateMetaballpositions(const std::vector<DXRBase::MetaballGroup*>& metaballGroups);
 
-	void initDecals(D3D12_GPU_DESCRIPTOR_HANDLE* gpuHandle, D3D12_CPU_DESCRIPTOR_HANDLE* cpuHandle);
 	void addMetaballGroupAABB(int index);
 
 private:
 	DX12API* m_context;
 
 	DX12RenderableTexture** m_gbufferInputTextures;
-	DX12Texture** m_decalInputTextures;
 
 	std::string m_shaderFilename;
 
 	std::unique_ptr<ShaderComponent::DX12ConstantBuffer> m_sceneCB;
 	std::unique_ptr<ShaderComponent::DX12ConstantBuffer> m_meshCB;
-	std::unique_ptr<ShaderComponent::DX12ConstantBuffer> m_decalCB;
 
 	std::vector<std::unordered_map<Mesh*, InstanceList>> m_bottomBuffers;
 	std::vector<std::unordered_map<int, InstanceList>> m_bottomBuffers_Metaballs;
@@ -144,28 +142,40 @@ private:
 	};
 
 	std::string m_brdfLUTPath;
-	std::string m_decalTexPaths[3];
 
 	wComPtr<ID3D12DescriptorHeap> m_rtDescriptorHeap = {};
 	D3D12_CPU_DESCRIPTOR_HANDLE m_rtHeapCPUHandle[2];
 	D3D12_GPU_DESCRIPTOR_HANDLE m_rtHeapGPUHandle[2];
 
-	D3D12_CPU_DESCRIPTOR_HANDLE m_rtOutputTextureUavCPUHandles[2];
-	D3D12_GPU_DESCRIPTOR_HANDLE m_rtOutputTextureUavGPUHandles[2];
+	// DXR shader outputs
+	D3D12_CPU_DESCRIPTOR_HANDLE m_rtOutputAlbedoUavCPUHandles[2];
+	D3D12_GPU_DESCRIPTOR_HANDLE m_rtOutputAlbedoUavGPUHandles[2];
+	D3D12_CPU_DESCRIPTOR_HANDLE m_rtOutputNormalsUavCPUHandles[2];
+	D3D12_GPU_DESCRIPTOR_HANDLE m_rtOutputNormalsUavGPUHandles[2];
+	D3D12_CPU_DESCRIPTOR_HANDLE m_rtOutputMetalnessRoughnessAoUavCPUHandles[2];
+	D3D12_GPU_DESCRIPTOR_HANDLE m_rtOutputMetalnessRoughnessAoUavGPUHandles[2];
+	D3D12_CPU_DESCRIPTOR_HANDLE m_rtOutputShadowsUavCPUHandles[2];
+	D3D12_GPU_DESCRIPTOR_HANDLE m_rtOutputShadowsUavGPUHandles[2];
+	D3D12_CPU_DESCRIPTOR_HANDLE m_rtOutputPositionsOneUavCPUHandles[2];
+	D3D12_GPU_DESCRIPTOR_HANDLE m_rtOutputPositionsOneUavGPUHandles[2];
+	D3D12_CPU_DESCRIPTOR_HANDLE m_rtOutputPositionsTwoUavCPUHandles[2];
+	D3D12_GPU_DESCRIPTOR_HANDLE m_rtOutputPositionsTwoUavGPUHandles[2];
+	// DXR shader inputs
+	D3D12_CPU_DESCRIPTOR_HANDLE m_rtInputShadowsLastFrameUavCPUHandles[2];
+	D3D12_GPU_DESCRIPTOR_HANDLE m_rtInputShadowsLastFrameUavGPUHandles[2];
+
 	D3D12_CPU_DESCRIPTOR_HANDLE m_rtOutputBloomTextureUavCPUHandles[2];
 	D3D12_GPU_DESCRIPTOR_HANDLE m_rtOutputBloomTextureUavGPUHandles[2];
 
 	D3D12_GPU_DESCRIPTOR_HANDLE m_rtBrdfLUTGPUHandle;
-	std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> m_gbufferStartGPUHandles;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_decalTexGPUHandles;
+	std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> m_gbufferStartUAVGPUHandles;
+	std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> m_gbufferStartSRVGPUHandles;
 	UINT m_heapIncr;
 	UINT m_usedDescriptors;
 
 	std::vector<MeshHandles> m_rtMeshHandles[2];
 	// Metaballs
 	std::vector<ID3D12Resource*> m_metaballPositions_srv;
-	// Decals
-	UINT m_decalsToRender;
 
 	const WCHAR* m_rayGenName = L"rayGen";
 	const WCHAR* m_closestHitName = L"closestHitTriangle";
@@ -197,7 +207,11 @@ private:
 	glm::vec3 m_mapSize;
 	glm::vec3 m_mapStart;
 
+	// Water simluation stuff
 	int m_currWaterZChunk;
 	int m_maxWaterZChunk;
 	int m_waterZChunkSize;
+
+	// Temporal accumulation stuff
+	unsigned int m_frameCount;
 };

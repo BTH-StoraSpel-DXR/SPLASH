@@ -99,6 +99,8 @@ protected: // Functions
 	virtual void spawnProjectile (const ProjectileInfo& info)                                                = 0;
 	virtual void submitWaterPoint(const glm::vec3& point)                                                    = 0;
 	virtual void waterHitPlayer  (const Netcode::ComponentID id, const Netcode::ComponentID projectileID)    = 0;
+	virtual void spawnPowerup(const int type, const glm::vec3& pos, const Netcode::ComponentID compID, const Netcode::ComponentID parentCompID) {};
+	virtual void destroyPowerup(const Netcode::ComponentID compID, const Netcode::ComponentID playerId) {};
 
 	// AUDIO
 	virtual void playerJumped (const Netcode::ComponentID id)                = 0;

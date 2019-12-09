@@ -27,15 +27,17 @@ namespace DXRShaderCommon {
 
 #endif
 
-
 #define MAX_RAY_RECURSION_DEPTH 15
 #define MAX_INSTANCES 400
 #define NUM_POINT_LIGHTS 12
+#define NUM_SPOT_LIGHTS 12
+#define NUM_TOTAL_LIGHTS NUM_POINT_LIGHTS + NUM_SPOT_LIGHTS
 #define NUM_TEAM_COLORS 12
 #define MAX_NUM_METABALLS 500
 #define MAX_NUM_METABALL_GROUPS 16
 #define METABALL_RADIUS 0.12f
-#define MAX_DECALS 100
+#define NUM_SHADOW_TEXTURES 14
+#define LIGHT_RADIUS 0.08 // TODO: tweak this!
 
 static const uint MESH_NO_FLAGS				 			= 	0;
 static const uint MESH_USE_INDICES 						= 	1 << 0;
@@ -48,11 +50,18 @@ static const uint MESH_HAS_METALNESS_ROUGHNESS_AO_TEX	= 	1 << 3;
 #define INSTANCE_MASK_CAST_SHADOWS 0x02
 
 struct RayPayload {
-	float4 color;
+	float4 albedoOne;
+	float4 albedoTwo;
+	float3 normalOne;
+	float3 normalTwo;
+	float4 metalnessRoughnessAOOne;
+	float4 metalnessRoughnessAOTwo;
+	float3 worldPositionOne;
+	float3 worldPositionTwo;
+	float shadowTwo[NUM_SHADOW_TEXTURES];
 	uint recursionDepth;
 	float closestTvalue;
 };
-
 struct ShadowRayPayload {
 	bool isHit;
 };
@@ -65,26 +74,23 @@ struct Vertex {
 	float3 bitangent;
 };
 
-struct PointLightInput {
+struct PointlightInput {
 	float3 color;
-	float padding;
+	float padding1;
 	float3 position;
-    float attConstant;
-    float attLinear;
-    float attQuadratic;
-	float2 padding2;
+    float reachRadius;
 };
 
 struct SpotlightInput {
+	// This part must match point light input
+	// (all lights are casted to PointLightInput during shading)
 	float3 color;
-	float attConstant;
+	float padding1;
 	float3 position;
-	float attLinear;
+    float reachRadius;
+	// This part can be unique for each light type
 	float3 direction;
-	float attQuadratic;
-
 	float angle;
-	float padding1, padding2, padding3;
 };
 
 struct MetaballGroupData {
@@ -100,15 +106,15 @@ struct SceneCBuffer {
 	float4x4 viewToWorld;
 	float4x4 clipToView;
 	float3 cameraPosition;
-	bool doTonemapping;
+	bool doHardShadows;
 	float3 cameraDirection;
 	uint nMetaballGroups;
-    uint nDecals;
+	uint padding;
 	float nearZ;
 	float farZ;
 	float padding2;
-    PointLightInput pointLights[NUM_POINT_LIGHTS];
-    SpotlightInput spotLights[NUM_POINT_LIGHTS];
+    PointlightInput pointLights[NUM_POINT_LIGHTS];
+    SpotlightInput spotLights[NUM_SPOT_LIGHTS];
 	float4 teamColors[NUM_TEAM_COLORS];
 	MetaballGroupData metaballGroup[MAX_NUM_METABALL_GROUPS];
 
@@ -118,6 +124,9 @@ struct SceneCBuffer {
 	float3 mapStart;
 	float padding4;
 	uint3 waterArraySize;
+
+	// Random seed stuff
+	uint frameCount;
 };
 
 // Properties set once per BLAS/Mesh
@@ -130,17 +139,6 @@ struct MeshData {
 };
 struct MeshCBuffer {
 	MeshData data[MAX_INSTANCES]; // cbuffer min size is 64kb, fill with flags
-};
-
-struct DecalData {
-    float3 position;
-	float padding0;
-    float3 halfSize;
-	float padding1;
-    float4x4 rot;
-};
-struct DecalCBuffer {
-    DecalData data[MAX_DECALS];
 };
 
 struct ProceduralPrimitiveAttributes {

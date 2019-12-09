@@ -121,7 +121,7 @@ void ParticleSystem::initEmitter(Entity* owner, ParticleEmitterComponent* compon
 	auto& gbufferShader = Application::getInstance()->getResourceManager().getShaderSet<GBufferOutShader>();
 	auto& inputLayout = gbufferShader.getPipeline()->getInputLayout();
 
-	emitter.outputVertexBufferSize = 6 * 300;
+	emitter.outputVertexBufferSize = 6 * owner->getComponent<ParticleEmitterComponent>()->maxNumberOfParticles;
 	auto& noDepthShader = Application::getInstance()->getResourceManager().getShaderSet<GBufferOutShaderNoDepth>();
 	emitter.model = std::make_unique<Model>(emitter.outputVertexBufferSize, &noDepthShader);
 
@@ -137,7 +137,7 @@ void ParticleSystem::initEmitter(Entity* owner, ParticleEmitterComponent* compon
 		emitter.physicsBufferDefaultHeap[i]->SetName(L"Particle Physics Default Resource Heap");
 	}
 
-	emitter.inputConstantBufferSize = (12 * 312 + 312 + 11) * 4;
+	emitter.inputConstantBufferSize = (12 * 312 + 312 + 12) * 4;
 	void* scrapData = malloc(emitter.inputConstantBufferSize);
 	emitter.inputConstantBuffer = std::make_unique<ShaderComponent::DX12ConstantBuffer>(scrapData, emitter.inputConstantBufferSize, ShaderComponent::CS, 0);
 	free(scrapData);

@@ -10,6 +10,7 @@ public:
 	virtual ~DX12Mesh();
 
 	virtual void draw(const Renderer& renderer, void* cmdList) override;
+	void draw_new(const Renderer& renderer, void* cmdList, int srvOffset);
 	virtual void bindMaterial(void* cmdList);
 	unsigned int getSRVIndex();
 private:

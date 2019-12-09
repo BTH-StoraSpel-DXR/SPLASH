@@ -23,3 +23,4 @@
 #include "types/TorchExtinguishedEvent.h"
 #include "types/TorchNotHeldEvent.h"
 #include "types/UpdateSanityEvent.h"
+#include "types/SpawnPowerUp.h"

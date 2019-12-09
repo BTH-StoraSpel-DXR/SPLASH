@@ -38,12 +38,12 @@ DX12Mesh::DX12Mesh(unsigned int numVertices, Shader* shader)
 DX12Mesh::~DX12Mesh() {
 }
 
-void DX12Mesh::draw(const Renderer& renderer, void* cmdList) {
+void DX12Mesh::draw_new(const Renderer& renderer, void* cmdList, int srvOffset) { 
 	auto* dxCmdList = static_cast<ID3D12GraphicsCommandList4*>(cmdList);
 
 	bindMaterial(cmdList);
 	// Set offset in SRV heap for this mesh 
-	dxCmdList->SetGraphicsRootDescriptorTable(m_context->getRootIndexFromRegister("t0"), m_context->getMainGPUDescriptorHeap()->getGPUDescriptorHandleForIndex(m_SRVIndex));
+	dxCmdList->SetGraphicsRootDescriptorTable(m_context->getRootIndexFromRegister("t0"), m_context->getMainGPUDescriptorHeap()->getGPUDescriptorHandleForIndex(m_SRVIndex + srvOffset));
 	vertexBuffer->bind(cmdList);
 
 	if (indexBuffer)
@@ -55,7 +55,11 @@ void DX12Mesh::draw(const Renderer& renderer, void* cmdList) {
 	else
 		dxCmdList->DrawInstanced(getNumVertices(), 1, 0, 0);
 
-	 static_cast<DX12ShaderPipeline*>(material->getShader()->getPipeline())->instanceFinished();
+	static_cast<DX12ShaderPipeline*>(material->getShader()->getPipeline())->instanceFinished();
+}
+
+void DX12Mesh::draw(const Renderer& renderer, void* cmdList) {
+	draw_new(renderer, cmdList, 0);
 }
 
 void DX12Mesh::bindMaterial(void* cmdList) {

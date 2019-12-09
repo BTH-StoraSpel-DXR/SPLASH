@@ -28,6 +28,8 @@ public:
 	virtual bool trySetCBufferVar(const std::string& name, const void* data, UINT size) override;
 	virtual bool trySetStructBufferVar(const std::string& name, const void* data, UINT numElements) override;
 
+	void setRenderTargetFormat(unsigned int rtIndex, DXGI_FORMAT format);
+
 	// Call this after each mesh/instance
 	// Internally updates meshIndex used to place multiple instances in a single cbuffer
 	void instanceFinished();
@@ -47,6 +49,7 @@ private:
 	std::atomic_uint m_meshIndex[2];
 	DX12API* m_context;
 
+	std::unordered_map<unsigned int, DXGI_FORMAT> m_rtFormats;
 	static std::unique_ptr<DXILShaderCompiler> m_dxilCompiler; // Class Singleton
 	wComPtr<ID3D12PipelineState> m_pipelineState;
 };

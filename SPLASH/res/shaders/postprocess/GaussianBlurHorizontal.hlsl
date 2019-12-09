@@ -21,7 +21,10 @@ void CSMain(int3 groupThreadID : SV_GroupThreadID,
 	// N pixels, we will need to load N + 2*BlurRadius pixels
 	// due to the blur radius.
 	//
-	
+
+	float2 inputSize;
+	input.GetDimensions(inputSize.x, inputSize.y);
+
 	// This thread group runs N threads.  To get the extra 2*BlurRadius pixels, 
 	// have 2*BlurRadius threads sample an extra pixel.
 	if(groupThreadID.x < blurRadius) {
@@ -32,13 +35,13 @@ void CSMain(int3 groupThreadID : SV_GroupThreadID,
 	}
 	if(groupThreadID.x >= N-blurRadius) {
 		// Clamp out of bound samples that occur at image borders.
-		int x = min(dispatchThreadID.x + blurRadius, input.Length.x-1);
+		int x = min(dispatchThreadID.x + blurRadius, inputSize.x-1);
 		cache[groupThreadID.x+2*blurRadius] = input[int2(x, dispatchThreadID.y) * textureSizeDifference];
 		// cache[groupThreadID.x] = float4(0, 0.5, 0, 1);
 	}
 
 	// Clamp out of bound samples that occur at image borders.
-	cache[groupThreadID.x+blurRadius] = input[min(dispatchThreadID.xy, input.Length.xy-1) * textureSizeDifference];
+	cache[groupThreadID.x+blurRadius] = input[min(dispatchThreadID.xy, inputSize.xy-1) * textureSizeDifference];
 
 	// Wait for all threads to finish.
 	GroupMemoryBarrierWithGroupSync();

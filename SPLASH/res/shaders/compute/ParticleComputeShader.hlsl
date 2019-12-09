@@ -18,6 +18,7 @@ struct ParticleInput{ // Size of this type is hardcoded in ShaderPipeline.cpp an
 	float frameTime;
 	float particleSize;
 	uint2 atlasSize; // How many sprites in each dimension the texture atlas contains, set to 1x1 for no animation
+	float drag;
 };
 
 cbuffer CSInputBuffer : register(b0) : SAIL_IGNORE {
@@ -109,7 +110,11 @@ void updateVertices(int particleIndex) {
 void updatePhysics(int particleIndex, float dt) {
 	float3 oldVelocity = CSPhysicsBuffer[particleIndex].velocity;
 	CSPhysicsBuffer[particleIndex].velocity += CSPhysicsBuffer[particleIndex].acceleration * dt;
+	float3 xzVel = CSPhysicsBuffer[particleIndex].velocity;
+	xzVel.y = 0.0f;
+	CSPhysicsBuffer[particleIndex].velocity -= normalize(xzVel) * inputBuffer.drag * dt;
 	CSPhysicsBuffer[particleIndex].position += (oldVelocity + CSPhysicsBuffer[particleIndex].velocity) * 0.5 * dt;
+	
 	
 	updateVertices(particleIndex);
 }

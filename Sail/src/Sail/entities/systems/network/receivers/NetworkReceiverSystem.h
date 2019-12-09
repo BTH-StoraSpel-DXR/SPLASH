@@ -49,6 +49,8 @@ protected:
 	void spawnProjectile (const ProjectileInfo& info)                                                override;
 	void submitWaterPoint(const glm::vec3& point)                                                    override;
 	void waterHitPlayer  (const Netcode::ComponentID id, const Netcode::ComponentID projectileID)    override;
+	virtual void spawnPowerup(const int type, const glm::vec3& pos, const Netcode::ComponentID compID, const Netcode::ComponentID parentCompID) override;
+	virtual void destroyPowerup(const Netcode::ComponentID compID, const Netcode::ComponentID playerId) override;
 
 	// AUDIO
 	void playerJumped (const Netcode::ComponentID id)                  override;

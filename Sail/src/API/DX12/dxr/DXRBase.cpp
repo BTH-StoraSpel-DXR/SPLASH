@@ -26,13 +26,6 @@ DXRBase::DXRBase(const std::string& shaderFilename, DX12RenderableTexture** inpu
 	EventDispatcher::Instance().subscribe(Event::Type::WINDOW_RESIZE, this);
 	EventDispatcher::Instance().subscribe(Event::Type::RESET_WATER, this);
 
-	/*m_decalTexPaths[0] = "pbr/water/Water_001_COLOR.tga";
-	m_decalTexPaths[1] = "pbr/water/Water_001_NORM.tga";
-	m_decalTexPaths[2] = "pbr/water/Water_001_MAT.tga";*/
-	m_decalTexPaths[0] = "pbr/splash/PuddleAlbedo.tga";
-	m_decalTexPaths[1] = "pbr/splash/PuddleNM.tga";
-	m_decalTexPaths[2] = "pbr/splash/puddleMRAo.tga";
-
 	m_context = Application::getInstance()->getAPI<DX12API>();
 
 	// Create frame resources (one per swap buffer)
@@ -43,7 +36,8 @@ DXRBase::DXRBase(const std::string& shaderFilename, DX12RenderableTexture** inpu
 	m_rayGenShaderTable = m_context->createFrameResource<DXRUtils::ShaderTableData>();
 	m_missShaderTable = m_context->createFrameResource<DXRUtils::ShaderTableData>();
 	m_hitGroupShaderTable = m_context->createFrameResource<DXRUtils::ShaderTableData>();
-	m_gbufferStartGPUHandles = m_context->createFrameResource<D3D12_GPU_DESCRIPTOR_HANDLE>();
+	m_gbufferStartUAVGPUHandles = m_context->createFrameResource<D3D12_GPU_DESCRIPTOR_HANDLE>();
+	m_gbufferStartSRVGPUHandles = m_context->createFrameResource<D3D12_GPU_DESCRIPTOR_HANDLE>();
 
 	// Create root signatures
 	createDXRGlobalRootSignature();
@@ -55,7 +49,6 @@ DXRBase::DXRBase(const std::string& shaderFilename, DX12RenderableTexture** inpu
 	createRaytracingPSO();
 	createInitialShaderResources();
 
-	m_decalsToRender = 0;
 	unsigned int initData = 0;
 	m_waterStructuredBuffer = std::make_unique<ShaderComponent::DX12StructuredBuffer>(&initData, 1, sizeof(unsigned int));
 	m_waterArrSize = 1;
@@ -108,7 +101,7 @@ void DXRBase::setGBufferInputs(DX12RenderableTexture** inputs) {
 	m_gbufferInputTextures = inputs;
 }
 
-void DXRBase::updateAccelerationStructures(const std::vector<Renderer::RenderCommand>& sceneGeometry, ID3D12GraphicsCommandList4* cmdList, const std::vector<DXRBase::MetaballGroup*>& metaballGroups) {
+void DXRBase::updateAccelerationStructures(const std::vector<Renderer::RenderCommand>& sceneGeometry, const std::vector<DXRBase::MetaballGroup*>& metaballGroups, ID3D12GraphicsCommandList4* cmdList) {
 
 	unsigned int frameIndex = m_context->getSwapIndex();
 	unsigned int totalNumInstances = 0;
@@ -228,18 +221,26 @@ void DXRBase::updateAccelerationStructures(const std::vector<Renderer::RenderCom
 
 }
 
-void DXRBase::updateSceneData(Camera& cam, LightSetup& lights, const std::vector<DXRBase::MetaballGroup*>& metaballGroups, const std::vector<glm::vec3>& teamColors, bool doToneMapping) {
+void DXRBase::updateSceneData(Camera* cam, LightSetup* lights, const std::vector<DXRBase::MetaballGroup*>& metaballGroups, const std::vector<glm::vec3>& teamColors) {
 
 	updateMetaballpositions(metaballGroups);
 
 	DXRShaderCommon::SceneCBuffer newData = {};
-	newData.viewToWorld = glm::inverse(cam.getViewMatrix());
-	newData.clipToView = glm::inverse(cam.getProjMatrix());
-	newData.nearZ = cam.getNearZ();
-	newData.farZ = cam.getFarZ();
-	newData.cameraPosition = cam.getPosition();
-	newData.cameraDirection = cam.getDirection();
-	newData.projectionToWorld = glm::inverse(cam.getViewProjection());
+	if (cam) {
+		newData.viewToWorld = glm::inverse(cam->getViewMatrix());
+		newData.clipToView = glm::inverse(cam->getProjMatrix());
+		newData.nearZ = cam->getNearZ();
+		newData.farZ = cam->getFarZ();
+		newData.cameraPosition = cam->getPosition();
+		newData.cameraDirection = cam->getDirection();
+		newData.projectionToWorld = glm::inverse(cam->getViewProjection());
+	}
+	newData.nMetaballGroups = metaballGroups.size();
+	newData.doHardShadows = Application::getInstance()->getSettings().applicationSettingsStatic["graphics"]["shadows"].getSelected().value == 0.f;;
+	newData.waterArraySize = m_waterArrSizes;
+	newData.mapSize = m_mapSize;
+	newData.mapStart = m_mapStart;
+	newData.frameCount = m_frameCount++;
 	newData.nMetaballGroups = metaballGroups.size();
 
 	for (auto& group : metaballGroups) {
@@ -247,32 +248,20 @@ void DXRBase::updateSceneData(Camera& cam, LightSetup& lights, const std::vector
 		newData.metaballGroup[group->index].size = group->balls.size();
 	}
 
-	newData.nDecals = m_decalsToRender;
-	newData.doTonemapping = doToneMapping;
-	newData.waterArraySize = m_waterArrSizes;
-	newData.mapSize = m_mapSize;
-	newData.mapStart = m_mapStart;
-
 	int nTeams = teamColors.size();
 	for (int i = 0; i < nTeams && i < NUM_TEAM_COLORS; i++) {
 		newData.teamColors[i] = glm::vec4(teamColors[i], 1.0f);
 	}
 
-	auto& plData = lights.getPointLightsData();
-	memcpy(newData.pointLights, plData.pLights, sizeof(plData));
+	if (lights) {
+		auto& plData = lights->getPointLightsData();
+		memcpy(newData.pointLights, plData.pLights, sizeof(plData));
 
-	auto& slData = lights.getSpotLightsData();
-	memcpy(newData.spotLights, slData.sLights, sizeof(slData));
+		auto& slData = lights->getSpotLightsData();
+		memcpy(newData.spotLights, slData.sLights, sizeof(slData));
+	}
 
 	m_sceneCB->updateData(&newData, sizeof(newData));
-}
-
-void DXRBase::updateDecalData(DXRShaderCommon::DecalData* decals, size_t size) {
-	DXRShaderCommon::DecalCBuffer newData;
-	memcpy(newData.data, decals, size * sizeof(DXRShaderCommon::DecalData));
-	m_decalsToRender = size;
-
-	m_decalCB->updateData(&newData, sizeof(newData));
 }
 
 void DXRBase::addWaterAtWorldPosition(const glm::vec3& position) {
@@ -496,19 +485,38 @@ void DXRBase::updateMetaballpositions(const std::vector<DXRBase::MetaballGroup*>
 	pos_res->Unmap(0, nullptr);
 }
 
-void DXRBase::dispatch(DX12RenderableTexture* outputTexture, DX12RenderableTexture* outputBloomTexture, ID3D12GraphicsCommandList4* cmdList) {
+void DXRBase::dispatch(BounceOutput& output, DX12RenderableTexture* outputBloomTexture, DX12RenderableTexture* shadowsLastFrameInput, ID3D12GraphicsCommandList4* cmdList) {
 
 	assert(m_gbufferInputTextures); // Input textures not set!
 	
 	unsigned int frameIndex = m_context->getSwapIndex();
+	unsigned int lastFrameIndex = 1 - frameIndex;
 
 	auto copyDescriptor = [&](DX12RenderableTexture* texture, D3D12_CPU_DESCRIPTOR_HANDLE* cdh) {
 		// Copy output texture uav to heap
-		texture->transitionStateTo(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		//texture->transitionStateTo(cmdList, D3D12_RESOURCE_STATE_COPY_SOURCE); // This transition is done in RaytracingRenderer::runShading()
 		m_context->getDevice()->CopyDescriptorsSimple(1, cdh[frameIndex], texture->getUavCDH(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	};
-	copyDescriptor(outputTexture, m_rtOutputTextureUavCPUHandles);
+	copyDescriptor(output.positionsOne.get(), m_rtOutputPositionsOneUavCPUHandles);
 	copyDescriptor(outputBloomTexture, m_rtOutputBloomTextureUavCPUHandles);
+
+	if (shadowsLastFrameInput) {
+		// Copy descriptor for textures only used when soft shadows are enabled
+		copyDescriptor(output.albedo.get(), m_rtOutputAlbedoUavCPUHandles);
+		copyDescriptor(output.normal.get(), m_rtOutputNormalsUavCPUHandles);
+		copyDescriptor(output.metalnessRoughnessAO.get(), m_rtOutputMetalnessRoughnessAoUavCPUHandles);
+		copyDescriptor(output.shadows.get(), m_rtOutputShadowsUavCPUHandles);
+		copyDescriptor(output.positionsTwo.get(), m_rtOutputPositionsTwoUavCPUHandles);
+		
+		// Copy history input texture srv
+		m_context->getDevice()->CopyDescriptorsSimple(1, m_rtInputShadowsLastFrameUavCPUHandles[frameIndex], shadowsLastFrameInput->getSrvCDH(lastFrameIndex), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		// TODO: transition in batch
+		output.albedo->transitionStateTo(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		output.normal->transitionStateTo(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		output.metalnessRoughnessAO->transitionStateTo(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		output.shadows->transitionStateTo(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	}
 
 	//Set constant buffer descriptor heap
 	ID3D12DescriptorHeap* descriptorHeaps[] = { m_rtDescriptorHeap.Get() };
@@ -516,8 +524,6 @@ void DXRBase::dispatch(DX12RenderableTexture* outputTexture, DX12RenderableTextu
 
 
 	// Let's raytrace
-	outputTexture->transitionStateTo(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	//DX12Utils::SetResourceTransitionBarrier(cmdList, m_rtOutputUAV.resource.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
 	raytraceDesc.Width = Application::getInstance()->getWindow()->getWindowWidth();
@@ -557,6 +563,10 @@ void DXRBase::resetWater() {
 		m_waterDataCPU[i] = m_waterDeltas[i] = 0;
 	}
 	m_waterChanged = true;
+}
+
+ShaderComponent::DX12StructuredBuffer* DXRBase::getWaterVoxelSBuffer() {
+	return m_waterStructuredBuffer.get();
 }
 
 void DXRBase::reloadShaders() {
@@ -803,13 +813,10 @@ void DXRBase::createInitialShaderResources(bool remake) {
 
 		m_heapIncr = m_context->getDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		// Create the UAV. Based on the root signature we created it should be the first entry
-		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-
 		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_rtDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = m_rtDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 
+		// The first 10 slots in the heap will be used for the output UAVs and history input SRV
 		auto storeHandle = [&](D3D12_CPU_DESCRIPTOR_HANDLE* cdh, D3D12_GPU_DESCRIPTOR_HANDLE* gdh) {
 			gdh[0] = gpuHandle;
 			cdh[0] = cpuHandle;
@@ -822,51 +829,57 @@ void DXRBase::createInitialShaderResources(bool remake) {
 			gpuHandle.ptr += m_heapIncr;
 			m_usedDescriptors++;
 		};
-
-		// The first slots in the heap will be used for the output UAV
-		storeHandle(m_rtOutputTextureUavCPUHandles, m_rtOutputTextureUavGPUHandles);
+		// Albedo UAV output
+		storeHandle(m_rtOutputAlbedoUavCPUHandles, m_rtOutputAlbedoUavGPUHandles);
+		// Normals UAV output
+		storeHandle(m_rtOutputNormalsUavCPUHandles, m_rtOutputNormalsUavGPUHandles);
+		// Metalness/roughness/ao UAV output
+		storeHandle(m_rtOutputMetalnessRoughnessAoUavCPUHandles, m_rtOutputMetalnessRoughnessAoUavGPUHandles);
+		// Bloom (to be bloomed) UAV output
 		storeHandle(m_rtOutputBloomTextureUavCPUHandles, m_rtOutputBloomTextureUavGPUHandles);
+		// Shadows UAV output
+		storeHandle(m_rtOutputShadowsUavCPUHandles, m_rtOutputShadowsUavGPUHandles);
+		// First bounce world positions output
+		storeHandle(m_rtOutputPositionsOneUavCPUHandles, m_rtOutputPositionsOneUavGPUHandles);
+		// Second bounce world positions output
+		storeHandle(m_rtOutputPositionsTwoUavCPUHandles, m_rtOutputPositionsTwoUavGPUHandles);
+		// Shadows last frame SRV input
+		storeHandle(m_rtInputShadowsLastFrameUavCPUHandles, m_rtInputShadowsLastFrameUavGPUHandles);
 
+		
 		// Next slot is used for the brdfLUT
 		m_rtBrdfLUTGPUHandle = gpuHandle;
 		if (!Application::getInstance()->getResourceManager().hasTexture(m_brdfLUTPath)) {
 			Application::getInstance()->getResourceManager().loadTexture(m_brdfLUTPath);
 		}
-		auto& brdfLutTex = static_cast<DX12Texture&>(Application::getInstance()->getResourceManager().getTexture(m_brdfLUTPath));
+		auto& brdfLutTex = dynamic_cast<DX12Texture&>(Application::getInstance()->getResourceManager().getTexture(m_brdfLUTPath));
 		m_context->getDevice()->CopyDescriptorsSimple(1, cpuHandle, brdfLutTex.getSrvCDH(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		cpuHandle.ptr += m_heapIncr;
 		gpuHandle.ptr += m_heapIncr;
 		m_usedDescriptors++;
 
-		// Next (4 * numSwapBuffers) slots are used for input gbuffers
+		// Next (5 * numSwapBuffers) slots are used for input/output gbuffers
 		for (unsigned int i = 0; i < m_context->getNumGPUBuffers(); i++) {
-			m_gbufferStartGPUHandles[i] = gpuHandle;
-			D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptors[4];
-			srcDescriptors[0] = m_gbufferInputTextures[0]->getSrvCDH(i);
-			srcDescriptors[1] = m_gbufferInputTextures[1]->getSrvCDH(i);
-			srcDescriptors[2] = m_gbufferInputTextures[2]->getSrvCDH(i);
-			srcDescriptors[3] = m_gbufferInputTextures[0]->getDepthSrvCDH(i);
+			D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptors[5];
+			srcDescriptors[0] = m_gbufferInputTextures[0]->getUavCDH(i);
+			srcDescriptors[1] = m_gbufferInputTextures[1]->getUavCDH(i);
+			srcDescriptors[2] = m_gbufferInputTextures[2]->getUavCDH(i);
+			srcDescriptors[3] = m_gbufferInputTextures[3]->getSrvCDH(i);
+			srcDescriptors[4] = m_gbufferInputTextures[0]->getDepthSrvCDH(i);
 
-			UINT dstRangeSizes[] = { 4 };
-			UINT srcRangeSizes[] = { 1, 1, 1, 1 };
-			m_context->getDevice()->CopyDescriptors(1, &cpuHandle, dstRangeSizes, 4, srcDescriptors, srcRangeSizes, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-			cpuHandle.ptr += m_heapIncr * 4;
-			gpuHandle.ptr += m_heapIncr * 4;
-			m_usedDescriptors+=4;
+			UINT dstRangeSizes[] = { 5 };
+			UINT srcRangeSizes[] = { 1, 1, 1, 1, 1 };
+			m_context->getDevice()->CopyDescriptors(1, &cpuHandle, dstRangeSizes, 5, srcDescriptors, srcRangeSizes, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+			// First three are UAVs, store handle
+			m_gbufferStartUAVGPUHandles[i] = gpuHandle;
+			cpuHandle.ptr += m_heapIncr * 3;
+			gpuHandle.ptr += m_heapIncr * 3;
+			// Last two are SRVs, store handle
+			m_gbufferStartSRVGPUHandles[i] = gpuHandle;
+			cpuHandle.ptr += m_heapIncr * 2;
+			gpuHandle.ptr += m_heapIncr * 2;
+			m_usedDescriptors+=5;
 		}
-
-		// Initialize decal SRVs
-		initDecals(&gpuHandle, &cpuHandle);
-
-		//// Ray gen settings CB
-		//m_rayGenCBData.flags = RT_ENABLE_TA | RT_ENABLE_JITTER_AA;
-		//m_rayGenCBData.numAORays = 5;
-		//m_rayGenCBData.AORadius = 0.9f;
-		//m_rayGenCBData.frameCount = 0;
-		//m_rayGenCBData.GISamples = 1;
-		//m_rayGenCBData.GIBounces = 1;
-		//m_rayGenSettingsCB = std::make_unique<DX12ConstantBuffer>("Ray Gen Settings CB", sizeof(RayGenSettings), m_renderer);
-		//m_rayGenSettingsCB->setData(&m_rayGenCBData, 0);
 
 		// Store heap start for views that might update in runtime
 		// Half of the rest of the list is allocated for each swap frame
@@ -882,10 +895,9 @@ void DXRBase::createInitialShaderResources(bool remake) {
 		// Scene CB
 		{
 			unsigned int size = sizeof(DXRShaderCommon::SceneCBuffer);
-			void* initData = malloc(size);
-			memset(initData, 0, size);
-			m_sceneCB = std::make_unique<ShaderComponent::DX12ConstantBuffer>(initData, size, ShaderComponent::BIND_SHADER::CS, 0);
-			free(initData);
+			DXRShaderCommon::SceneCBuffer initData = {};
+			initData.mapSize = glm::vec3(1000.f); // Needs to be set at start to prevent crash or slowdowns
+			m_sceneCB = std::make_unique<ShaderComponent::DX12ConstantBuffer>(&initData, size, ShaderComponent::BIND_SHADER::CS, 0);
 		}
 		// Mesh CB
 		{
@@ -893,14 +905,6 @@ void DXRBase::createInitialShaderResources(bool remake) {
 			void* initData = malloc(size);
 			memset(initData, 0, size);
 			m_meshCB = std::make_unique<ShaderComponent::DX12ConstantBuffer>(initData, size, ShaderComponent::BIND_SHADER::CS, 0);
-			free(initData);
-		}
-		// Decal CB
-		{
-			unsigned int size = sizeof(DXRShaderCommon::DecalCBuffer);
-			void* initData = malloc(size);
-			memset(initData, 0, size);
-			m_decalCB = std::make_unique<ShaderComponent::DX12ConstantBuffer>(initData, size, ShaderComponent::BIND_SHADER::CS, 0);
 			free(initData);
 		}
 	}
@@ -913,25 +917,6 @@ void DXRBase::updateDescriptorHeap(ID3D12GraphicsCommandList4* cmdList) {
 	// Make sure brdfLut texture has been initialized
 	auto& brdfLutTex = static_cast<DX12Texture&>(Application::getInstance()->getResourceManager().getTexture(m_brdfLUTPath));
 	brdfLutTex.initBuffers(cmdList);
-
-	// Make sure decal textures has been initialized
-	{
-		auto& decalTex = static_cast<DX12Texture&>(Application::getInstance()->getResourceManager().getTexture(m_decalTexPaths[0]));
-		if (!decalTex.hasBeenInitialized()) {
-			decalTex.initBuffers(cmdList);
-			decalTex.transitionStateTo(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-		}
-		auto& decalTex1 = static_cast<DX12Texture&>(Application::getInstance()->getResourceManager().getTexture(m_decalTexPaths[1]));
-		if (!decalTex1.hasBeenInitialized()) {
-			decalTex1.initBuffers(cmdList);
-			decalTex1.transitionStateTo(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-		}
-		auto& decalTex2 = static_cast<DX12Texture&>(Application::getInstance()->getResourceManager().getTexture(m_decalTexPaths[2]));
-		if (!decalTex2.hasBeenInitialized()) {
-			decalTex2.initBuffers(cmdList);
-			decalTex2.transitionStateTo(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-		}
-	}
 
 	// Update descriptors for vertices, indices, textures etc
 	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_rtHeapCPUHandle[frameIndex];
@@ -1030,15 +1015,19 @@ void DXRBase::updateShaderTables() {
 			m_rayGenShaderTable[frameIndex].Resource->Release();
 			m_rayGenShaderTable[frameIndex].Resource.Reset();
 		}
-		DXRUtils::ShaderTableBuilder tableBuilder(1U, m_rtPipelineState.Get(), 64U);
+		DXRUtils::ShaderTableBuilder tableBuilder(1U, m_rtPipelineState.Get(), 96U);
 		tableBuilder.addShader(m_rayGenName);
-		tableBuilder.addDescriptor(m_rtOutputTextureUavGPUHandles[frameIndex].ptr);
-		tableBuilder.addDescriptor(m_rtOutputBloomTextureUavGPUHandles[frameIndex].ptr);
-		tableBuilder.addDescriptor(m_gbufferStartGPUHandles[frameIndex].ptr);
-		tableBuilder.addDescriptor(m_decalTexGPUHandles.ptr);
 		tableBuilder.addDescriptor(m_rtBrdfLUTGPUHandle.ptr);
-		D3D12_GPU_VIRTUAL_ADDRESS decalCBHandle = m_decalCB->getBuffer()->GetGPUVirtualAddress();
-		tableBuilder.addDescriptor(decalCBHandle);
+		tableBuilder.addDescriptor(m_rtOutputAlbedoUavGPUHandles[frameIndex].ptr);
+		tableBuilder.addDescriptor(m_rtOutputNormalsUavGPUHandles[frameIndex].ptr);
+		tableBuilder.addDescriptor(m_rtOutputMetalnessRoughnessAoUavGPUHandles[frameIndex].ptr);
+		tableBuilder.addDescriptor(m_rtOutputShadowsUavGPUHandles[frameIndex].ptr);
+		tableBuilder.addDescriptor(m_rtOutputPositionsOneUavGPUHandles[frameIndex].ptr);
+		tableBuilder.addDescriptor(m_rtOutputPositionsTwoUavGPUHandles[frameIndex].ptr);
+		tableBuilder.addDescriptor(m_rtOutputBloomTextureUavGPUHandles[frameIndex].ptr);
+		tableBuilder.addDescriptor(m_rtInputShadowsLastFrameUavGPUHandles[frameIndex].ptr);
+		tableBuilder.addDescriptor(m_gbufferStartUAVGPUHandles[frameIndex].ptr);
+		tableBuilder.addDescriptor(m_gbufferStartSRVGPUHandles[frameIndex].ptr);
 		m_rayGenShaderTable[frameIndex] = tableBuilder.build(m_context->getDevice());
 	}
 
@@ -1139,7 +1128,7 @@ void DXRBase::createRaytracingPSO() {
 	psoBuilder.addLibrary(ShaderPipeline::DEFAULT_SHADER_LOCATION + "dxr/ShadowRay.hlsl", { m_shadowMissName });
 	psoBuilder.addSignatureToShaders({ m_shadowMissName }, m_localSignatureEmpty->get());
 
-	psoBuilder.setMaxPayloadSize(sizeof(RayPayload));
+	psoBuilder.setMaxPayloadSize(sizeof(DXRShaderCommon::RayPayload));
 	psoBuilder.setMaxAttributeSize(sizeof(float) * 4);
 	psoBuilder.setMaxRecursionDepth(MAX_RAY_RECURSION_DEPTH);
 	psoBuilder.setGlobalSignature(m_dxrGlobalRootSignature->get());
@@ -1158,20 +1147,42 @@ void DXRBase::createDXRGlobalRootSignature() {
 
 void DXRBase::createRayGenLocalRootSignature() {
 	m_localSignatureRayGen = std::make_unique<DX12Utils::RootSignature>("RayGenLocal");
-	m_localSignatureRayGen->addDescriptorTable("OutputUAV", D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 0);
-	m_localSignatureRayGen->addDescriptorTable("OutputBloomUAV", D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1);
-	m_localSignatureRayGen->addDescriptorTable("gbufferInputTextures", D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 10, 0U, DX12GBufferRenderer::NUM_GBUFFERS + 1);
-	m_localSignatureRayGen->addDescriptorTable("gbufferInputTextures", D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 10 + DX12GBufferRenderer::NUM_GBUFFERS + 1, 0U, 3U);
 	m_localSignatureRayGen->addDescriptorTable("sys_brdfLUT", D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 5);
-	m_localSignatureRayGen->addCBV("DecalCBuffer", 2, 0);
+	m_localSignatureRayGen->addDescriptorTable("OutputAlbedoUAV", D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 3);
+	m_localSignatureRayGen->addDescriptorTable("OutputNormalsUAV", D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 4);
+	m_localSignatureRayGen->addDescriptorTable("OutputMetalnessRoughnessAOUAV", D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 5);
+	m_localSignatureRayGen->addDescriptorTable("OutputShadowsUAV", D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 6);
+	m_localSignatureRayGen->addDescriptorTable("OutputPositionsOneUAV", D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 7);
+	m_localSignatureRayGen->addDescriptorTable("OutputPositionsTwoUAV", D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 8);
+	m_localSignatureRayGen->addDescriptorTable("OutputBloomUAV", D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 9);
+	m_localSignatureRayGen->addDescriptorTable("InputShadowsLastFrameSRV", D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 20);
+	m_localSignatureRayGen->addDescriptorTable("gbufferInputOutputTextures", D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 0, 0U, 3);
+
+	m_localSignatureRayGen->addDescriptorTable("gbufferInputTextures", D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 10, 0U, 2);
 	m_localSignatureRayGen->addStaticSampler();
+
+	// Border sampler used to sample InputShadowsLastFrame
+	D3D12_STATIC_SAMPLER_DESC samplerDesc = {};
+	samplerDesc.Filter = D3D12_FILTER_ANISOTROPIC;
+	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	samplerDesc.MipLODBias = 0.f;
+	samplerDesc.MaxAnisotropy = 16;
+	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	samplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+	samplerDesc.MinLOD = 0.f;
+	samplerDesc.MaxLOD = FLT_MAX;
+	samplerDesc.ShaderRegister = 1;
+	samplerDesc.RegisterSpace = 0;
+	samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	m_localSignatureRayGen->addStaticSampler(samplerDesc);
 
 	m_localSignatureRayGen->build(m_context->getDevice(), D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
 }
 
 void DXRBase::createHitGroupLocalRootSignature() {
 	m_localSignatureHitGroup_mesh = std::make_unique<DX12Utils::RootSignature>("HitGroupLocal");
-	m_localSignatureHitGroup_mesh->addDescriptorTable("sys_brdfLUT", D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 5);
 	m_localSignatureHitGroup_mesh->addSRV("VertexBuffer", 1, 0);
 	m_localSignatureHitGroup_mesh->addSRV("IndexBuffer", 1, 1);
 	m_localSignatureHitGroup_mesh->addCBV("MeshCBuffer", 1, 0);
@@ -1202,26 +1213,6 @@ void DXRBase::initMetaballBuffers() {
 		m_metaballPositions_srv.emplace_back(DX12Utils::CreateBuffer(m_context->getDevice(), MAX_NUM_METABALLS * sizeof(glm::vec3), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, DX12Utils::sUploadHeapProperties));
 		m_metaballPositions_srv.back()->SetName(L"Metaball Positions");
 	}
-}
-
-void DXRBase::initDecals(D3D12_GPU_DESCRIPTOR_HANDLE* gpuHandle, D3D12_CPU_DESCRIPTOR_HANDLE* cpuHandle) {
-	auto& resMan = Application::getInstance()->getResourceManager();
-	resMan.loadTexture(m_decalTexPaths[0]);
-	resMan.loadTexture(m_decalTexPaths[1]);
-	resMan.loadTexture(m_decalTexPaths[2]);
-
-	m_decalTexGPUHandles = *gpuHandle;
-	D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptors[3];
-	srcDescriptors[0] = static_cast<DX12Texture*>(&resMan.getTexture(m_decalTexPaths[0]))->getSrvCDH();
-	srcDescriptors[1] = static_cast<DX12Texture*>(&resMan.getTexture(m_decalTexPaths[1]))->getSrvCDH();
-	srcDescriptors[2] = static_cast<DX12Texture*>(&resMan.getTexture(m_decalTexPaths[2]))->getSrvCDH();
-
-	UINT dstRangeSizes[] = {3};
-	UINT srcRangeSizes[] = {1, 1, 1};
-	m_context->getDevice()->CopyDescriptors(1, cpuHandle, dstRangeSizes, 3, srcDescriptors, srcRangeSizes, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	cpuHandle->ptr += m_heapIncr * 3;
-	gpuHandle->ptr += m_heapIncr * 3;
-	m_usedDescriptors += 3;
 }
 
 void DXRBase::addMetaballGroupAABB(int index) {

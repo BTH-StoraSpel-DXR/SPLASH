@@ -43,26 +43,9 @@ D3D12_CPU_DESCRIPTOR_HANDLE DX12ATexture::getUavCDH(int swapBuffer) const {
 	return uavHeapCDHs[i];
 }
 
-//void DX12ATexture::resetStates(const std::thread::id& resetTo) {
-//	// Assume thread 0 contains the correct state
-//	//if (states.find(resetTo) != states.end()) {
-//		//startState = states[resetTo][context->getFrameIndex()];
-//	if (!states.empty()) {
-//		startState = (*states.begin()).second;
-//	}
-//	//}
-//
-//	states.clear();
-//	/*for (unsigned int threadID = 0; threadID < numThreads; threadID++) {
-//		for (unsigned int frameIndex = 0; frameIndex < context->getNumSwapBuffers(); frameIndex++) {
-//			states[threadID][frameIndex] = currentState;
-//		}
-//	}*/
-//}
-
-void DX12ATexture::transitionStateTo(ID3D12GraphicsCommandList4* cmdList, D3D12_RESOURCE_STATES newState) {
-	unsigned int frameIndex = context->getSwapIndex();
-	auto index = (useOneResource) ? 0 : frameIndex;
+void DX12ATexture::transitionStateTo(ID3D12GraphicsCommandList4* cmdList, D3D12_RESOURCE_STATES newState, int frameIndex) {
+	int i = (frameIndex == -1) ? context->getSwapIndex() : frameIndex;
+	auto index = (useOneResource) ? 0 : i;
 
 	if (state[index] == newState) return;
 

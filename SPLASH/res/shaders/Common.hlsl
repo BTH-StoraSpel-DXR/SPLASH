@@ -7,9 +7,7 @@ struct PointLight {
 	float3 color;
 	float distanceToLight;
 	float3 fragToLight;
-    float attConstant;
-    float attLinear;
-    float attQuadratic;
+    float reachRadius;
 };
 
 struct DirectionalLight {

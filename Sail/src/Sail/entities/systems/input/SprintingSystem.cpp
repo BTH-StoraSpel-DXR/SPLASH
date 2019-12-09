@@ -6,7 +6,7 @@
 #include "Sail/entities/components/SpeedLimitComponent.h"
 #include "Sail/entities/components/AnimationComponent.h"
 #include "Sail/entities/components/CrosshairComponent.h"
-#include "Sail/entities/components/PowerUpComponent.h"
+#include "Sail/entities/components/PowerUp/PowerUpComponent.h"
 
 SprintingSystem::SprintingSystem() {
 	registerComponent<SprintingComponent>(true, true, true);
@@ -19,14 +19,14 @@ void SprintingSystem::update(float dt, float alpha) {
 	for (auto& e : entities) {
 		auto sprintComp = e->getComponent<SprintingComponent>();
 		if (auto powC = e->getComponent<PowerUpComponent>()) {
-			if (powC->powerUps[PowerUpComponent::PowerUps::STAMINA].time > 0.0f) {
+			if (powC->powerUps[PowerUps::STAMINA].time > 0.0f) {
 				sprintComp->sprintDuration = sprintComp->defaultSprintDuration * 2.0f;
 			}
 			else {
 				sprintComp->sprintDuration = sprintComp->defaultSprintDuration;
 			}
 
-			if (powC->powerUps[PowerUpComponent::PowerUps::RUNSPEED].time > 0.0f) {
+			if (powC->powerUps[PowerUps::RUNSPEED].time > 0.0f) {
 				sprintComp->sprintSpeedModifier = sprintComp->defaultSprintSpeedModifier * 1.5f;
 			}
 			else {

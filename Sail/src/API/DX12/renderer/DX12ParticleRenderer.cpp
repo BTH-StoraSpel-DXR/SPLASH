@@ -8,7 +8,7 @@
 #include "Sail/graphics/shader/Shader.h"
 #include "API/DX12/DX12VertexBuffer.h"
 #include "API/DX12/resources/DX12RenderableTexture.h"
-#include "DX12GBufferRenderer.h";
+#include "DX12GBufferRenderer.h"
 #include "DX12HybridRaytracerRenderer.h"
 
 DX12ParticleRenderer::DX12ParticleRenderer() {

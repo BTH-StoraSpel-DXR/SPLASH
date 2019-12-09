@@ -20,6 +20,7 @@
 #include "../DX12VertexBuffer.h"
 #include "Sail/entities/systems/physics/OctreeAddRemoverSystem.h"
 #include "Sail/events/EventDispatcher.h"
+#include <glm/gtx/string_cast.hpp>
 #include "API/DX12/resources/DX12DDSTexture.h"
 
 DX12GBufferRenderer::DX12GBufferRenderer() {
@@ -39,7 +40,8 @@ DX12GBufferRenderer::DX12GBufferRenderer() {
 	auto windowHeight = app->getWindow()->getWindowHeight();
 
 	for (int i = 0; i < NUM_GBUFFERS; i++) {
-		m_gbufferTextures[i] = static_cast<DX12RenderableTexture*>(RenderableTexture::Create(windowWidth, windowHeight, "GBuffer renderer output " + std::to_string(i), Texture::R8G8B8A8, (i == 0)));
+		m_gbufferTextures[i] = static_cast<DX12RenderableTexture*>(RenderableTexture::Create(windowWidth, windowHeight, "GBuffer renderer output " + std::to_string(i),
+			(i == NUM_GBUFFERS - 1) ? Texture::R16G16_FLOAT : Texture::R8G8B8A8, (i == 0))); // Last gbuffer output is motion vectors which needs more precision but only two channels
 	}
 }
 
@@ -216,6 +218,10 @@ void DX12GBufferRenderer::recordCommands(PostProcessPipeline* postProcessPipelin
 			cmdList->SetGraphicsRoot32BitConstants(GlobalRootParam::CBV_TEAM_COLOR, 3, &teamColors[command->teamColorID], 0);
 		}
 
+		// Specifically used in GBuffer shader to calculate motion vectors
+		glm::mat4 wvpLastFrame = camera->getViewProjectionLastFrame() * glm::transpose(command->transformLastFrame);
+		shaderPipeline->trySetCBufferVar("sys_mWVPLastFrame", &wvpLastFrame, sizeof(glm::mat4));
+		
 		command->model.mesh->draw(*this, cmdList.Get());
 	}
 
@@ -224,7 +230,7 @@ void DX12GBufferRenderer::recordCommands(PostProcessPipeline* postProcessPipelin
 	if (threadID == nThreads - 1) {
 
 		// Transition output textures for use in raytracing
-		for (int i = 0; i < NUM_GBUFFERS; i++) {
+		for (int i = 0; i < NUM_GBUFFERS - 1; i++) {
 			// TODO: transition in batch
 			m_gbufferTextures[i]->transitionStateTo(cmdList.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 		}

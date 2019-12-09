@@ -1,8 +1,15 @@
 #pragma once
 #pragma once
 
-#include "Component.h"
+#include "../Component.h"
 #include "Sail/entities/Entity.h"
+enum PowerUps {
+	RUNSPEED,
+	STAMINA,
+	SHOWER,
+	POWERWASH,
+	NUMPOWUPS
+};
 
 class PowerUpComponent : public Component<PowerUpComponent> {
 public:
@@ -18,13 +25,7 @@ public:
 		}
 	};
 
-	enum PowerUps {
-		RUNSPEED,
-		STAMINA,
-		SHOWER,
-		POWERWASH,
-		NUMPOWUPS
-	};
+
 
 public:
 	PowerUpComponent();

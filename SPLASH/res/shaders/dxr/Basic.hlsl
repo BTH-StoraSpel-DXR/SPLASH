@@ -3,38 +3,45 @@
 
 RaytracingAccelerationStructure gRtScene 			: register(t0);
 Texture2D<float4> sys_brdfLUT 						: register(t5);
-Texture2D<float4> sys_inTex_normals 				: register(t10);
-Texture2D<float4> sys_inTex_albedo 					: register(t11);
-Texture2D<float4> sys_inTex_texMetalnessRoughnessAO : register(t12);
-Texture2D<float>  sys_inTex_depth 					: register(t13);
-// Decal textures
-Texture2D<float4> decal_texAlbedo 					: register(t14);
-Texture2D<float4> decal_texNormal 					: register(t15);
-Texture2D<float4> decal_texMetalnessRoughnessAO 	: register(t16);
 
-RWTexture2D<float4> lOutput 	 : register(u0);
-RWTexture2D<float4> lOutputBloom : register(u1);
+// Gbuffer inputs/outputs
+RWTexture2D<float4> gbuffer_normals 				: register(u0);
+RWTexture2D<float4> gbuffer_albedo 				    : register(u1);
+RWTexture2D<float4> gbuffer_metalnessRoughnessAO 	: register(u2);
+Texture2D<float2>   gbuffer_motionVectors			: register(t10);
+Texture2D<float>    gbuffer_depth 					: register(t11);
+
+RWTexture2D<float4> lOutputAlbedo		 		: register(u3);		// RGB
+RWTexture2D<float4> lOutputNormals 				: register(u4); 	// XYZ
+RWTexture2D<float4> lOutputMetalnessRoughnessAO : register(u5); 	// Metalness/Roughness/AO
+RWTexture2DArray<float2> lOutputShadows 		: register(u6); 	// Shadows first bounce/shadows second bounce for all lights
+RWTexture2D<float4> lOutputPositionsOne			: register(u7);		// XYZ - world space positions for first bounce
+RWTexture2D<float4> lOutputPositionsTwo			: register(u8);		// XYZ - world space positions for second bounce
+RWTexture2D<float4> lOutputBloom 				: register(u9); 	// RGB - Writes all colors that should later be bloomed
+Texture2DArray<float2> InputShadowsLastFrame 	: register(t20); 	// last frame Shadows first bounce/last frame shadows second bounce
 
 ConstantBuffer<SceneCBuffer> CB_SceneData : register(b0, space0);
 ConstantBuffer<MeshCBuffer> CB_MeshData : register(b1, space0);
-ConstantBuffer<DecalCBuffer> CB_DecalData : register(b2, space0);
 
 StructuredBuffer<Vertex> vertices : register(t1, space0);
 StructuredBuffer<uint> indices : register(t1, space1);
 StructuredBuffer<float3> metaballs : register(t1, space2);
+
 StructuredBuffer<uint> waterData : register(t6, space0);
 
-// Texture2DArray<float4> textures : register(t2, space0);
+// Closest hit textures
 Texture2D<float4> sys_texAlbedo : register(t2);
 Texture2D<float4> sys_texNormal : register(t3);
 Texture2D<float4> sys_texMetalnessRoughnessAO : register(t4);
 
 SamplerState ss : register(s0);
+SamplerState motionSS : register(s1);
 
+#define RAYTRACING
+#define RAYTRACER_HARD_SHADOWS
 #include "Utils.hlsl"
-#include "Shading.hlsl"
-#include "Decals.hlsl"
-
+#include "WaterOnSurface.hlsl"
+#include "shading/PBR.hlsl"
 
 // Generate a ray in world space for a camera pixel corresponding to an index from the dispatched 2D grid.
 inline void generateCameraRay(uint2 index, out float3 origin, out float3 direction) {
@@ -52,22 +59,89 @@ inline void generateCameraRay(uint2 index, out float3 origin, out float3 directi
 	direction = normalize(world.xyz - origin);
 }
 
+float getShadowAmount(inout uint seed, float3 worldPosition, float3 worldNormal, inout int inOutlightIndex) {
+	// Shoots a ray towards a random point on the light
+
+	const uint numSamples = 1; // Rays per light source per pixel
+
+	bool skip = false;
+	PointlightInput p;
+	// Find the next applicable light
+	bool foundLight = false;
+	while (true) {
+		skip = false;
+		if (inOutlightIndex >= NUM_TOTAL_LIGHTS) {
+			// No more applicable lights found!
+			inOutlightIndex = -1;
+			return 0.f;
+		}
+		// First "NUM_POINT_LIGHTS" lights are sampled as point lights and the rest as spot lights
+		if (inOutlightIndex < NUM_POINT_LIGHTS) {
+			p = CB_SceneData.pointLights[inOutlightIndex];
+		} else {
+			SpotlightInput spotlight = CB_SceneData.spotLights[inOutlightIndex-NUM_POINT_LIGHTS];
+			// Skip pixels outside spotlight cone
+			float3 L = normalize(spotlight.position - worldPosition);
+			float angle = dot(L, normalize(spotlight.direction));
+			if(spotlight.angle == 0 || abs(angle) <= spotlight.angle) {
+				skip = true;
+			}
+			p = (PointlightInput)spotlight;
+		}
+
+		// Ignore point light if color is black
+		if (all(p.color == 0.0f)) {
+			inOutlightIndex++;
+			continue;
+		}
+		// Light found, break!
+		break;
+	}
+
+	float lightShadowAmount = 0.f;
+	if (!skip) {
+		float3 toLight = normalize(p.position - worldPosition);
+		// Calculate a vector perpendicular to L
+		float3 perpL = cross(toLight, float3(0.f, 1.0f, 0.f));
+		// Handle case where L = up -> perpL should then be (1,0,0)
+		if (all(perpL == 0.0f)) {
+			perpL.x = 1.0;
+		}
+		// Use perpL to get a vector from worldPosition to the edge of the light sphere
+		float3 toLightEdge = normalize((p.position+perpL*LIGHT_RADIUS) - worldPosition);
+		// Angle between L and toLightEdge. Used as the cone angle when sampling shadow rays
+		float coneAngle = acos(dot(toLight, toLightEdge)) * 2.0f;
+		float distance = length(p.position - worldPosition);
+
+		[unroll]
+		for (int shadowSample = 0; shadowSample < numSamples; shadowSample++) {
+			float3 L = Utils::getConeSample(seed, toLight, coneAngle);
+			lightShadowAmount += (float)Utils::rayHitAnything(worldPosition, worldNormal, L, distance);
+		}
+		lightShadowAmount /= numSamples;
+	} else {
+		// Assume shadow if skipped
+		lightShadowAmount = 1.f;
+	}
+
+	inOutlightIndex++;
+
+	return lightShadowAmount;
+}
+
 [shader("raygeneration")]
 void rayGen() {
 	uint2 launchIndex = DispatchRaysIndex().xy;
 
-#define TRACE_FROM_GBUFFERS
-#ifdef TRACE_FROM_GBUFFERS
 	float2 screenTexCoord = ((float2)launchIndex + 0.5f) / DispatchRaysDimensions().xy;
 
 	// Use G-Buffers to calculate/get world position, normal and texture coordinates for this screen pixel
 	// G-Buffers contain data in world space
-	float3 worldNormal = sys_inTex_normals.SampleLevel(ss, screenTexCoord, 0).rgb * 2.f - 1.f;
-	float4 albedoColor = sys_inTex_albedo.SampleLevel(ss, screenTexCoord, 0).rgba;
-	
-	albedoColor = pow(albedoColor, 2.2f);
+	float3 worldNormal = gbuffer_normals[launchIndex].rgb * 2.f - 1.f;
+	float4 albedoColor = gbuffer_albedo[launchIndex];
+	albedoColor = pow(albedoColor, 2.2f); // SRGB
 
-	float4 metalnessRoughnessAO = sys_inTex_texMetalnessRoughnessAO.SampleLevel(ss, screenTexCoord, 0);
+	float4 metalnessRoughnessAO = gbuffer_metalnessRoughnessAO[launchIndex];
 	float metalness = metalnessRoughnessAO.r;
 	float roughness = metalnessRoughnessAO.g;
 	float ao = metalnessRoughnessAO.b;
@@ -75,12 +149,13 @@ void rayGen() {
 
 	// ---------------------------------------------------
 	// --- Calculate world position from depth texture ---
+	// ---------------------------------------------------
 
-	// TODO: move calculations to cpu
+	// These calculations could be moved to the cpu
 	float projectionA = CB_SceneData.farZ / (CB_SceneData.farZ - CB_SceneData.nearZ);
 	float projectionB = (-CB_SceneData.farZ * CB_SceneData.nearZ) / (CB_SceneData.farZ - CB_SceneData.nearZ);
 
-	float depth = sys_inTex_depth.SampleLevel(ss, screenTexCoord, 0);
+	float depth = gbuffer_depth[launchIndex];
 	float linearDepth = projectionB / (depth - projectionA);
 
 	float2 screenPos = screenTexCoord * 2.0f - 1.0f;
@@ -88,25 +163,30 @@ void rayGen() {
 
 	float3 screenVS = mul(CB_SceneData.clipToView, float4(screenPos, 0.f, 1.0f)).xyz;
 	float3 viewRay = float3(screenVS.xy / screenVS.z, 1.f);
-
-	// float3 viewRay = normalize(float3(screenPos, 1.0f));
 	float4 vsPosition = float4(viewRay * linearDepth, 1.0f);
 
 	float3 worldPosition = mul(CB_SceneData.viewToWorld, vsPosition).xyz;
 	// ---------------------------------------------------
 
-	RayPayload payload;
-	payload.recursionDepth = 1;
-	payload.closestTvalue = 0;
-	payload.color = float4(0,0,0,0);
-	if (worldNormal.x == -1 && worldNormal.y == -1) {
-		// Bounding boxes dont need shading
-		lOutput[launchIndex] = float4(albedoColor.rgb, 1.0f);
-		return;
-	} else {
-		shade(worldPosition, worldNormal, albedoColor.rgb, emissivness, metalness, roughness, ao, payload);
-	}
+	// Material
+	float3 albedoOne = gbuffer_albedo[launchIndex].rgb;
+	float4 mrao = gbuffer_metalnessRoughnessAO[launchIndex];
+	float metalnessOne = mrao.r;
+	float roughnessOne = mrao.g;
+	float aoOne = mrao.b;
+	float emissivenessOne = pow(1 - mrao.a, 2);
+	float originalAoOne = aoOne;
+	// Change material if first bounce color should be water on a surface
+	getWaterMaterialOnSurface(albedoOne, metalnessOne, roughnessOne, aoOne, worldNormal, worldPosition);
 
+	RayDesc ray;
+	ray.Origin = worldPosition;
+	ray.Direction = reflect(worldPosition - CB_SceneData.cameraPosition, worldNormal);
+	ray.TMin = 0.00001;
+	ray.TMax = 10000.0;
+
+	RayPayload payload = Utils::makeEmptyPayload();
+	TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 0 /* ray index*/, 0, 0, ray, payload);
 
 	//===========MetaBalls RT START===========
 	float3 rayDir;
@@ -114,7 +194,6 @@ void rayGen() {
 	// Generate a ray for a camera pixel corresponding to an index from the dispatched 2D grid.
 	generateCameraRay(launchIndex, origin, rayDir);
 
-	RayDesc ray;
 	ray.Origin = origin;
 	ray.Direction = rayDir;
 	// Set TMin to a non-zero small value to avoid aliasing issues due to floating point errors
@@ -122,80 +201,156 @@ void rayGen() {
 	ray.TMin = 0.00001;
 	ray.TMax = 10000.0;
 
-	RayPayload payload_metaball;
-	payload_metaball.recursionDepth = 0;
-	payload_metaball.closestTvalue = 0;
-	payload_metaball.color = float4(0, 0, 0, 0);
-
-	TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, INSTANCE_MASK_METABALLS, 0 /* ray index*/, 0, 0, ray, payload_metaball);
+	RayPayload payloadMetaball = Utils::makeEmptyPayload();
+	TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, INSTANCE_MASK_METABALLS, 0 /* ray index*/, 0, 0, ray, payloadMetaball);
 	//===========MetaBalls RT END===========
 
-	float metaballDepth = dot(normalize(CB_SceneData.cameraDirection), normalize(rayDir) * payload_metaball.closestTvalue);
+	float metaballDepth = dot(normalize(CB_SceneData.cameraDirection), normalize(rayDir) * payloadMetaball.closestTvalue);
+	RayPayload finalPayload = payload;
+	if (metaballDepth <= linearDepth) { 
+		finalPayload = payloadMetaball;
+		// Overwrite variables used for shadow rays
+		worldPosition = payloadMetaball.worldPositionOne;
+		worldNormal = payloadMetaball.normalOne;
 
-	float3 outputColor;
-	if (metaballDepth <= linearDepth) {
-		outputColor = payload_metaball.color.rgb;
-	} else {
-		outputColor = payload.color.rgb;
-
-		// Decals are untested since tonemapping was moved, uncomment at own risk
-		// float4 totDecalColour = 0.0f;
-		// for (uint i = 0; i < CB_SceneData.nDecals; i++) {
-		// 	totDecalColour += renderDecal(i, vsPosition.xyz, worldPosition, worldNormal, payload.color);		
-		// 	if (!all(totDecalColour == 0.0f)) {
-		// 		lOutput[launchIndex] = totDecalColour;
-		// 		break;
-		// 	}
-		// }
+		albedoOne = payloadMetaball.albedoOne.rgb;
+		metalnessOne = payloadMetaball.metalnessRoughnessAOOne.r;
+		roughnessOne = payloadMetaball.metalnessRoughnessAOOne.g;
+		aoOne = payloadMetaball.metalnessRoughnessAOOne.b;
+		emissivenessOne = 0.f;
 	}
-	// Perform tonemapping if requested
-	// Tonemapping is otherwise done in post processing
-	outputColor = (CB_SceneData.doTonemapping) ? tonemap(outputColor) : outputColor;
+
+	// Second bounce information
+	float3 albedoTwo = finalPayload.albedoTwo.rgb;
+	float3 worldNormalTwo = finalPayload.normalTwo.rgb;
+	mrao = finalPayload.metalnessRoughnessAOTwo;
+	float metalnessTwo = mrao.r;
+	float roughnessTwo = mrao.g;
+	float aoTwo = mrao.b;
+	float emissivenessTwo = pow(1 - mrao.a, 2);
+	float3 worldPositionTwo = finalPayload.worldPositionTwo;
+	// Change material if second bounce color should be water on a surface
+	getWaterMaterialOnSurface(albedoTwo, metalnessTwo, roughnessTwo, aoTwo, worldNormalTwo, worldPositionTwo);
+
+	//////////////////////////
+	//     Hard shadows     //
+	//////////////////////////
+	if (CB_SceneData.doHardShadows) {
+		// Shade scene
+
+		PBRPixel pixelOne;
+		pixelOne.worldPosition = worldPosition;
+		pixelOne.worldNormal = worldNormal;
+		pixelOne.albedo = albedoOne;
+		pixelOne.emissiveness = emissivenessOne;
+		pixelOne.metalness = metalnessOne;
+		pixelOne.roughness = roughnessOne;
+		pixelOne.ao = aoOne;
+
+		PBRPixel pixelTwo;
+		pixelTwo.worldPosition = worldPositionTwo;
+		pixelTwo.worldNormal = worldNormalTwo;
+		pixelTwo.albedo = albedoTwo;
+		pixelTwo.emissiveness = emissivenessTwo;
+		pixelTwo.metalness = metalnessTwo;
+		pixelTwo.roughness = roughnessTwo;
+		pixelTwo.ao = aoTwo;
+
+		pixelOne.invViewDir = CB_SceneData.cameraPosition - pixelOne.worldPosition;
+    	pixelTwo.invViewDir = pixelOne.worldPosition - pixelTwo.worldPosition;
+
+		PBRScene scene;
+		// Shade the reflection
+		scene.pointLights = CB_SceneData.pointLights;
+		scene.spotLights = CB_SceneData.spotLights;
+		scene.brdfLUT = sys_brdfLUT;
+		scene.sampler = ss;
+
+		float4 secondBounceColor = pbrShade(scene, pixelTwo, -1.f);
+		// Shade the first hit
+		float4 outputColor = pbrShade(scene, pixelOne, secondBounceColor.rgb);
+		// float4 outputColor = secondBounceColor;
+		lOutputPositionsOne[launchIndex] = outputColor;
+
+		// Write bloom pass input
+		lOutputBloom[launchIndex] = float4((length(outputColor.rgb) > 1.0f) ? clamp(outputColor.rgb, 0.f, 3.f) : 0.f, 1.0f);
+
+		return; // Stop here, all code below is for soft shadows
+	}
+
+
+	//////////////////////////
+	//     Soft shadows     //
+	//////////////////////////
+
+	// Get shadow from first bounce
+	// Initialize a random seed
+	uint randSeed = Utils::initRand( DispatchRaysIndex().x + DispatchRaysIndex().y * DispatchRaysDimensions().x, CB_SceneData.frameCount );
+
+	// Temporal filtering via an exponential moving average
+	float alpha = 0.3f; // Temporal fade, trading temporal stability for lag
+	// Reproject screenTexCoord to where it was last frame
+	float2 motionVector = gbuffer_motionVectors.SampleLevel(ss, screenTexCoord, 0);
+	motionVector.y = 1.f - motionVector.y;
+	motionVector = motionVector * 2.f - 1.0f;
+
+	float totalShadowAmount = 0.f;
+	float2 reprojectedTexCoord = screenTexCoord - motionVector;
+
+	uint shadowTextureIndex = 0;
+	int lightIndex = 0;
+	[unroll]
+	while (shadowTextureIndex < NUM_SHADOW_TEXTURES) {
+		float firstBounceShadow = getShadowAmount(randSeed, worldPosition, worldNormal, lightIndex);
+		if (lightIndex == -1) {
+			// No more lights available!
+			break;
+		}
+
+		float2 cLast = InputShadowsLastFrame.SampleLevel(motionSS, float3(reprojectedTexCoord, shadowTextureIndex), 0).rg;
+		// float2 cLast = 0.0f;
+		float2 shadow = float2(firstBounceShadow, finalPayload.shadowTwo[shadowTextureIndex]);
+		shadow = alpha * (1.0f - shadow) + (1.0f - alpha) * cLast;
+		lOutputShadows[uint3(launchIndex, shadowTextureIndex)] = shadow;
+		totalShadowAmount += firstBounceShadow;
+		shadowTextureIndex++;
+	}
+	totalShadowAmount /= max(NUM_SHADOW_TEXTURES, 1);
+
+	// Interpolation to shade water in shadows nicely, currently done in shadepass instead
+	// totalShadowAmount = 1 - totalShadowAmount * totalShadowAmount;
+	// aoOne = lerp(aoOne, originalAoOne, totalShadowAmount);
+	// albedoOne.x = totalShadowAmount;
+	// albedoOne.yz = 0.f;
+
+	// Overwrite gbuffers
+	gbuffer_albedo[launchIndex] = float4(albedoOne, 1.0f);
+	gbuffer_normals[launchIndex] = float4(worldNormal * 0.5f + 0.5f, 1.0f);
+	gbuffer_metalnessRoughnessAO[launchIndex] = float4(metalnessOne, roughnessOne, aoOne, emissivenessOne);
 	// Write outputs
-	lOutput[launchIndex] = float4(outputColor, 1.0f);
-	lOutputBloom[launchIndex] = float4((length(outputColor) > 1.0f) ? outputColor : 0.f, 1.0f);
-
-#else
-	// Fully RT
-
-	float3 rayDir;
-	float3 origin;
-	// Generate a ray for a camera pixel corresponding to an index from the dispatched 2D grid.
-	generateCameraRay(launchIndex, origin, rayDir);
-
-	RayDesc ray;
-	ray.Origin = origin;
-	ray.Direction = rayDir;
-	// Set TMin to a non-zero small value to avoid aliasing issues due to floating point errors
-	// TMin should be kept small to prevent missing geometry at close contact areas
-	ray.TMin = 0.00001;
-	ray.TMax = 10000.0;
-
-	RayPayload payload;
-	payload.recursionDepth = 0;
-	payload.closestTvalue = 0;
-
-	payload.color = float4(0, 0, 0, 0);
-	TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, INSTANCE_MASK_DEFAULT & ~INSTANCE_MASK_METABALLS, 0 /* ray index*/, 0, 0, ray, payload);
-
-	lOutput[launchIndex] = payload.color;
-#endif
+	lOutputAlbedo[launchIndex] = float4(albedoTwo, 1.0f);
+	lOutputNormals[launchIndex] = float4(worldNormalTwo * 0.5f + 0.5f, 1.0f);
+	lOutputMetalnessRoughnessAO[launchIndex] = float4(metalnessTwo, roughnessTwo, aoTwo, emissivenessTwo);
+	lOutputPositionsOne[launchIndex] = float4(worldPosition, 1.0f);
+	lOutputPositionsTwo[launchIndex] = float4(worldPositionTwo, 1.0f);
+	
 }
 
 [shader("miss")]
 void miss(inout RayPayload payload) {
-	//===Change Background color here===
-	float t = 0.0; //Black
-	payload.color = float4(t,t,t,1);
-	payload.closestTvalue = 1000;
+	payload.albedoTwo = float4(0.f, 0.f, 0.f, 1.0f);
+	payload.closestTvalue = 100000;
 }
 
 float4 getAlbedo(MeshData data, float2 texCoords) {
-	float4 color = float4(data.color.rgb, 1.0f);
-	if (data.flags & MESH_HAS_ALBEDO_TEX) {		
-		color *= sys_texAlbedo.SampleLevel(ss, texCoords, 0);
+	float4 color = float4(data.color.rgb, 0.f);
+	if (data.flags & MESH_HAS_ALBEDO_TEX) {
+		float4 sampled = sys_texAlbedo.SampleLevel(ss, texCoords, 0);
+		// color.rgb *= pow(sampled.rgb, 2.2f); // SRGB conversion
+		color.rgb *= sampled.rgb; // No SRGB conversion
+		color.a = sampled.a; // Team color amount is stored in alpha, dont do SRGB conversion
 	}
-	
+
 	return color;
 }
 float4 getMetalnessRoughnessAO(MeshData data, float2 texCoords) {
@@ -253,22 +408,42 @@ void closestHitTriangle(inout RayPayload payload, in BuiltInTriangleIntersection
 	}
 
 	float4 albedoColor = getAlbedo(CB_MeshData.data[blasIndex], texCoords);
-	float a = albedoColor.a;
 	float3 teamColor = CB_SceneData.teamColors[teamColorID].rgb;
 	
-	if (a < 1.0f) {
-		float f = 1 - a;
-		albedoColor = float4(albedoColor.rgb * (1 - f) + teamColor * f, a);
+	// Apply teamcolor depending on alpha. 0 = fully team color
+	if (albedoColor.a < 1.0f) {
+		float f = 1 - albedoColor.a;
+		albedoColor = float4(albedoColor.rgb * (1 - f) + teamColor * f, albedoColor.a);
 	}
-	albedoColor = float4(pow(albedoColor.rgb, 2.2), a);
 
 	float4 metalnessRoughnessAO = getMetalnessRoughnessAO(CB_MeshData.data[blasIndex], texCoords);
-	float metalness = metalnessRoughnessAO.r;
-	float roughness = metalnessRoughnessAO.g;
-	float ao = metalnessRoughnessAO.b;
-	float emissivness = pow(1 - metalnessRoughnessAO.a, 2);
 
-	shade(Utils::HitWorldPosition(), normalInWorldSpace, albedoColor.rgb, emissivness, metalness, roughness, ao, payload, true);
+	float3 worldPosition = Utils::HitWorldPosition();
+	
+	// Initialize a random seed
+	uint randSeed = Utils::initRand( DispatchRaysIndex().x + DispatchRaysIndex().y * DispatchRaysDimensions().x, CB_SceneData.frameCount );
+	
+	if (!CB_SceneData.doHardShadows) {
+		// Soft shadows only
+		// Write shadows for each light
+		int shadowTextureIndex = 0;
+		int lightIndex = 0;
+		[unroll] // THIS IS REQUIRED FOR SOME REASON
+		while (shadowTextureIndex < NUM_SHADOW_TEXTURES) {
+			float shadowAmount = getShadowAmount(randSeed, worldPosition, normalInWorldSpace, lightIndex);
+			if (lightIndex == -1) {
+				// No more lights available!
+				break;
+			}
+			payload.shadowTwo[shadowTextureIndex] = shadowAmount;
+			shadowTextureIndex++;
+		}
+	}
+
+	payload.albedoTwo.rgb = albedoColor.rgb; // TODO: store alpha and use as team color amount
+	payload.normalTwo = normalInWorldSpace;
+	payload.metalnessRoughnessAOTwo = metalnessRoughnessAO;
+	payload.worldPositionTwo = worldPosition;
 }
 
 
@@ -293,35 +468,38 @@ void closestHitProcedural(inout RayPayload payload, in ProceduralPrimitiveAttrib
 		TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, INSTANCE_MASK_DEFAULT & ~INSTANCE_MASK_METABALLS, 0, 0, 0, reflectRaydesc, reflect_payload);
 		TraceRay(gRtScene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, INSTANCE_MASK_DEFAULT & ~INSTANCE_MASK_METABALLS, 0, 0, 0, reftractRaydesc, refract_payload);
 
+		float4 reflect_color = reflect_payload.albedoTwo;
+		reflect_color.b += 0.01f;
+		reflect_color =  saturate(reflect_color);
+
+		float4 refract_color = refract_payload.albedoTwo;
+		refract_color.b += 0.3f;
+		refract_color = saturate(refract_color);
+
+		float3 hitToCam = CB_SceneData.cameraPosition - Utils::HitWorldPosition();
+		float refconst = pow(abs(dot(normalize(hitToCam), normalInWorldSpace)), 2);
+
+		// float4 finaldiffusecolor = saturate((refract_color * refconst + reflect_color * (1- refconst)));
+		float4 finaldiffusecolor = refract_color * 0.8f + reflect_color * 0.2f;
+		finaldiffusecolor.a = 1;
+
+		/////////////////////////
+		payload.albedoOne = float4(refract_color.rgb, 1.0f);
+		payload.normalOne = normalInWorldSpace;
+		payload.metalnessRoughnessAOOne = float4(1.f, 0.f, 1.f, 1.f);
+		payload.worldPositionOne = Utils::HitWorldPosition();
+
+		payload.albedoTwo = float4(reflect_color.rgb, 1.0f);
+		payload.normalTwo = reflect_payload.normalTwo;
+		payload.metalnessRoughnessAOTwo = reflect_payload.metalnessRoughnessAOTwo;
+		payload.worldPositionTwo = reflect_payload.worldPositionTwo;
+
 	} else {
-		reflect_payload.color = float4(0.0f, 0.0f, 0.1f,1.0f);
-		refract_payload.color = float4(0.0f, 0.0f, 0.f,1.0f);
+		payload.albedoTwo = float4(0.0f, 0.0f, .01f, 1.0f);
+		payload.normalTwo = normalInWorldSpace;
+		payload.metalnessRoughnessAOTwo = float4(1.f, 1.f, 1.f, 1.f);
+		payload.worldPositionTwo = Utils::HitWorldPosition();
 	}
-
-	float4 reflect_color = reflect_payload.color;
-	reflect_color.b += 0.01f;
-	reflect_color =  saturate(reflect_color);
-
-	float4 refract_color = refract_payload.color;
-	refract_color.b += 0.01f;
-	refract_color = saturate(refract_color);
-
-	float3 hitToCam = CB_SceneData.cameraPosition - Utils::HitWorldPosition();
-	float refconst = pow(abs(dot(normalize(hitToCam), normalInWorldSpace)), 2);
-
-	// float4 finaldiffusecolor = saturate((refract_color * refconst + reflect_color * (1- refconst)));
-	float4 finaldiffusecolor = refract_color * 0.8f + reflect_color * 0.2f;
-	finaldiffusecolor.a = 1;
-	
-	/////////////////////////
-	float3 albedoColor = finaldiffusecolor.xyz;
-	float metalness = 1;
-	float roughness = 1;
-	float ao = 1;
-
-	payload.color = phongShade(Utils::HitWorldPosition(), normalInWorldSpace, finaldiffusecolor.xyz);
-
-	return;
 }
 
 bool solveQuadratic(in float a, in float b, in float c, inout float x0, inout float x1) {

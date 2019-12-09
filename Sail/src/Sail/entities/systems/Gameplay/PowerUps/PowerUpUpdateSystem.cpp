@@ -1,6 +1,7 @@
+
 #include "pch.h" 
 #include "PowerUpUpdateSystem.h"
-#include "Sail/entities/components/PowerUpComponent.h"
+#include "Sail/entities/components/PowerUp/PowerUpComponent.h"
 
 PowerUpUpdateSystem::PowerUpUpdateSystem() {
 	registerComponent<PowerUpComponent>(true, true, true);
@@ -10,7 +11,6 @@ PowerUpUpdateSystem::~PowerUpUpdateSystem() {
 }
 
 void PowerUpUpdateSystem::update(float dt) {
-
 	for (auto& e: entities) {
 		if (auto* powC = e->getComponent<PowerUpComponent>()) {
 			for (auto& pow : powC->powerUps) {
