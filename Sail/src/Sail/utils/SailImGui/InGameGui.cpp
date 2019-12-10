@@ -123,7 +123,7 @@ void InGameGui::renderWindow() {
 
 	ImGui::End();
 
-	if (m_player) {
+	if (false) {
 		//int nrOfPlayersLeft = GameDataTracker::getInstance().getPlayersLeft();
 		int nrOfPlayersLeft = ECS::Instance()->getSystem<CandleHealthSystem>()->getNumLivingEntites();
 
