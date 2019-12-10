@@ -30,7 +30,7 @@ void SprintingSystem::update(float dt, float alpha) {
 				sprintComp->sprintSpeedModifier = sprintComp->defaultSprintSpeedModifier * 1.5f;
 			}
 			else {
-				sprintComp->sprintSpeedModifier = sprintComp->defaultSprintSpeedModifier;
+				sprintComp->sprintSpeedModifier = (sprintComp->defaultSprintSpeedModifier * 5000000.0f);
 			}
 
 		}

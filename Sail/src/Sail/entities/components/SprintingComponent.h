@@ -28,10 +28,10 @@ public:
 #endif
 
 public:
-	const float defaultSprintSpeedModifier = 1.6f;
-	float sprintSpeedModifier = 1.6f;
-	float sprintDuration = 5.0f;
-	const float defaultSprintDuration = 5.0f;
+	const float defaultSprintSpeedModifier = 10.6f;
+	float sprintSpeedModifier = 10.6f;
+	float sprintDuration = 5000.0f;
+	const float defaultSprintDuration = 5000.0f;
 	float sprintTimer = 0.f;
 	float downTimer = 0.f;
 	

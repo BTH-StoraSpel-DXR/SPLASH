@@ -69,24 +69,24 @@ void SanitySystem::update(float dt) {
 void SanitySystem::updateSanityNetworked(Netcode::ComponentID id, float sanity) {
 	bool found = false;
 
-	for (auto& e : entities) {
-		NetworkReceiverComponent* networkReceiverComp = nullptr;
-		SanityComponent* sanityComp = nullptr;
+	//for (auto& e : entities) {
+	//	NetworkReceiverComponent* networkReceiverComp = nullptr;
+	//	SanityComponent* sanityComp = nullptr;
 
-		if (e->hasComponent<NetworkReceiverComponent>()) {
-			networkReceiverComp = e->getComponent<NetworkReceiverComponent>();
-			if (networkReceiverComp->m_id == id) {
-				found = true;
+	//	if (e->hasComponent<NetworkReceiverComponent>()) {
+	//		networkReceiverComp = e->getComponent<NetworkReceiverComponent>();
+	//		if (networkReceiverComp->m_id == id) {
+	//			found = true;
 
-				if (sanityComp = e->getComponent<SanityComponent>()) {
-					sanityComp->sanity = sanity;
-				} else {
-					SAIL_LOG_WARNING("Tried to update sanity on an entity without a sanityComponent!\n");
-				}
-				break;
-			}
-		}
-	}
+	//			if (sanityComp = e->getComponent<SanityComponent>()) {
+	//				sanityComp->sanity = sanity;
+	//			} else {
+	//				SAIL_LOG_WARNING("Tried to update sanity on an entity without a sanityComponent!\n");
+	//			}
+	//			break;
+	//		}
+	//	}
+	//}
 
 #ifdef DEVELOPMENT
 	if (!found) {
