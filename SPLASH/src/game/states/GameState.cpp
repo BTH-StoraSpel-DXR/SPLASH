@@ -205,6 +205,35 @@ GameState::GameState(StateStack& stack)
 		extraCandles[i]->addComponent<RenderInActiveGameComponent>();
 		//this->m_player->addChildEntity(this->extraCandles[i].get());
 	}
+	extraCandles[0]->getComponent<TransformComponent>()->setTranslation({ 15.5f, 2.6f, 24.3f });
+	extraCandles[0]->getComponent<TransformComponent>()->setRotations({ 5.383f, 0.0f, 0.0f });
+
+	extraCandles[1]->getComponent<TransformComponent>()->setTranslation({ 27.4f, 4.1f, 17.7f });
+	extraCandles[1]->getComponent<TransformComponent>()->setRotations({ 0.0f, 0.0f, 3.2f });
+
+	extraCandles[2]->getComponent<TransformComponent>()->setTranslation({ 40.8f, 2.8f, 28.1f });
+	extraCandles[2]->getComponent<TransformComponent>()->setRotations({ 0.0f, 0.0f, 1.5f });
+
+	extraCandles[3]->getComponent<TransformComponent>()->setTranslation({ 30.4f, 2.6f, 70.2f });
+	extraCandles[3]->getComponent<TransformComponent>()->setRotations({ 0.0f, 0.0f, 5.0f });
+
+	extraCandles[4]->getComponent<TransformComponent>()->setTranslation({ 12.45f, 2.6f, 24.3f });
+	extraCandles[4]->getComponent<TransformComponent>()->setRotations({ 5.383f, 0.0f, 0.0f });
+
+	extraCandles[5]->getComponent<TransformComponent>()->setTranslation({ 0.4f, 4.1f, 17.7f });
+	extraCandles[5]->getComponent<TransformComponent>()->setRotations({ 0.0f, 0.0f, 3.2f });
+
+	extraCandles[6]->getComponent<TransformComponent>()->setTranslation({ 0.4f, 4.1f, 1.8f });
+	extraCandles[6]->getComponent<TransformComponent>()->setRotations({ 0.0f, 0.0f, 3.2f });
+
+	extraCandles[7]->getComponent<TransformComponent>()->setTranslation({ 27.4f, 4.1f, 1.8f });
+	extraCandles[7]->getComponent<TransformComponent>()->setRotations({ 0.0f, 0.0f, 3.2f });
+
+	extraCandles[8]->getComponent<TransformComponent>()->setTranslation({ 14.0f, 4.1f, 1.8f });
+	extraCandles[8]->getComponent<TransformComponent>()->setRotations({ 0.0f, 0.0f, 3.2f });
+
+	extraCandles[9]->getComponent<TransformComponent>()->setTranslation({ 45.2f, 2.2f, 59.7f });
+	extraCandles[9]->getComponent<TransformComponent>()->setRotations({ 0.9f, 0.0f, 0.0f });
 
 	
 	m_componentSystems.networkReceiverSystem->setPlayer(m_player);
