@@ -624,7 +624,30 @@ void GameState::initConsole() {
 		);
 
 		return std::string("Match ended.");
-		}, "GameState");
+	}, "GameState"
+	);
+
+	console.addCommand("raise", [&]() {
+
+		m_componentSystems.modelSubmitSystem->raiseVats();
+		
+		return std::string("Started raising cloning vats.");
+	}, "GameState"
+	);
+	console.addCommand("lower", [&]() {
+
+		m_componentSystems.modelSubmitSystem->lowerVats();
+
+		return std::string("Lowered cloning vats.");
+	}, "GameState"
+	);
+	console.addCommand("stopvats", [&]() {
+
+		m_componentSystems.modelSubmitSystem->stopVats();
+
+		return std::string("Lowered cloning vats.");
+	}, "GameState"
+	);
 #ifdef _DEBUG
 	console.addCommand("AddCube", [&]() {
 		return createCube(m_cam.getPosition());
@@ -824,10 +847,10 @@ bool GameState::render(float dt, float alpha) {
 	if (m_isInKillCamMode) {
 		killCamAlpha = m_componentSystems.killCamReceiverSystem->getKillCamAlpha(alpha);
 
-		m_componentSystems.killCamModelSubmitSystem->submitAll(killCamAlpha);
+		m_componentSystems.killCamModelSubmitSystem->submitAll(killCamAlpha, dt);
 		m_componentSystems.killCamMetaballSubmitSystem->submitAll(killCamAlpha);
 	} else {
-		m_componentSystems.modelSubmitSystem->submitAll(alpha);
+		m_componentSystems.modelSubmitSystem->submitAll(alpha, dt);
 		m_componentSystems.particleSystem->submitAll();
 		m_componentSystems.metaballSubmitSystem->submitAll(alpha);
 		m_componentSystems.boundingboxSubmitSystem->submitAll();
@@ -1255,7 +1278,7 @@ void GameState::createBots() {
 		botCount = 0;
 	}
 
-	botCount = 5;
+	botCount = 1;
 
 	for (size_t i = 0; i < botCount; i++) {
 		glm::vec3 spawnLocation = m_componentSystems.levelSystem->getSpawnPoint();

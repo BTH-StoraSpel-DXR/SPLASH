@@ -18,7 +18,11 @@ ModelSubmitSystem<T>::ModelSubmitSystem() {
 }
 
 template <typename T>
-void ModelSubmitSystem<T>::submitAll(const float alpha) {
+void ModelSubmitSystem<T>::submitAll(const float alpha, float dt) {
+	if (raisingVats) {
+		timePassed += dt;
+	}
+
 	Renderer* renderer = Application::getInstance()->getRenderWrapper()->getCurrentRenderer();
 	for (auto& e : entities) {
 		ModelComponent* model = e->getComponent<ModelComponent>();
@@ -31,6 +35,12 @@ void ModelSubmitSystem<T>::submitAll(const float alpha) {
 			flags |= Renderer::IS_VISIBLE_ON_SCREEN;
 		}
 
+		if (raisingVats) {
+			if (e->getName() == "CloningVat") {
+				raise(e);
+			}
+		}
+
 		renderer->submit(
 			model->getModel(), 
 			e->hasComponent<RealTimeComponent>() ? transform->getMatrixWithUpdate() : transform->getRenderMatrix(alpha),
@@ -39,6 +49,52 @@ void ModelSubmitSystem<T>::submitAll(const float alpha) {
 			model->teamColorID
 		);
 	}
+}
+
+template<typename T>
+void ModelSubmitSystem<T>::raise(Entity* e) {
+	TransformComponent* transform = e->getComponent<TransformComponent>();
+	if (timePassed > timeToRaise) {
+		timePassed = timeToRaise;
+		raisingVats = false;
+	}
+
+	float percentageRaised = timePassed / timeToRaise;
+	SAIL_LOG(std::to_string(percentageRaised));
+	float currentY = yFloor + (yRoof - yFloor) * percentageRaised;
+
+	glm::vec3 translation = transform->getTranslation();
+	translation.y = currentY;
+	transform->setTranslation(translation);
+	
+	if (!raisingVats) {
+		timePassed = 0.0f;
+	}
+}
+
+template<typename T>
+void ModelSubmitSystem<T>::raiseVats() {
+	raisingVats = true;
+}
+
+template<typename T>
+void ModelSubmitSystem<T>::lowerVats() {
+	raisingVats = false;
+	for (auto& e : entities) {
+		if (e->getName() == "CloningVat") {
+			TransformComponent* transform = e->getComponent<TransformComponent>();
+			glm::vec3 translation = transform->getTranslation();
+			translation.y = yRoof;
+
+			translation.y = yFloor;
+			transform->setTranslation(translation);
+		}
+	}
+}
+
+template<typename T>
+void ModelSubmitSystem<T>::stopVats() {
+	raisingVats = false;
 }
 
 

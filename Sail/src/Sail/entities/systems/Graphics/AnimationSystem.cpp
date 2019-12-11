@@ -76,7 +76,7 @@ template <typename T>
 void AnimationSystem<T>::updateTransforms(const float dt) { 
 	for (auto& e : entities) {
 		AnimationComponent* animationC = e->getComponent<AnimationComponent>();
-		animationC->currentAnimation = animationC->getAnimationStack()->getAnimation(12);
+		//animationC->currentAnimation = animationC->getAnimationStack()->getAnimation(12);
 		if (!animationC->currentAnimation) {
 #if defined(_DEBUG)
 			SAIL_LOG_WARNING("AnimationComponent without animation set");
@@ -85,9 +85,9 @@ void AnimationSystem<T>::updateTransforms(const float dt) {
 		}
 
 		//transition update
-		/*if (animationC->currentTransition.to != nullptr) {
+		if (animationC->currentTransition.to != nullptr) {
 			if (animationC->currentTransition.done) {
-				transitions complete
+				//transitions complete
 				if (animationC->currentTransition.transpiredTime >= animationC->currentTransition.transitionTime) {
 					animationC->currentAnimation = animationC->currentTransition.to;
 					animationC->animationTime = animationC->currentTransition.transpiredTime;
@@ -108,15 +108,15 @@ void AnimationSystem<T>::updateTransforms(const float dt) {
 						animationC->currentTransition.transpiredTime += dt;
 					}
 				} else if (animationC->currentTransition.transpiredTime >= animationC->currentTransition.transitionTime) {
-					 Transition done
+					 //Transition done
 					animationC->currentTransition.done = true;
 				} else {
-					 Transition transpiring
+					// Transition transpiring
 					animationC->currentTransition.transpiredTime += dt;
 				}
 			}
 		}
-	*/
+	
 		if (animationC->updateDT) {
 			addTime(animationC, dt);
 		}

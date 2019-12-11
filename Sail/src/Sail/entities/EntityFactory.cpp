@@ -553,8 +553,18 @@ Entity::SPtr EntityFactory::CreateCleaningBot(const glm::vec3& pos, NodeSystem* 
 	return e;
 }
 
+static int handle2 = 0;
 Entity::SPtr EntityFactory::CreateStaticMapObject(const std::string& name, Model* model, Model* boundingBoxModel, const glm::vec3& pos, const glm::vec3& rot, const glm::vec3& scale) {
-	auto e = ECS::Instance()->createEntity(name);
+	std::string usedName = name;
+	if (name == "ClutterSpecial") {
+		if (handle2 < 2) {
+			usedName = "CloningVat";
+			handle2++;
+		}
+	}
+	
+	
+	auto e = ECS::Instance()->createEntity(usedName);
 	e->addComponent<ModelComponent>(model);
 	e->addComponent<TransformComponent>(pos, rot, scale);
 	e->addComponent<BoundingBoxComponent>(boundingBoxModel);

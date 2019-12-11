@@ -270,7 +270,7 @@ bool PBRTestState::render(float dt, float alpha) {
 	// Draw the scene. Entities with model and trans component will be rendered.
 	m_componentSystems.beginEndFrameSystem->beginFrame(m_cam);
 
-	m_componentSystems.modelSubmitSystem->submitAll(alpha);
+	m_componentSystems.modelSubmitSystem->submitAll(alpha, dt);
 	m_componentSystems.metaballSubmitSystem->submitAll(alpha);
 	m_componentSystems.boundingboxSubmitSystem->submitAll();
 
