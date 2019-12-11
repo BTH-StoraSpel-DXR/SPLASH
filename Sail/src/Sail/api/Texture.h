@@ -37,6 +37,8 @@ public:
 	static Texture* Create(const std::string& filename);
 	virtual ~Texture() {}
 
+	virtual unsigned int getByteSize() const = 0;
+
 	//virtual SailTexture* getHandle() = 0;
 
 protected:

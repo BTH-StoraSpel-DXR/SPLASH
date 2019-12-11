@@ -53,13 +53,15 @@ private:
 	glm::vec3 getNodePos(const int x, const int z, float nodeSize, float nodePadding, float startOffsetX, float startOffsetZ);
 
 private:
-	float m_timeBetweenPathUpdate;
-
 	std::unique_ptr<NodeSystem> m_nodeSystem;
 
 	Octree* m_octree;
 
+	float m_targetReachedThreshold;
+
+#ifdef DEVELOPMENT
 	const static unsigned int NUM_UPDATE_TIMES = 10;
 	float m_updateTimes[NUM_UPDATE_TIMES];
 	unsigned int m_currUpdateTimeIndex = 0;
+#endif
 };

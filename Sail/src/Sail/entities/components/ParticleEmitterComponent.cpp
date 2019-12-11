@@ -84,8 +84,8 @@ bool ParticleEmitterComponent::hasBeenCreatedInSystem() {
 	return m_hasBeenCreatedInSystem;
 }
 
-void ParticleEmitterComponent::setAsCreatedInSystem() { 
-	m_hasBeenCreatedInSystem = true;
+void ParticleEmitterComponent::setAsCreatedInSystem(bool created) { 
+	m_hasBeenCreatedInSystem = created;
 }
 
 const std::string& ParticleEmitterComponent::getTextureName() const {

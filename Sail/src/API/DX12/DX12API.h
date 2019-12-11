@@ -118,6 +118,7 @@ public:
 	const D3D12_RECT* getScissorRect() const;
 	CommandQueue* getComputeQueue() const;
 	CommandQueue* getDirectQueue() const;
+	unsigned int getFrameCount() const; // Returns the number of elapsed frames
 
 #ifdef _DEBUG
 	void beginPIXCapture() const;
@@ -156,6 +157,7 @@ private:
 	D3D12_CPU_DESCRIPTOR_HANDLE m_currentRenderTargetCDH;
 	ID3D12Resource* m_currentRenderTargetResource;
 	float m_clearColor[4];
+	unsigned int m_frameCount;
 
 	wComPtr<ID3D12Device5> m_device;
 #ifdef _DEBUG

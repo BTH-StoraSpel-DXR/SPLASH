@@ -30,7 +30,19 @@ Mesh::~Mesh() {
 
 
 unsigned int Mesh::getByteSize() const {
-	return sizeof(*this) + meshData.numIndices * sizeof(unsigned long) + meshData.numVertices * sizeof(glm::vec3) * 4 + meshData.numVertices * sizeof(glm::vec2);
+	unsigned int size = 0;
+
+	size += sizeof(*this);
+	size += meshData.numIndices * sizeof(unsigned long);
+	size += meshData.numVertices * sizeof(glm::vec3) * 4;
+	size += meshData.numVertices * sizeof(glm::vec2);
+	size += meshData.numVertices * sizeof(glm::vec4);
+
+	size += material->getByteSize();
+	size += vertexBuffer->getByteSize();
+	size += indexBuffer->getByteSize();
+
+	return size;
 }
 
 const Mesh::Data& Mesh::getMeshData() {

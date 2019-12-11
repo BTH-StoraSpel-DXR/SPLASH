@@ -11,7 +11,7 @@ bool BaseComponentSystem::addEntity(Entity* entity) {
 		return false;
 	}
 
-	// Check if the entity is about to be in the system
+	// Check if the entity is about to be in the system.
 	if (entitiesQueuedToAdd_set.count(id)) {
 		return false;
 	}

@@ -464,6 +464,10 @@ void DX12RaytracingRenderer::submitWaterPoint(const glm::vec3& pos) {
 	m_dxr.addWaterAtWorldPosition(pos);
 }
 
+unsigned int DX12RaytracingRenderer::removeWaterPoint(const glm::vec3& pos, const glm::ivec3& posOffset, const glm::ivec3& negOffset) {
+	return m_dxr.removeWaterAtWorldPosition(pos, posOffset, negOffset);
+}
+
 void DX12RaytracingRenderer::setTeamColors(const std::vector<glm::vec3>& teamColors) {
 	Renderer::setTeamColors(teamColors);
 }
@@ -471,6 +475,10 @@ void DX12RaytracingRenderer::setTeamColors(const std::vector<glm::vec3>& teamCol
 bool DX12RaytracingRenderer::checkIfOnWater(const glm::vec3& pos) {
 
 	return m_dxr.checkWaterAtWorldPosition(pos);
+}
+
+std::pair<bool, glm::vec3> DX12RaytracingRenderer::getNearestWaterPosition(const glm::vec3& position, const glm::vec3& maxOffset) {
+	return m_dxr.getNearestWaterPosition(position, maxOffset);
 }
 
 void DX12RaytracingRenderer::updateMetaballAABB() {
@@ -495,7 +503,7 @@ void DX12RaytracingRenderer::createSoftShadowsTextures(unsigned int numPlayers) 
 	// m_outputTextures contains all reflection bounce information
 	// gbuffer textures contains first "bounce" information
 	m_outputTextures.albedo = std::unique_ptr<DX12RenderableTexture>(static_cast<DX12RenderableTexture*>(RenderableTexture::Create(windowWidth, windowHeight, "RT albedo secound boucne output")));
-	m_outputTextures.metalnessRoughnessAO = std::unique_ptr<DX12RenderableTexture>(static_cast<DX12RenderableTexture*>(RenderableTexture::Create(windowWidth, windowHeight, "RT mrao secound boucne output")));
+	m_outputTextures.metalnessRoughnessAO = std::unique_ptr<DX12RenderableTexture>(static_cast<DX12RenderableTexture*>(RenderableTexture::Create(windowWidth, windowHeight, "RT mrao secound bounce output")));
 	m_outputTextures.normal = std::unique_ptr<DX12RenderableTexture>(static_cast<DX12RenderableTexture*>(RenderableTexture::Create(windowWidth, windowHeight, "RT normal secound boucne output")));
 	m_outputTextures.shadows = std::unique_ptr<DX12RenderableTexture>(static_cast<DX12RenderableTexture*>(RenderableTexture::Create(windowWidth, windowHeight, "CurrentFrameShadowTexture", Texture::R8G8, false, false, m_numShadowTextures)));
 	m_outputTextures.positionsTwo = std::unique_ptr<DX12RenderableTexture>(static_cast<DX12RenderableTexture*>(RenderableTexture::Create(windowWidth, windowHeight, "PositionTwoTexture", Texture::R32G32B32A32_FLOAT)));

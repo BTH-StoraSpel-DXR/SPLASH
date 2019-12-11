@@ -16,20 +16,21 @@ Texture* Texture::Create(const std::string& filename) {
 DX12Texture::DX12Texture(const std::string& filename)
 	: m_isInitialized(false)
 	, m_initFenceVal(UINT64_MAX)
+	, m_fileName(filename)
 {
-	context = Application::getInstance()->getAPI<DX12API>();
+	m_context = Application::getInstance()->getAPI<DX12API>();
 	// Dont create one resource per swap buffer
 	useOneResource = true;
 
 	m_isDDSTexture = std::filesystem::path(filename).extension().compare(".dds") == 0;
 
 	if (!m_isDDSTexture) {
-		m_textureData = &getTextureData(filename);
+		m_tgaData = &getTextureData(filename);
 
 		m_textureDesc = {};
 		m_textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // TODO: read this from texture data
-		m_textureDesc.Width = m_textureData->getWidth();
-		m_textureDesc.Height = m_textureData->getHeight();
+		m_textureDesc.Width = m_tgaData->getWidth();
+		m_textureDesc.Height = m_tgaData->getHeight();
 		m_textureDesc.DepthOrArraySize = 1;
 		m_textureDesc.SampleDesc.Count = 1;
 		m_textureDesc.SampleDesc.Quality = 0;
@@ -39,14 +40,14 @@ DX12Texture::DX12Texture(const std::string& filename)
 		m_textureDesc.MipLevels = MIP_LEVELS;
 	} else {
 		std::wstring wide_string = std::wstring(filename.begin(), filename.end());
-		ThrowIfFailed(DirectX::LoadDDSTextureFromFile(context->getDevice(), wide_string.c_str(), textureDefaultBuffers[0].ReleaseAndGetAddressOf(),
+		ThrowIfFailed(DirectX::LoadDDSTextureFromFile(m_context->getDevice(), wide_string.c_str(), textureDefaultBuffers[0].ReleaseAndGetAddressOf(),
 													  m_ddsData, m_subresources));
 		m_textureDesc = textureDefaultBuffers[0]->GetDesc();
 	}
 
 	// A texture rarely updates its data, if at all, so it is stored in a default heap
 	state[0] = D3D12_RESOURCE_STATE_COPY_DEST;
-	ThrowIfFailed(context->getDevice()->CreateCommittedResource(&DX12Utils::sDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &m_textureDesc, state[0], nullptr, IID_PPV_ARGS(&textureDefaultBuffers[0])));
+	ThrowIfFailed(m_context->getDevice()->CreateCommittedResource(&DX12Utils::sDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &m_textureDesc, state[0], nullptr, IID_PPV_ARGS(&textureDefaultBuffers[0])));
 	textureDefaultBuffers[0]->SetName((std::wstring(L"Texture default buffer for ") + std::wstring(filename.begin(), filename.end())).c_str());
 
 	// Create a shader resource view (descriptor that points to the texture and describes it)
@@ -55,7 +56,7 @@ DX12Texture::DX12Texture(const std::string& filename)
 	srvDesc.Format = m_textureDesc.Format;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = m_textureDesc.MipLevels;
-	context->getDevice()->CreateShaderResourceView(textureDefaultBuffers[0].Get(), &srvDesc, srvHeapCDHs[0]);
+	m_context->getDevice()->CreateShaderResourceView(textureDefaultBuffers[0].Get(), &srvDesc, srvHeapCDHs[0]);
 
 	// Dont allow UAV access
 	uavHeapCDHs[0] = {0};
@@ -91,19 +92,19 @@ void DX12Texture::initBuffers(ID3D12GraphicsCommandList4* cmdList) {
 	// this function gets the size an upload buffer needs to be to upload a texture to the gpu.
 	// each row must be 256 byte aligned except for the last row, which can just be the size in bytes of the row
 	// eg. textureUploadBufferSize = ((((width * numBytesPerPixel) + 255) & ~255) * (height - 1)) + (width * numBytesPerPixel);
-	context->getDevice()->GetCopyableFootprints(&m_textureDesc, 0, (m_isDDSTexture ? static_cast<UINT>(m_subresources.size()) : 1),
+	m_context->getDevice()->GetCopyableFootprints(&m_textureDesc, 0, (m_isDDSTexture ? static_cast<UINT>(m_subresources.size()) : 1),
 												0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
 
 	// Create the upload heap
 	// This could be done in a buffer manager owned by dx12api
-	m_textureUploadBuffer.Attach(DX12Utils::CreateBuffer(context->getDevice(), textureUploadBufferSize, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, DX12Utils::sUploadHeapProperties));
+	m_textureUploadBuffer.Attach(DX12Utils::CreateBuffer(m_context->getDevice(), textureUploadBufferSize, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, DX12Utils::sUploadHeapProperties));
 	m_textureUploadBuffer->SetName(L"Texture upload buffer");
 
 	if (!m_isDDSTexture) {
 		D3D12_SUBRESOURCE_DATA textureData = {};
-		textureData.pData = m_textureData->getTextureData();
-		textureData.RowPitch = m_textureData->getWidth() * m_textureData->getBytesPerPixel();
-		textureData.SlicePitch = textureData.RowPitch * m_textureData->getHeight();
+		textureData.pData = m_tgaData->getTextureData();
+		textureData.RowPitch = m_tgaData->getWidth() * m_tgaData->getBytesPerPixel();
+		textureData.SlicePitch = textureData.RowPitch * m_tgaData->getHeight();
 		// Copy the upload buffer contents to the default heap using a helper method from d3dx12.h
 		DX12Utils::UpdateSubresources(cmdList, textureDefaultBuffers[0].Get(), m_textureUploadBuffer.Get(), 0, 0, 1, &textureData);
 		//transitionStateTo(cmdList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE); // Uncomment if generateMips is disabled
@@ -115,7 +116,7 @@ void DX12Texture::initBuffers(ID3D12GraphicsCommandList4* cmdList) {
 	}
 
 	auto type = cmdList->GetType();
-	m_queueUsedForUpload = (type == D3D12_COMMAND_LIST_TYPE_DIRECT) ? context->getDirectQueue() : context->getComputeQueue();
+	m_queueUsedForUpload = (type == D3D12_COMMAND_LIST_TYPE_DIRECT) ? m_context->getDirectQueue() : m_context->getComputeQueue();
 	// Schedule a signal to be called directly after this command list has executed
 	// This allows us to know when the texture has been uploaded to the GPU
 	m_queueUsedForUpload->scheduleSignal([this](UINT64 signaledValue) {
@@ -123,7 +124,6 @@ void DX12Texture::initBuffers(ID3D12GraphicsCommandList4* cmdList) {
 	});
 
 	m_isInitialized = true;
-
 }
 
 bool DX12Texture::hasBeenInitialized() const {
@@ -132,6 +132,42 @@ bool DX12Texture::hasBeenInitialized() const {
 
 ID3D12Resource* DX12Texture::getResource() const {
 	return textureDefaultBuffers[0].Get();
+}
+
+unsigned int DX12Texture::getByteSize() const {
+	unsigned int size = 0;
+
+	size += sizeof(*this);
+
+	size += sizeof(unsigned char) * m_fileName.capacity();
+
+	size += sizeof(D3D12_SUBRESOURCE_DATA) * m_subresources.capacity();
+
+	if (m_isDDSTexture) {
+		if (m_ddsData != nullptr) {
+			size += sizeof(uint8_t) * m_textureDesc.Width * m_textureDesc.Height * m_textureDesc.DepthOrArraySize;
+		}
+	}
+	// tga data is stored in ResourceManager.
+	// Do not calculate it here.
+	// It may be null if the data has been uploaded to VRAM and removed from RAM.
+
+	return size;
+}
+
+void DX12Texture::clearDDSData() {
+	m_ddsData.reset(nullptr);
+}
+
+void DX12Texture::releaseUploadBuffer() {
+	if (m_textureUploadBuffer.Get()) {
+		m_textureUploadBuffer->Release();
+		m_textureUploadBuffer = nullptr;
+	}
+}
+
+const std::string& DX12Texture::getFilename() const {
+	return m_fileName;
 }
 
 void DX12Texture::generateMips(ID3D12GraphicsCommandList4* cmdList) {
@@ -187,14 +223,14 @@ void DX12Texture::generateMips(ID3D12GraphicsCommandList4* cmdList) {
 		dxPipeline->setCBufferVar("NumMipLevels", &mipCount, sizeof(unsigned int));
 		dxPipeline->setCBufferVar("TexelSize", &texelSize, sizeof(glm::vec2));
 
-		const auto& heap = context->getComputeGPUDescriptorHeap();
+		const auto& heap = m_context->getComputeGPUDescriptorHeap();
 		unsigned int indexStart = heap->getAndStepIndex(20); // TODO: read this from root parameters
 		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = heap->getCPUDescriptorHandleForIndex(indexStart);
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = heap->getGPUDescriptorHandleForIndex(indexStart);
 
 		transitionStateTo(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-		context->getDevice()->CopyDescriptorsSimple(1, cpuHandle, getSrvCDH(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		cmdList->SetComputeRootDescriptorTable(context->getRootIndexFromRegister("t0"), gpuHandle);
+		m_context->getDevice()->CopyDescriptorsSimple(1, cpuHandle, getSrvCDH(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		cmdList->SetComputeRootDescriptorTable(m_context->getRootIndexFromRegister("t0"), gpuHandle);
 		cpuHandle.ptr += heap->getDescriptorIncrementSize() * 10;
 		
 		//SetShaderResourceView(GenerateMips::SrcMip, 0, texture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, srcMip, 1, &srvDesc);
@@ -204,7 +240,7 @@ void DX12Texture::generateMips(ID3D12GraphicsCommandList4* cmdList) {
 			uavDesc.Format = m_textureDesc.Format;
 			uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 			uavDesc.Texture2D.MipSlice = srcMip + mip + 1;
-			context->getDevice()->CreateUnorderedAccessView(textureDefaultBuffers[0].Get(), nullptr, &uavDesc, cpuHandle);
+			m_context->getDevice()->CreateUnorderedAccessView(textureDefaultBuffers[0].Get(), nullptr, &uavDesc, cpuHandle);
 			cpuHandle.ptr += heap->getDescriptorIncrementSize();
 
 			DX12Utils::SetResourceTransitionBarrier(cmdList, textureDefaultBuffers[0].Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, srcMip + mip + 1);

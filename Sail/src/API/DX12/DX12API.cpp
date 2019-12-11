@@ -23,6 +23,7 @@ DX12API::DX12API()
 	, m_windowedMode(true)
 	, m_directQueueFenceValues()
 	, m_computeQueueFenceValues()
+	, m_frameCount(0)
 {
 	m_renderTargets.resize(NUM_SWAP_BUFFERS);
 }
@@ -457,6 +458,7 @@ void DX12API::nextFrame() {
 		getComputeGPUDescriptorHeap()->setIndex(0);
 	}
 	EventDispatcher::Instance().emit(NewFrameEvent());
+	m_frameCount++;
 }
 
 void DX12API::resizeBuffers(UINT width, UINT height) {
@@ -684,6 +686,10 @@ DX12API::CommandQueue* DX12API::getComputeQueue() const {
 
 DX12API::CommandQueue* DX12API::getDirectQueue() const {
 	return m_directCommandQueue.get();
+}
+
+unsigned int DX12API::getFrameCount() const {
+	return m_frameCount;
 }
 
 #ifdef _DEBUG

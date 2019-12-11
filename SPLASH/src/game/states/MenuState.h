@@ -71,6 +71,7 @@ private:
 	std::vector<std::string> m_newfoundLobbies;
 
 	void renderDebug();
+	void renderRAM();
 
 	int m_windowToRender;
 	bool m_joiningLobby;

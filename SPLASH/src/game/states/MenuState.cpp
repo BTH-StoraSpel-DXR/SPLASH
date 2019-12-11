@@ -1,6 +1,8 @@
 #include "Sail/../../Sail/src/Network/NetworkModule.hpp"
 #include "MenuState.h"
 
+#include <Psapi.h>
+
 #include "Sail.h"
 #include "../libraries/imgui/imgui.h"
 
@@ -13,6 +15,11 @@
 #include "Sail/entities/systems/render/BeginEndFrameSystem.h"
 #include <string>
 #include "Sail/utils/SailImGui/SailImGui.h"
+
+// Mainly used in progress bar
+#define TOTAL_NR_OF_MODELS 25
+#define TOTAL_NR_OF_TEXTURES 88
+
 
 MenuState::MenuState(StateStack& stack) 
 	: State(stack),
@@ -178,6 +185,7 @@ if (m_usePercentage) {
 	}
 #ifdef DEVELOPMENT
 	renderDebug();
+	renderRAM();
 #endif
 	if (m_joiningLobby) {
 		renderJoiningLobby();
@@ -273,22 +281,50 @@ void MenuState::removeDeadLobbies() {
 void MenuState::renderDebug() {
 
 	if (ImGui::Begin("Loading Info")) {
-		//maxCount being hardcoded for now
+		auto& rm = m_app->getResourceManager();
+
 		std::string progress = "Models:";
 		ImGui::Text(progress.c_str());
 		ImGui::SameLine();
-		ImGui::ProgressBar(m_app->getResourceManager().numberOfModels() / 27.0f, ImVec2(0.0f, 0.0f), std::string(std::to_string(m_app->getResourceManager().numberOfModels()) + ":" + std::to_string(27)).c_str());
+		ImGui::ProgressBar(
+			rm.numberOfModels() / (float)TOTAL_NR_OF_MODELS,
+			ImVec2(0.0f, 0.0f),
+			std::string(std::to_string(rm.numberOfModels()) + ":" + std::to_string(TOTAL_NR_OF_MODELS)).c_str()
+		);
 
 		progress = "Textures:";
 		ImGui::Text(progress.c_str());
 		ImGui::SameLine();
-		ImGui::ProgressBar(m_app->getResourceManager().numberOfTextures() / 64.0f, ImVec2(0.0f, 0.0f));
-
-	
-
+		ImGui::ProgressBar(
+			rm.numberOfTextures() / (float)TOTAL_NR_OF_TEXTURES,
+			ImVec2(0.0f, 0.0f),
+			std::string(std::to_string(rm.numberOfTextures()) + ":" + std::to_string(TOTAL_NR_OF_TEXTURES)).c_str()
+		);
 	}
 	ImGui::End();
+}
 
+void MenuState::renderRAM() {
+	static int framesElapsed = 100;		// Trigger the update on the first frame
+	framesElapsed++;
+
+	static size_t physicalMemory = 0;
+	auto workSetUsage = []() {
+		PROCESS_MEMORY_COUNTERS_EX pmc;
+		GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc));
+		return pmc.WorkingSetSize;
+	};
+
+	if (framesElapsed > 100) {
+		physicalMemory = workSetUsage();
+		framesElapsed = 0;
+	}
+
+	if (ImGui::Begin("RAM usage")) {
+		auto str = std::to_string(physicalMemory / (1024 * 1024)) + " MB";
+		ImGui::Text(str.c_str());
+	}
+	ImGui::End();
 }
 
 void MenuState::joinLobby(std::string& ip) {

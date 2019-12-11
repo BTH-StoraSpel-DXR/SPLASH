@@ -3,7 +3,7 @@
 #include "NotFBXLoader.h"
 #include <fstream>
 
-bool NotFBXLoader::Load(const std::string& filename, Mesh::Data* mdata,  AnimationStack*& animationStack) {
+bool NotFBXLoader::Load(const std::string& filename, Mesh::Data* data,  AnimationStack*& animationStack) {
 	std::ifstream out(filename, std::fstream::binary);
 
 	if (!out.is_open()) {
@@ -11,42 +11,36 @@ bool NotFBXLoader::Load(const std::string& filename, Mesh::Data* mdata,  Animati
 		return false;
 	}
 
-
 	char m = 'm';
 	char a = 'a';
 
 	char type;
-
-
-
 	while (!out.eof()) {
 		out.read((char*)&type, sizeof(type));
 		if (type == m) {
-			Mesh::Data& data = *mdata;
+			//Mesh::Data& data = *mdata;
 
 			//Mesh / Model
-			out.read((char*)(&data.numIndices), sizeof(data.numIndices));
-			data.indices = SAIL_NEW unsigned long[data.numIndices];
-			out.read((char*)data.indices, sizeof(*data.indices) * data.numIndices);
-			out.read((char*)& data.numVertices, sizeof(data.numVertices));
-			out.read((char*)& data.numInstances, sizeof(data.numInstances));
+			out.read((char*)(&data->numIndices), sizeof(data->numIndices));
+			data->indices = SAIL_NEW unsigned long[data->numIndices];
+			out.read((char*)data->indices, sizeof(*data->indices) * data->numIndices);
+			out.read((char*)& data->numVertices, sizeof(data->numVertices));
+			out.read((char*)& data->numInstances, sizeof(data->numInstances));
 
-			data.positions		= SAIL_NEW Mesh::vec3[data.numVertices];
-			data.normals		= SAIL_NEW Mesh::vec3[data.numVertices];
-			data.texCoords		= SAIL_NEW Mesh::vec2[data.numVertices];
-			data.tangents		= SAIL_NEW Mesh::vec3[data.numVertices];
-			data.bitangents	= SAIL_NEW Mesh::vec3[data.numVertices];
+			data->positions		= SAIL_NEW Mesh::vec3[data->numVertices];
+			data->normals		= SAIL_NEW Mesh::vec3[data->numVertices];
+			data->texCoords		= SAIL_NEW Mesh::vec2[data->numVertices];
+			data->tangents		= SAIL_NEW Mesh::vec3[data->numVertices];
+			data->bitangents	= SAIL_NEW Mesh::vec3[data->numVertices];
 
-			out.read((char*)data.positions,	sizeof(*data.positions) *	data.numVertices);
-			out.read((char*)data.normals,		sizeof(*data.normals) *	data.numVertices);
-			out.read((char*)data.texCoords,	sizeof(*data.texCoords) *	data.numVertices);
-			out.read((char*)data.tangents,		sizeof(*data.tangents) *	data.numVertices);
-			out.read((char*)data.bitangents,	sizeof(*data.bitangents) * data.numVertices);
-						
+			out.read((char*)data->positions,		sizeof(*data->positions) *	data->numVertices);
+			out.read((char*)data->normals,		sizeof(*data->normals) *	data->numVertices);
+			out.read((char*)data->texCoords,		sizeof(*data->texCoords) *	data->numVertices);
+			out.read((char*)data->tangents,		sizeof(*data->tangents) *	data->numVertices);
+			out.read((char*)data->bitangents,	sizeof(*data->bitangents) * data->numVertices);					
 		} else if (type == a && !animationStack) {
 			animationStack = SAIL_NEW AnimationStack();
 			
-
 			//Animation stack
 			unsigned int connS;
 			AnimationStack::VertConnection* connections;
@@ -122,8 +116,8 @@ bool NotFBXLoader::Load(const std::string& filename, Mesh::Data* mdata,  Animati
 void NotFBXLoader::Save(const std::string& filename, Mesh::Data* mdata, AnimationStack* animationStack) {
 	std::ofstream out(filename, std::fstream::binary);
 
-	char m = 'm';
-	char a = 'a';
+	const char m = 'm';
+	const char a = 'a';
 
 	if (mdata) {
 		Mesh::Data& data = *mdata;
@@ -177,9 +171,9 @@ void NotFBXLoader::Save(const std::string& filename, Mesh::Data* mdata, Animatio
 		out.write((char*)& nAnimations, sizeof(nAnimations));
 		for (size_t i = 0; i < nAnimations; i++) {
 			animation = animationStack->getAnimation(i);
-			std::string name = animation->getName();
-			size_t stringLen = name.length();
-			unsigned int maxFrame = animation->getMaxAnimationFrame();
+			const std::string& name = animation->getName();
+			const size_t stringLen = name.length();
+			const unsigned int maxFrame = animation->getMaxAnimationFrame();
 
 			out.write((char*)& stringLen, sizeof(stringLen));
 			out.write((char*)name.data(), name.length());		

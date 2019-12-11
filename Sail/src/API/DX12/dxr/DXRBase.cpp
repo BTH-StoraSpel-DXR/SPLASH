@@ -22,7 +22,6 @@ DXRBase::DXRBase(const std::string& shaderFilename, DX12RenderableTexture** inpu
 	, m_mapSize(1.f)
 	, m_mapStart(1.f)
 {
-
 	EventDispatcher::Instance().subscribe(Event::Type::WINDOW_RESIZE, this);
 	EventDispatcher::Instance().subscribe(Event::Type::RESET_WATER, this);
 
@@ -308,6 +307,78 @@ void DXRBase::addWaterAtWorldPosition(const glm::vec3& position) {
 	}
 }
 
+unsigned int DXRBase::removeWaterAtWorldPosition(const glm::vec3& position, const glm::ivec3& posOffset, const glm::ivec3& negOffset) {
+	static auto& mapSettings = Application::getInstance()->getSettings().gameSettingsDynamic["map"];
+	auto mapSize = glm::vec3(mapSettings["sizeX"].value, 0.8f, mapSettings["sizeY"].value) * (float)mapSettings["tileSize"].value;
+	auto mapStart = -glm::vec3((float)mapSettings["tileSize"].value / 2.0f, 0.f, (float)mapSettings["tileSize"].value / 2.0f);
+
+	// Convert position to index, stored as floats
+	glm::vec3 floatInd = ((position - mapStart) / mapSize) * m_waterArrSizes;
+	// Convert triple-number index to a single index value
+	int origQuarterIndex = glm::floor((int)glm::floor(floatInd.x * 4.f) % 4);
+	// Convert triple-number (float) to triple-number (int)
+	glm::i32vec3 origInd = floor(floatInd);
+
+	unsigned int numRemovedWater = 0;
+	for (int x = negOffset.x; x < posOffset.x + 1; x++) {
+		for (int y = negOffset.y; y < posOffset.y + 1; y++) {
+			for (int z = negOffset.z; z < posOffset.z + 1; z++) {
+				int quarterIndex = origQuarterIndex + x;
+				glm::i32vec3 ind = origInd;
+				if (quarterIndex < 0) {
+					ind.x -= 1;
+					quarterIndex = 4 + quarterIndex;
+				} else if (quarterIndex > 3) {
+					ind.x += 1;
+					quarterIndex = quarterIndex - 4;
+				}
+				ind.x = glm::clamp(ind.x, 0, int(m_waterArrSizes.x));
+				ind.y = glm::clamp(ind.y + y, 0, int(m_waterArrSizes.y));
+				ind.z = glm::clamp(ind.z + z, 0, int(m_waterArrSizes.z));
+				int arrIndex = Utils::to1D(ind, m_waterArrSizes.x, m_waterArrSizes.y);
+				if (m_updateWater[arrIndex]) {
+					// Ignore water points that are outside the map
+					if (arrIndex >= 0 && arrIndex < m_waterArrSize) {
+						// Make sure to update this water
+						uint8_t up0 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 0);
+						uint8_t up1 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 1);
+						uint8_t up2 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 2);
+						uint8_t up3 = Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], 3);
+
+						switch (quarterIndex) {
+						case 0:
+							numRemovedWater += up0;
+							m_waterDeltas[arrIndex] = Utils::packQuarterFloat(0U, up1, up2, up3);
+							break;
+						case 1:
+							numRemovedWater += up1;
+							m_waterDeltas[arrIndex] = Utils::packQuarterFloat(up0, 0U, up2, up3);
+							break;
+						case 2:
+							numRemovedWater += up2;
+							m_waterDeltas[arrIndex] = Utils::packQuarterFloat(up0, up1, 0U, up3);
+							break;
+						case 3:
+							numRemovedWater += up3;
+							m_waterDeltas[arrIndex] = Utils::packQuarterFloat(up0, up1, up2, 0U);
+							break;
+						}
+
+						m_waterDataCPU[arrIndex] = m_waterDeltas[arrIndex];
+						m_waterChanged = true;
+
+						if (m_waterDataCPU[arrIndex] == 0) {
+							m_updateWater[arrIndex] = false;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return numRemovedWater;
+}
+
 bool DXRBase::checkWaterAtWorldPosition(const glm::vec3& position) {
 	bool returnValue = false;
 
@@ -328,6 +399,57 @@ bool DXRBase::checkWaterAtWorldPosition(const glm::vec3& position) {
 	}
 
 	return returnValue;
+}
+
+// THIS WAS IMPLEMENTED SPECIFICALLY FOR CLEANING BOTS!
+std::pair<bool, glm::vec3> DXRBase::getNearestWaterPosition(const glm::vec3& position, const glm::vec3& maxOffset) {
+	static auto& mapSettings = Application::getInstance()->getSettings().gameSettingsDynamic["map"];
+	auto mapSize = glm::vec3(mapSettings["sizeX"].value, 0.8f, mapSettings["sizeY"].value) * (float)mapSettings["tileSize"].value;
+	auto mapStart = -glm::vec3((float)mapSettings["tileSize"].value / 2.0f, 0.f, (float)mapSettings["tileSize"].value / 2.0f);
+
+	// Convert position to index, stored as floats
+	glm::vec3 floatInd = ((position - mapStart) / mapSize) * m_waterArrSizes;
+	// Convert triple-number index to a single index value
+	int origQuarterIndex = glm::floor((int)glm::floor(floatInd.x * 4.f) % 4);
+	// Convert triple-number (float) to triple-number (int)
+	glm::i32vec3 origInd = floor(floatInd);
+	origInd.y = 0;
+
+	int xOffset = maxOffset.x / mapSize.x * m_waterArrSizes.x;
+	int zOffset = maxOffset.z / mapSize.z * m_waterArrSizes.z;
+
+	auto daRand = glm::diskRand(maxOffset.x);
+	glm::vec3 closestPos = position + glm::vec3(daRand.x, 0.f, daRand.y);
+	float leastDist = FLT_MAX;
+	bool found = false;
+	for (int x = -xOffset; x < xOffset + 1; x++) {
+		for (int z = -zOffset; z < zOffset + 1; z++) {
+			int quarterIndex = origQuarterIndex + x;
+			glm::i32vec3 ind = origInd;
+			ind.x += quarterIndex / 4;
+			quarterIndex = quarterIndex % 4;
+			ind.x = glm::clamp(ind.x, 0, int(m_waterArrSizes.x));
+			ind.z = glm::clamp(ind.z + z, 0, int(m_waterArrSizes.z));
+			int arrIndex = Utils::to1D(ind, m_waterArrSizes.x, m_waterArrSizes.y);
+
+			// Ignore water points that are outside the map
+			if (arrIndex >= 0 && arrIndex < m_waterArrSize) {
+				// Make sure to update this water
+				if (Utils::unpackQuarterFloat(m_waterDataCPU[arrIndex], quarterIndex) > 0U) {
+					ind.x = ind.x * 4 + quarterIndex;
+					auto currPos = (glm::vec3(ind) / glm::vec3(m_waterArrSizes.x * 4, m_waterArrSizes.y, m_waterArrSizes.z)) * m_mapSize + m_mapStart;
+					auto currDist = glm::distance2(glm::vec2(currPos.x, currPos.z), glm::vec2(position.x, position.z));
+					if (currDist < leastDist) {
+						leastDist = currDist;
+						closestPos = currPos;
+						found = true;
+					}
+				}
+			}
+		}
+	}
+
+	return std::pair(found, closestPos);
 }
 
 void DXRBase::updateWaterData() {
@@ -561,8 +683,9 @@ void DXRBase::dispatch(BounceOutput& output, DX12RenderableTexture* outputBloomT
 void DXRBase::resetWater() {
 	// TODO: make faster by updates the whole buffer at once
 	for (unsigned int i = 0; i < m_waterArrSize; i++) {
-		m_waterDataCPU[i] = m_waterDeltas[i] = 0;
+		m_waterDataCPU[i] = 0;
 	}
+	m_waterDeltas.clear();
 	m_waterChanged = true;
 }
 
@@ -850,10 +973,12 @@ void DXRBase::createInitialShaderResources(bool remake) {
 		
 		// Next slot is used for the brdfLUT
 		m_rtBrdfLUTGPUHandle = gpuHandle;
-		if (!Application::getInstance()->getResourceManager().hasTexture(m_brdfLUTPath)) {
-			Application::getInstance()->getResourceManager().loadTexture(m_brdfLUTPath);
+
+		auto& rm = Application::getInstance()->getResourceManager();
+		if (!rm.hasTexture(m_brdfLUTPath)) {
+			rm.loadTexture(m_brdfLUTPath);
 		}
-		auto& brdfLutTex = dynamic_cast<DX12Texture&>(Application::getInstance()->getResourceManager().getTexture(m_brdfLUTPath));
+		auto& brdfLutTex = static_cast<DX12Texture&>(rm.getTexture(m_brdfLUTPath));
 		m_context->getDevice()->CopyDescriptorsSimple(1, cpuHandle, brdfLutTex.getSrvCDH(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		cpuHandle.ptr += m_heapIncr;
 		gpuHandle.ptr += m_heapIncr;
@@ -909,7 +1034,6 @@ void DXRBase::createInitialShaderResources(bool remake) {
 			free(initData);
 		}
 	}
-
 }
 
 void DXRBase::updateDescriptorHeap(ID3D12GraphicsCommandList4* cmdList) {
@@ -949,9 +1073,7 @@ void DXRBase::updateDescriptorHeap(ID3D12GraphicsCommandList4* cmdList) {
 				hasTexture = (textureNum == 2) ? materialSettings.hasMetalnessRoughnessAOTexture : hasTexture;
 				if (hasTexture) {
 					// Make sure textures have initialized / uploaded their data to its default buffer
-					if (!texture->hasBeenInitialized()) {
-						texture->initBuffers(cmdList);
-					}
+					texture->initBuffers(cmdList);
 
 						// Copy SRV to DXR heap
 						m_context->getDevice()->CopyDescriptorsSimple(1, cpuHandle, texture->getSrvCDH(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);

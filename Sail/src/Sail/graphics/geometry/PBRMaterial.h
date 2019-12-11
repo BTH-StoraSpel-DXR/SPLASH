@@ -49,6 +49,8 @@ public:
 
 	Shader* getShader() const;
 
+	unsigned int getByteSize() const;
+
 private:
 	void getAndInsertTexture(const std::string& filename, int arraySlot);
 
@@ -59,5 +61,4 @@ private:
 	Texture* m_textures[3];
 
 	UINT m_numTextures;
-
 };

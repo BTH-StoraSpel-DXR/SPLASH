@@ -44,7 +44,7 @@ AiSystem::AiSystem() {
 
 	m_nodeSystem = std::make_unique<NodeSystem>();
 
-	m_timeBetweenPathUpdate = 3.f;
+	m_targetReachedThreshold = 5.f;
 }
 
 AiSystem::~AiSystem() {}
@@ -61,7 +61,7 @@ void AiSystem::initNodeSystem(Octree* octree) {
 	float realXMax = sizeX * tileSize;
 	float realZMax = sizeZ * tileSize;
 	float nodeSize = 0.5f;
-	float nodePadding = tileSize / 5.f;
+	float nodePadding = tileSize / 8.f;
 	int xMax = static_cast<int>(std::ceil(realXMax / (nodePadding))) + 1;
 	int zMax = static_cast<int>(std::ceil(realZMax / (nodePadding))) + 1;
 	int size = xMax * zMax;
@@ -165,6 +165,10 @@ void AiSystem::initNodeSystem(Octree* octree) {
 			}
 		}
 
+		if (conns.size() == 0) {
+			blocked = true;
+		}
+
 		nodes.emplace_back(nodePos, blocked, i);
 		connections.push_back(conns);
 	}
@@ -186,6 +190,7 @@ void AiSystem::initNodeSystem(Octree* octree) {
 	e->queueDestruction();
 
 	m_nodeSystem->setNodes(nodes, connections, xMax, zMax);
+	m_targetReachedThreshold = glm::pow(nodePadding, 2.f) / 2.f + 0.1f;
 }
 
 std::vector<Entity*>& AiSystem::getEntities() {
@@ -193,18 +198,16 @@ std::vector<Entity*>& AiSystem::getEntities() {
 }
 
 void AiSystem::update(float dt) {
-	//std::vector<std::future<void>> futures;
+#ifdef DEVELOPMENT
 	auto start = std::chrono::high_resolution_clock::now();
+#endif
 	for ( auto& entity : entities ) {
-		// Might be dangerous for threads
-		//futures.push_back(Application::getInstance()->pushJobToThreadPool([this, entity, dt] (int id) { this->aiUpdateFunc(entity, dt); }));
 		aiUpdateFunc(entity, dt);
 	}
+#ifdef DEVELOPMENT
 	m_updateTimes[m_currUpdateTimeIndex % NUM_UPDATE_TIMES] = static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count());
 	m_currUpdateTimeIndex++;
-	/*for ( auto& a : futures ) {
-		a.get();
-	}*/
+#endif
 }
 
 NodeSystem* AiSystem::getNodeSystem() {
@@ -239,7 +242,7 @@ void AiSystem::aiUpdateFunc(Entity* e, const float dt) {
 	
 	AiComponent* ai = e->getComponent<AiComponent>();
 
-	if ( ai->timeTakenOnPath > m_timeBetweenPathUpdate && ai->doWalk ) {
+	if ( ai->timeTakenOnPath >= ai->timeBetweenPathUpdate && ai->doWalk && ai->automaticallyUpdatePath ) {
 		ai->updatePath = true;
 	}
 
@@ -285,15 +288,9 @@ void AiSystem::updatePath(Entity* e) {
 	TransformComponent* transform = e->getComponent<TransformComponent>();
 	if (ai->updatePath ) {
 #ifdef _DEBUG_NODESYSTEM
-		for (int i = 0; i < ai->currPath.size(); i++) {
-			m_nodeSystem->getNodeEntities()[ai->currPath[i].index]->getComponent<ModelComponent>()->getModel()->getMesh(0)->getMaterial()->setColor(glm::vec4(0.f, 1.f, 0.f, 1.f));
-		}
+		m_nodeSystem->colorPath(ai->currPath, m_nodeSystem->getMaxColourID());
 #endif
 		ai->timeTakenOnPath = 0.f;
-		ai->reachedPathingTarget = false;
-
-		// ai->posTarget is updated in each FSM state
-		ai->lastTargetPos = ai->posTarget;
 
 		auto tempPath = m_nodeSystem->getPath(transform->getTranslation(), ai->posTarget);
 
@@ -307,14 +304,7 @@ void AiSystem::updatePath(Entity* e) {
 		ai->currPath = tempPath;
 
 #ifdef _DEBUG_NODESYSTEM
-		SAIL_LOG("Currpath size: " + std::to_string(ai->currPath.size()));
-		std::string daPath = "Path: {";
-		for (int i = 0; i < ai->currPath.size(); i++) {
-			m_nodeSystem->getNodeEntities()[ai->currPath[i].index]->getComponent<ModelComponent>()->getModel()->getMesh(0)->getMaterial()->setColor(glm::vec4(0.f, 0.f, 1.f, 1.f));
-			daPath += std::to_string(ai->currPath[i].index) + ", ";
-		}
-		daPath += "}";
-		SAIL_LOG(daPath);
+		m_nodeSystem->colorPath(ai->currPath, e->getID() % (m_nodeSystem->getMaxColourID() - 1));
 #endif
 
 		ai->updatePath = false;
@@ -329,31 +319,39 @@ void AiSystem::updatePhysics(Entity* e, float dt) {
 
 	// Check if there is a path currently active and if the ai should be walking
 	if ( ai->currPath.size() > 0 && ai->doWalk ) {
-		// Check if the ai hasn't reached the current pathing target yet
-		if ( !ai->reachedPathingTarget ) {
-			ai->timeTakenOnPath += dt;
+		ai->timeTakenOnPath += dt;
 
-			// Check if the distance between current node target and ai is low enough to begin targeting next node
-			if ( glm::distance(transform->getTranslation(), ai->currPath[ai->currNodeIndex].position) < ai->targetReachedThreshold ) {
-				ai->lastVisitedNode = ai->currPath[ai->currNodeIndex];
-				ai->reachedPathingTarget = true;
-			// Else continue walking
-			} else {
-				float acceleration = 70.0f - ( glm::length(movement->velocity) / speedLimit->maxSpeed ) * 20.0f;
-				movement->accelerationToAdd = getDesiredDir(ai, transform) * acceleration;
-			}
-		// Else increment the current node path
-		} else if (ai->currPath.size() > 0 ) {
+		auto aiPos = transform->getMatrixWithoutUpdate()[3];
+
+		// Check if the distance between current node target and ai is low enough to begin targeting next node
+		if ( glm::distance2(glm::vec2(aiPos.x, aiPos.z), glm::vec2(ai->currPath[ai->currNodeIndex].position.x, ai->currPath[ai->currNodeIndex].position.z)) < m_targetReachedThreshold) {
 			// Update next node target
-			if (ai->currNodeIndex < ai->currPath.size() - 1 ) {
-#ifdef _DEBUG_NODESYSTEM
-				m_nodeSystem->getNodeEntities()[ai->currNodeIndex]->getComponent<ModelComponent>()->getModel()->getMesh(0)->getMaterial()->setColor(glm::vec4(0.f, 1.f, 0.f, 1.f));
-#endif
+			if (ai->currNodeIndex < ai->currPath.size() - 1) {
 				ai->currNodeIndex++;
 			}
-			ai->reachedPathingTarget = false;
+		// Else continue walking
 		} else {
-			ai->currPath.clear();
+			float acceleration = 70.0f - ( glm::length(movement->velocity) / speedLimit->maxSpeed ) * 20.0f;
+			movement->accelerationToAdd = getDesiredDir(ai, transform) * acceleration;
+		}
+
+		/* Obstacle avoidance */
+		{
+			auto currVel = movement->velocity + movement->accelerationToAdd * dt;
+			auto currVelDir = glm::normalize(currVel);
+			// Intersection check
+			Octree::RayIntersectionInfo tempInfo;
+			m_octree->getRayIntersection(glm::vec3(aiPos), currVelDir, &tempInfo, e, 0.5f);
+
+			glm::vec3 adjustedAcc(0.f);
+			if (tempInfo.closestHitIndex != -1) {
+				auto currVelMag2 = glm::length2(currVel);
+				if (glm::pow(tempInfo.closestHit, 2.0f) < currVelMag2) {
+					float desireToAvoid = currVelMag2 / tempInfo.closestHit;
+					adjustedAcc = tempInfo.info[tempInfo.closestHitIndex].intersectionAxis * desireToAvoid * 70.f;
+				}
+			}
+			movement->accelerationToAdd += adjustedAcc;
 		}
 
 		float newYaw = getAiYaw(movement, transform->getRotations().y, dt);
@@ -371,38 +369,41 @@ void AiSystem::updatePhysics(Entity* e, float dt) {
 
 float AiSystem::getAiYaw(MovementComponent* moveComp, float currYaw, float dt) {
 	float newYaw = currYaw;
-	if ( glm::length2(moveComp->velocity) > 0.f ) {
-		float desiredYaw = 0.f;
-		float turnRate = glm::two_pi<float>();//glm::two_pi<float>() / 2.f; // 2 pi
-		auto normalizedVel = glm::normalize(moveComp->velocity);
-		float moveCompX = normalizedVel.x;
-		float moveCompZ = normalizedVel.z;
-		moveCompZ = moveCompZ != 0 ? moveCompZ : 0.1f;
-		if (moveCompZ < 0.f/* || moveCompX < 0.f*/) {
-			desiredYaw = glm::atan(moveCompX / moveCompZ) - glm::pi<float>();// + 0.7854f;
-		} else {
-			desiredYaw = glm::atan(moveCompX / moveCompZ);// - glm::pi<float>();// - 0.7854f;
-		}
-		desiredYaw = Utils::wrapValue(desiredYaw, 0.f, glm::two_pi<float>());
-		float diff = desiredYaw - currYaw;
-
-		if ( std::abs(diff) > glm::pi<float>() ) {
-			diff = currYaw - desiredYaw;
-		}
-
-		float toTurn = 0.f;
-		if ( diff > 0 ) {
-			toTurn = turnRate * dt;
-		} else if ( diff < 0 ) {
-			toTurn = -turnRate * dt;
-		}
-
-		if ( std::abs(diff) > std::abs(toTurn) ) {
-			newYaw = Utils::wrapValue(currYaw + toTurn, 0.f, glm::two_pi<float>());
-		} else {
-			newYaw = Utils::wrapValue(currYaw + diff, 0.f, glm::two_pi<float>());
-		}
-
+	float desiredYaw = 0.f;
+	float turnRate = glm::two_pi<float>();//glm::two_pi<float>() / 2.f; // 2 pi
+	glm::vec3 normalizedVel;
+	if (glm::length2(moveComp->velocity) > 0.f) {
+		normalizedVel = glm::normalize(moveComp->velocity);
+	} else {
+		normalizedVel = glm::normalize(glm::linearRand(glm::vec3(0.f), glm::vec3(1.f)));
 	}
+	float moveCompX = normalizedVel.x;
+	float moveCompZ = normalizedVel.z;
+	moveCompZ = moveCompZ != 0 ? moveCompZ : 0.1f;
+	if (moveCompZ < 0.f/* || moveCompX < 0.f*/) {
+		desiredYaw = glm::atan(moveCompX / moveCompZ) - glm::pi<float>();// + 0.7854f;
+	} else {
+		desiredYaw = glm::atan(moveCompX / moveCompZ);// - glm::pi<float>();// - 0.7854f;
+	}
+	desiredYaw = Utils::wrapValue(desiredYaw, 0.f, glm::two_pi<float>());
+	float diff = desiredYaw - currYaw;
+
+	if ( std::abs(diff) > glm::pi<float>() ) {
+		diff = currYaw - desiredYaw;
+	}
+
+	float toTurn = 0.f;
+	if ( diff > 0 ) {
+		toTurn = turnRate * dt;
+	} else if ( diff < 0 ) {
+		toTurn = -turnRate * dt;
+	}
+
+	if ( std::abs(diff) > std::abs(toTurn) ) {
+		newYaw = Utils::wrapValue(currYaw + toTurn, 0.f, glm::two_pi<float>());
+	} else {
+		newYaw = Utils::wrapValue(currYaw + diff, 0.f, glm::two_pi<float>());
+	}
+
 	return newYaw;
 }

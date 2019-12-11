@@ -4,6 +4,7 @@
 #include "Sail/Application.h"
 #include "Sail/entities/systems/Gameplay/LevelSystem/LevelSystem.h"
 
+
 class OptionsWindow : public SailImGuiWindow {
 
 public:
@@ -15,9 +16,9 @@ public:
 	void updateMap();
 
 private:
-	Application* m_app;
-	SettingStorage* m_settings;
-	LevelSystem* m_levelSystem;
+	Application* m_app = nullptr;
+	SettingStorage* m_settings = nullptr;
+	LevelSystem* m_levelSystem = nullptr;
 
 	int* m_keyToChange;
 

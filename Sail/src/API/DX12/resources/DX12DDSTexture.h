@@ -18,6 +18,8 @@ public:
 	bool hasBeenInitialized() const;
 	ID3D12Resource* getResource() const;
 
+	unsigned int getByteSize() const override { return 1000000000; }
+
 private:
 	void generateMips(ID3D12GraphicsCommandList4* cmdList);
 

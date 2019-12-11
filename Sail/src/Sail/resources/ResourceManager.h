@@ -18,7 +18,9 @@ class ShaderPipeline;
 class Shader;
 //class SoundManager;
 
-class ResourceManager {
+struct ID3D12GraphicsCommandList4;
+
+class ResourceManager final {
 public:
 	ResourceManager();
 	~ResourceManager();
@@ -99,7 +101,6 @@ public:
 		SAIL_LOG("Reloaded shader " + name);
 	}
 
-
 	const unsigned int numberOfModels() const;
 	const unsigned int numberOfTextures() const;
 	const unsigned int getByteSize() const;
@@ -107,11 +108,30 @@ public:
 	const unsigned int getAnimationsByteSize() const;
 	const unsigned int getAudioByteSize() const;
 	const unsigned int getTextureByteSize() const;
-	const unsigned int getGenericByteSize() const;
+	const unsigned int getShaderByteSize() const;
+	const unsigned int getMiscByteSize() const;
 	// SoundManager
 	//SoundManager* getSoundManager();
 
+	void uploadFinishedTextures(ID3D12GraphicsCommandList4* cmdList);
+	void clearModelCopies();
+	void releaseTextureUploadBuffers();
+
+#ifdef DEVELOPMENT
+	void unloadTextures();
+	void logRemainingTextures() const;
+	void printLoadedTexturesToFile() const;
+	void printModelsToFile() const;
+#endif
+
 private:
+	unsigned int calculateTextureByteSize() const;
+	unsigned int calculateAnimationByteSize() const;
+	unsigned int calculateModelByteSize() const;
+	unsigned int calculateAudioByteSize() const;
+	unsigned int calculateMiscByteSize() const;
+	unsigned int calculateShaderByteSize() const;
+
 	const std::string getSuitableName(const std::string& name);
 
 	enum RMDataType {
@@ -119,9 +139,10 @@ private:
 		Animations,
 		Audio,
 		Textures,
-		Generic
+		Shaders,
+		N_dataTypes
 	};
-	unsigned int m_byteSize[5];
+	unsigned int m_byteSize[static_cast<size_t>(N_dataTypes)];
 
 private:
 	// Audio files/data mapped to their filenames
@@ -132,7 +153,7 @@ private:
 	std::map<std::string, std::unique_ptr<Texture>> m_textures;
 	// Models mapped to their filenames
 	//std::map<std::string, std::unique_ptr<ParsedScene>> m_fbxModels;
-	std::mutex m_modelMutex;
+	mutable std::mutex m_modelMutex;
 	std::map < std::string, std::unique_ptr<Model>> m_models;
 	std::mutex m_animationMutex;
 	std::map < std::string, std::unique_ptr<AnimationStack>> m_animationStacks;
@@ -141,7 +162,18 @@ private:
 	// SoundManager containing all sounds
 	//std::unique_ptr<SoundManager> m_soundManager;
 
+	// Used when uploading textures to VRAM
+	std::mutex m_finishedTexturesMutex;
+	mutable std::mutex m_textureDatasMutex;
+	std::vector<Texture*> m_finishedTextures;
+
 	Shader* m_defaultShader;
+
+#ifdef DEVELOPMENT
+	std::vector<std::string> m_loadedTextures;
+	mutable bool m_hasLoggedTextures = false;
+	mutable bool m_hasLoggedModels = false;
+#endif
 };
 
 template <typename T>

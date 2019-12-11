@@ -143,16 +143,28 @@ void* DX12ShaderPipeline::compileShader(const std::string& source, const std::st
 	HRESULT hr;
 	switch (shaderType) {
 	case ShaderComponent::VS:
-		hr = D3DCompile(source.c_str(), source.length(), filepath.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain", "vs_5_1", flags, 0, &pShaders, &errorBlob);
-		break;
-	case ShaderComponent::GS:
-		hr = D3DCompile(source.c_str(), source.length(), filepath.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "GSMain", "gs_5_1", flags, 0, &pShaders, &errorBlob);
+		shaderDesc.entryPoint = L"VSMain";
+		shaderDesc.targetProfile = L"vs_6_0";
 		break;
 	case ShaderComponent::PS:
-		hr = D3DCompile(source.c_str(), source.length(), filepath.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSMain", "ps_5_1", flags, 0, &pShaders, &errorBlob);
+		shaderDesc.entryPoint = L"PSMain";
+		shaderDesc.targetProfile = L"ps_6_0";
+		break;
+	case ShaderComponent::GS:
+		shaderDesc.entryPoint = L"GSMain";
+		shaderDesc.targetProfile = L"gs_6_0";
 		break;
 	case ShaderComponent::CS:
-		hr = D3DCompile(source.c_str(), source.length(), filepath.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "CSMain", "cs_5_1", flags, 0, &pShaders, &errorBlob);
+		shaderDesc.entryPoint = L"CSMain";
+		shaderDesc.targetProfile = L"cs_6_0";
+		break;
+	case ShaderComponent::DS:
+		shaderDesc.entryPoint = L"DSMain";
+		shaderDesc.targetProfile = L"ds_6_0";
+		break;
+	case ShaderComponent::HS:
+		shaderDesc.entryPoint = L"HSMain";
+		shaderDesc.targetProfile = L"hs_6_0";
 		break;
 	}
 

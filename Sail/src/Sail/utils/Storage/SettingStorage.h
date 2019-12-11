@@ -35,10 +35,10 @@ public:
 
 		void setValue(const float& _value) {
 			value = _value;
-			if (value < minVal) {
+			if (value <= minVal) {
 				value = minVal;
 			}
-			if (value > maxVal) {
+			if (value >= maxVal) {
 				value = maxVal;
 			}
 		}

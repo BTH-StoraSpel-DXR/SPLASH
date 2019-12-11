@@ -46,6 +46,8 @@ RenderableTexture* PostProcessPipeline::run(RenderableTexture* baseTexture, void
 
 	// Stage one - fxaa if enabled
 	RenderableTexture* stageOneOutput = baseTexture;
+
+
 	if (enableFXAA) {
 		// FXAA
 		input.inputRenderableTexture = baseTexture;
@@ -56,29 +58,33 @@ RenderableTexture* PostProcessPipeline::run(RenderableTexture* baseTexture, void
 	// Stage two - bloom if enabled
 	RenderableTexture* stageTwoOutput = stageOneOutput;
 	if (bloomAmount > 0.f) {
-		input.inputRenderableTexture = m_bloomTexture;
+
 		// Blur pass one
+		input.inputRenderableTexture = m_bloomTexture;
 		auto* output = runStage(input, m_stages["BloomBlur1V"], cmdList);
 		input.inputRenderableTexture = output->outputTexture;
 		output = runStage(input, m_stages["BloomBlur1H"], cmdList);
+
 		// Blur pass two
 		input.inputRenderableTexture = output->outputTexture;
 		output = runStage(input, m_stages["BloomBlur2V"], cmdList);
 		input.inputRenderableTexture = output->outputTexture;
 		output = runStage(input, m_stages["BloomBlur2H"], cmdList);
+
 		// Blur pass three
 		input.inputRenderableTexture = output->outputTexture;
 		output = runStage(input, m_stages["BloomBlur3V"], cmdList);
 		input.inputRenderableTexture = output->outputTexture;
 		auto* bloomOutput = runStage(input, m_stages["BloomBlur3H"], cmdList);
 
+		// Blend pass
 		input.inputRenderableTexture = stageOneOutput;
 		input.inputRenderableTextureTwo = bloomOutput->outputTexture;
-
 		auto& blendStage = m_stages["BloomBlend"];
 		// Set blend amount in shader
 		blendStage.shader->getPipeline()->trySetCBufferVar("blendFactor", &bloomAmount, sizeof(float));
 		output = runStage(input, blendStage, cmdList);
+		
 		// Set final stage output
 		stageTwoOutput = output->outputTexture;
 	}
@@ -86,7 +92,7 @@ RenderableTexture* PostProcessPipeline::run(RenderableTexture* baseTexture, void
 	// Last stage - tonemapping, always runs
 	input.inputRenderableTexture = stageTwoOutput;
 	auto* tonemapOutput = runStage(input, m_stages["Tonemapper"], cmdList);
-
+	
 	return tonemapOutput->outputTexture;
 }
 
@@ -98,7 +104,7 @@ PostProcessPipeline::PostProcessOutput* PostProcessPipeline::runStage(PostProces
 	Application* app = Application::getInstance();
 	auto windowWidth = app->getWindow()->getWindowWidth();
 	auto windowHeight = app->getWindow()->getWindowHeight();
-
+	
 	m_dispatcher->begin(cmdList);
 
 	PostProcessOutput* output;

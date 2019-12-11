@@ -104,3 +104,11 @@ const PBRMaterial::PBRSettings& PBRMaterial::getPBRSettings() const {
 Shader* PBRMaterial::getShader() const {
 	return m_shader;
 }
+
+unsigned int PBRMaterial::getByteSize() const {
+	unsigned int size = 0;
+
+	size += sizeof(*this);
+
+	return size;
+}

@@ -9,6 +9,10 @@ public:
 	ParticleSystem();
 	~ParticleSystem();
 
+	bool isEnabled() const;
+
+	void setEnabled(bool state);
+
 	void update(float dt);
 	void updateOnGPU(ID3D12GraphicsCommandList4* cmdList, const glm::vec3& cameraPos);
 
@@ -19,6 +23,8 @@ private:
 	virtual void stop() override;
 
 private:
+	bool m_enabled;
+
 	std::unique_ptr<ComputeShaderDispatcher> m_dispatcher;
 
 	std::unordered_map<Entity*, ParticleEmitterComponent::EmitterData> m_emitters;

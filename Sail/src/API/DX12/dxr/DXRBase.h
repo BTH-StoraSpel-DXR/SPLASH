@@ -45,7 +45,10 @@ public:
 
 	void updateSceneData(Camera* cam, LightSetup* lights, const std::vector<DXRBase::MetaballGroup*>& metaballGroups, const std::vector<glm::vec3>& teamColors, unsigned int numShadowTextures);
 	void addWaterAtWorldPosition(const glm::vec3& position);
+	unsigned int removeWaterAtWorldPosition(const glm::vec3& position, const glm::ivec3& posOffset, const glm::ivec3& negOffset);
 	bool checkWaterAtWorldPosition(const glm::vec3& position);
+	// THIS WAS IMPLEMENTED SPECIFICALLY FOR CLEANING STATE!
+	std::pair<bool, glm::vec3> getNearestWaterPosition(const glm::vec3& position, const glm::vec3& maxOffset);
 	void updateWaterData();
 	void dispatch(BounceOutput& output, DX12RenderableTexture* outputBloomTexture, DX12RenderableTexture* shadowsLastFrameInput, ID3D12GraphicsCommandList4* cmdList);
 

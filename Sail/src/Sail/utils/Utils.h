@@ -113,6 +113,15 @@ namespace Utils {
 		ind3d.x = ind % xMax;
 		return ind3d;
 	}
+	inline int testSign(float x) {
+		if (x > 0.f) {
+			return 1;
+		} else if (x < 0.f) {
+			return -1;
+		} else {
+			return 0;
+		}
+	}
 
 	uint32_t packQuarterFloat(uint8_t a, uint8_t b, uint8_t c, uint8_t d);
 	uint32_t unpackQuarterFloat(uint32_t in, unsigned int index);

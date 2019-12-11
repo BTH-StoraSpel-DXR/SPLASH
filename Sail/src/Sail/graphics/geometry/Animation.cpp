@@ -40,6 +40,15 @@ const glm::mat4* Animation::Frame::getTransformList() {
 	return m_limbTransform;
 }
 
+unsigned int Animation::Frame::getByteSize() const {
+	unsigned int size = 0;
+
+	size += sizeof(*this);
+	size += sizeof(glm::mat4) * m_transformSize;
+	
+	return size;
+}
+
 #pragma endregion
 
 #pragma region ANIMATION
@@ -155,8 +164,25 @@ void Animation::addFrame(const unsigned int frame, const float time, Animation::
 void Animation::setName(const std::string& name) {
 	m_name = name;
 }
-const std::string Animation::getName() {
+const std::string& Animation::getName() {
 	return m_name;
+}
+
+unsigned int Animation::getByteSize() const {
+	unsigned int size = 0;
+	size += sizeof(*this);
+
+	size += m_name.capacity() * sizeof(unsigned char);
+	
+	size += sizeof(std::pair<unsigned int, float>) * m_frameTimes.size();
+
+	size += sizeof(std::pair<unsigned int, Animation::Frame*>) * m_frames.size();
+
+	for (auto& [key, val] : m_frames) {
+		size += val->getByteSize();
+	}
+
+	return size;
 }
 
 inline const bool Animation::exists(const unsigned int frame) {
@@ -284,10 +310,33 @@ AnimationStack::Bone& AnimationStack::getBone(const unsigned int index) {
 }
 
 unsigned int AnimationStack::getByteSize() {
-	unsigned int size = 0.f;
-	for (int i = 0; i < getAnimationCount(); i++) {
-		size += getAnimation(i)->getMaxAnimationFrame() * boneCount() * sizeof(glm::mat4);
+	unsigned int size = 0;
+	
+	size += sizeof(*this);
+	
+	size += sizeof(VertConnection) * m_connectionSize;
+
+	size += sizeof(std::pair<unsigned int, std::string>) * m_names.size();
+	for (auto& [key, val] : m_names) {
+		size += val.capacity() * sizeof(unsigned char);
 	}
+
+	size += sizeof(std::pair<std::string, unsigned int>) * m_indexes.size();
+	for (auto& [key, val] : m_indexes) {
+		size += key.capacity() * sizeof(unsigned char);
+	}
+
+	size += sizeof(std::pair<std::string, Animation*>) * m_stack.size();
+	for (auto& [key, val] : m_stack) {
+		size += key.capacity() * sizeof(unsigned char);
+
+		size += val->getByteSize();
+	}
+
+	for (auto& bone : m_bones) {
+		size += bone.getByteSize();
+	}
+
 	return size;
 }
 

@@ -19,6 +19,7 @@ class EntityRemovalSystem;
 class GameInputSystem;
 class GUISubmitSystem;
 class GunSystem;
+class HazardLightSystem;
 class HostSendToSpectatorSystem;
 class LevelGeneratorSystem;
 class KillCamReceiverSystem;
@@ -40,11 +41,11 @@ class SanitySystem;
 class SpeedLimitSystem;
 class SprinklerSystem;
 class UpdateBoundingBoxSystem;
-class HazardLightSystem;
 class SprintingSystem;
 class TeamColorSystem;
 class CandleThrowingSystem;
 class CrosshairSystem;
+class WaterCleaningSystem;
 
 
 // Systems that need duplicate versions for the killcam (due to slow motion and other reasons)
@@ -82,6 +83,7 @@ struct Systems {
 	GameInputSystem*           gameInputSystem           = nullptr;
 	GUISubmitSystem*           guiSubmitSystem           = nullptr;
 	GunSystem*                 gunSystem                 = nullptr;
+	HazardLightSystem*		   hazardLightSystem		 = nullptr;
 	HostSendToSpectatorSystem* hostSendToSpectatorSystem = nullptr;
 	KillCamReceiverSystem*     killCamReceiverSystem     = nullptr;
 	LevelSystem*               levelSystem               = nullptr;
@@ -100,11 +102,11 @@ struct Systems {
 	SanitySoundSystem*         sanitySoundSystem         = nullptr;
 	SanitySystem*              sanitySystem              = nullptr;
 	SpeedLimitSystem*          speedLimitSystem          = nullptr;
-	HazardLightSystem*           spotLightSystem           = nullptr;
 	TeamColorSystem*           teamColorSystem           = nullptr;
 	SprinklerSystem*           sprinklerSystem           = nullptr;
 	UpdateBoundingBoxSystem*   updateBoundingBoxSystem   = nullptr;
 	SprintingSystem*           sprintingSystem           = nullptr;
+	WaterCleaningSystem*	   waterCleaningSystem		 = nullptr;
 
 
 	// Systems that need duplicate versions for the killcam

@@ -21,6 +21,30 @@ private:
 	void init();
 
 private:
+	static constexpr int N_HISTORY = 100;
+
+	template<int N>
+	struct History {
+		float virtRAMHistory[N];
+		float physRAMHistory[N];
+		float cpuHistory[N];
+		float vramUsageHistory[N];
+		float frameTimesHistory[N];
+		float fixedUpdateHistory[N];
+		float averageSentPacketSizeHistory[N];
+			  
+		float rmModelsSizeMBHistory[N];
+		float rmAnimationsSizeMBHistory[N];
+		float rmAudioSizeMBHistory[N];
+		float rmTexturesSizeMBHistory[N];
+		float rmMiscSizeMBHistory[N];
+
+#ifdef DEVELOPMENT
+		float ecsSizeMBHistory[N];
+#endif
+	};
+
+
 	ULARGE_INTEGER m_lastCPU, m_lastSysCPU, m_lastUserCPU;
 	int m_numProcessors;
 	HANDLE m_self;
@@ -30,22 +54,8 @@ private:
 	// ImGui Profiler data
 	float m_profilerTimer = 0.f;
 	int m_profilerCounter = 0;
-	float* m_virtRAMHistory;
-	float* m_physRAMHistory;
-	float* m_cpuHistory;
-	float* m_vramUsageHistory;
-	float* m_frameTimesHistory;
-	float* m_fixedUpdateHistory;
-	float* m_averageSentPacketSizeHistory;
 
-	float* m_rmModelsSizeMBHistory;
-	float* m_rmAnimationsSizeMBHistory;
-	float* m_rmAudioSizeMBHistory;
-	float* m_rmTexturesSizeMBHistory;
-	float* m_rmGenericSizeMBHistory;
-#ifdef DEVELOPMENT
-	float* m_ecsSizeMBHistory;
-#endif
+	History<N_HISTORY> m_history;
 
 	std::string m_virtCount;
 	std::string m_physCount;
@@ -60,7 +70,7 @@ private:
 	std::string m_rmAnimationsMB;
 	std::string m_rmAudioMB;
 	std::string m_rmTexturesMB;
-	std::string m_rmGenericMB;
+	std::string m_rmMiscMB;
 #ifdef DEVELOPMENT
 	std::string m_ecsMB;
 #endif

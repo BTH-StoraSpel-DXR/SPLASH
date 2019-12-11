@@ -110,12 +110,14 @@ void Entity::addChildEntity(Entity* child) {
 
 void Entity::removeChildEntity(Entity* toRemove) {
 	auto child = std::find(m_children.begin(), m_children.end(), toRemove);
-	( *child )->setParent(nullptr);
-	if ( ( *child )->hasComponent<TransformComponent>() ) {
-		auto childTransComp = ( *child )->getComponent<TransformComponent>();
-		childTransComp->removeParent();
-	}	
-	m_children.erase(child);
+	if (child != m_children.end() && (*child) != nullptr) {
+		(*child)->setParent(nullptr);
+		if ((*child)->hasComponent<TransformComponent>()) {
+			auto childTransComp = (*child)->getComponent<TransformComponent>();
+			childTransComp->removeParent();
+		}
+		m_children.erase(child);
+	}
 }
 
 void Entity::removeAllChildren() {
@@ -125,13 +127,14 @@ void Entity::removeAllChildren() {
 			auto childTransComp = child->getComponent<TransformComponent>();
 			childTransComp->removeParent();
 		}
+		child->setParent(nullptr);
 	}
 	m_children.clear();
 }
 
 void Entity::removeDeleteAllChildren() {
 	for (auto child : m_children) {
-
+		child->setParent(nullptr);
 		child->queueDestruction();
 		if (child->hasComponent<TransformComponent>()) {
 

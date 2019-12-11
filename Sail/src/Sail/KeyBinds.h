@@ -37,6 +37,7 @@ namespace KeyBinds {
 	extern int TOGGLE_SPHERE;	// Collision
 	extern int TOGGLE_SUN;
 	extern int TOGGLE_ROOM_LIGHTS;
+	extern int UNLOAD_CPU_TEXTURES;
 
 	// Application
 	extern int ALT_KEY;
