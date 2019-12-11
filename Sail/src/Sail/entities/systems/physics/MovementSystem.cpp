@@ -28,6 +28,12 @@ void MovementSystem<T>::update(float dt) {
 
 		// Reset additional acceleration
 		movement->accelerationToAdd = glm::vec3(0.0f);
+
+		if (e->getName() == "PlayerCandle") {
+			if (movement->velocity.y < 0) {
+				movement->velocity.y = 0;
+			}
+		}
 		
 		// Rotation
 		if (movement->rotation != glm::vec3(0.0f)) {
