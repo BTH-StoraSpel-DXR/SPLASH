@@ -40,7 +40,7 @@ int main() {
 	int size = filesToConvert.size();
 	for (auto f : filesToConvert) {
 		i++;
-		std::cout << "[ " << i << " / " << size << " ] " << f.parent_path().string() << std::endl;
+		std::cout << "[ " << i << " / " << size << " ] " << f.string() << std::endl;
 
 		Mesh::Data data;
 		AnimationStack* animationStack = nullptr;
@@ -59,9 +59,9 @@ int main() {
 		//f.parent_path();
 	}
 
-	while (true) {
 
-	}
+	std::cout << "Done!" << std::endl;
+	std::cin;
 
 	return 0;
 }

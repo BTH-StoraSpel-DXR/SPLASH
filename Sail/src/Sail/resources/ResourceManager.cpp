@@ -146,7 +146,9 @@ bool ResourceManager::loadModel(const std::string& filename, Shader* shader, con
 	if (type == ResourceManager::ImporterType::SAIL_NOT_FBXSDK) {
 		Mesh::Data mData;		
 		AnimationStack* animationStack = nullptr;		
-		NotFBXLoader::Load(SAIL_DEFAULT_MODEL_LOCATION + filename, &mData, animationStack);
+		if (!NotFBXLoader::Load(SAIL_DEFAULT_MODEL_LOCATION + filename, &mData, animationStack)) {
+			return false;
+		}
 		temp = SAIL_NEW Model(mData, shaderToUse);
 
 		if (animationStack) {

@@ -1,11 +1,17 @@
-#ifndef FBX_CONVERTER
 #include "pch.h"
-#endif // FBX_CONVERTER
+
 #include "NotFBXLoader.h"
 #include <fstream>
 
-void NotFBXLoader::Load(const std::string& filename, Mesh::Data* mdata,  AnimationStack*& animationStack) {
+bool NotFBXLoader::Load(const std::string& filename, Mesh::Data* mdata,  AnimationStack*& animationStack) {
 	std::ifstream out(filename, std::fstream::binary);
+
+	if (!out.is_open()) {
+		SAIL_LOG_WARNING("Not FBX Loader could not open file: " + filename);
+		return false;
+	}
+
+
 	char m = 'm';
 	char a = 'a';
 
@@ -110,6 +116,7 @@ void NotFBXLoader::Load(const std::string& filename, Mesh::Data* mdata,  Animati
 	}
 
 	out.close();
+	return true;
 }
 
 void NotFBXLoader::Save(const std::string& filename, Mesh::Data* mdata, AnimationStack* animationStack) {
