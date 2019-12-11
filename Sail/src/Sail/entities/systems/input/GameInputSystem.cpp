@@ -236,7 +236,7 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 			// Prevent division by zero
 			if ( playerMovement.forwardMovement != 0.0f || playerMovement.rightMovement != 0.0f ) {
 
-				speedLimit->maxSpeed = 1.0f;
+				//speedLimit->maxSpeed = 1.0f;
 
 				// Calculate total movement
 				float acceleration = 70.0f - ( glm::length(movement->velocity) / speedLimit->maxSpeed ) * 20.0f;
