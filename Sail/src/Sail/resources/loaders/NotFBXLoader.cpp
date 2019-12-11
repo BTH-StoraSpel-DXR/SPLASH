@@ -1,22 +1,25 @@
+#ifndef FBX_CONVERTER
 #include "pch.h"
+#endif // FBX_CONVERTER
 #include "NotFBXLoader.h"
 #include <fstream>
 
-void NotFBXLoader::Load(std::string filename, Model*& model, Shader* shader,  AnimationStack*& animationStack) {
+void NotFBXLoader::Load(const std::string& filename, Mesh::Data* mdata,  AnimationStack*& animationStack) {
 	std::ifstream out(filename, std::fstream::binary);
 	char m = 'm';
 	char a = 'a';
 
 	char type;
 
+
+
 	while (!out.eof()) {
 		out.read((char*)&type, sizeof(type));
-		if (type == m && !model) {
-
-			Mesh::Data data;
+		if (type == m) {
+			Mesh::Data& data = *mdata;
 
 			//Mesh / Model
-			out.read((char*)&data.numIndices, sizeof(data.numIndices));
+			out.read((char*)(&data.numIndices), sizeof(data.numIndices));
 			data.indices = SAIL_NEW unsigned long[data.numIndices];
 			out.read((char*)data.indices, sizeof(*data.indices) * data.numIndices);
 			out.read((char*)& data.numVertices, sizeof(data.numVertices));
@@ -24,19 +27,16 @@ void NotFBXLoader::Load(std::string filename, Model*& model, Shader* shader,  An
 
 			data.positions		= SAIL_NEW Mesh::vec3[data.numVertices];
 			data.normals		= SAIL_NEW Mesh::vec3[data.numVertices];
-			//data.colors		= SAIL_NEW Mesh::vec4[data.numVertices];
 			data.texCoords		= SAIL_NEW Mesh::vec2[data.numVertices];
 			data.tangents		= SAIL_NEW Mesh::vec3[data.numVertices];
 			data.bitangents	= SAIL_NEW Mesh::vec3[data.numVertices];
 
 			out.read((char*)data.positions,	sizeof(*data.positions) *	data.numVertices);
 			out.read((char*)data.normals,		sizeof(*data.normals) *	data.numVertices);
-			//out.read((char*)data.colors,		sizeof(*data.colors) *		data.numVertices);
 			out.read((char*)data.texCoords,	sizeof(*data.texCoords) *	data.numVertices);
 			out.read((char*)data.tangents,		sizeof(*data.tangents) *	data.numVertices);
 			out.read((char*)data.bitangents,	sizeof(*data.bitangents) * data.numVertices);
 						
-			model = SAIL_NEW Model(data, shader);
 		} else if (type == a && !animationStack) {
 			animationStack = SAIL_NEW AnimationStack();
 			
@@ -102,7 +102,9 @@ void NotFBXLoader::Load(std::string filename, Model*& model, Shader* shader,  An
 				animationStack->addAnimation(name, animation);
 			}
 		} else {
+#ifndef FBX_CONVERTER
 			SAIL_LOG_WARNING("Not FBX Loader found something strange!");
+#endif // !FBX_CONVERTER
 			break;
 		}
 	}
@@ -110,18 +112,16 @@ void NotFBXLoader::Load(std::string filename, Model*& model, Shader* shader,  An
 	out.close();
 }
 
-void NotFBXLoader::Save(std::string filename, Model* model, AnimationStack* animationStack) {
+void NotFBXLoader::Save(const std::string& filename, Mesh::Data* mdata, AnimationStack* animationStack) {
 	std::ofstream out(filename, std::fstream::binary);
 
 	char m = 'm';
 	char a = 'a';
 
-	if (model) {
+	if (mdata) {
+		Mesh::Data& data = *mdata;
+
 		out.write((char*)&m, sizeof(m));
-
-		Mesh* mesh = model->getMesh(0);
-		const Mesh::Data& data = mesh->getData();
-
 		//Mesh / Model
 		out.write((char*)&data.numIndices, sizeof(data.numIndices));
 		out.write((char*)data.indices, sizeof(*data.indices) * data.numIndices);

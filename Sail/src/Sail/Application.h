@@ -11,7 +11,6 @@
 #include "utils/Storage/SettingStorage.h"
 #include "utils/StateStorage.h"
 #include "resources/ResourceManager.h"
-#include "resources/loaders/AssimpLoader.h"
 #include "MemoryManager/MemoryManager/src/MemoryManager.h"
 #include "RendererWrapper.h"
 #include "Sail/../../SPLASH/src/ImGuiWindows/Chat/ChatWindow.h"

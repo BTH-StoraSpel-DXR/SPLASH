@@ -53,9 +53,7 @@ project "SPLASH"
 	includedirs {
 		"libraries",
 		"Sail/src",
-		"%{IncludeDir.FBX_SDK}",
 		"%{IncludeDir.ImGui}",
-		"%{IncludeDir.Assimp}",
 		"Physics"
 	}
 
@@ -92,13 +90,11 @@ project "SPLASH"
 	-- Copy dlls to executable path
 	filter { "action:vs2017 or vs2019", "platforms:*64" }
 		postbuildcommands {
-			"{COPY} \"../libraries/FBX_SDK/lib/vs2017/x64/%{buildCfg}/libfbxsdk.dll\" \"%{cfg.targetdir}\"",
-			"{COPY} \"../libraries/assimp/lib/x64/assimp-vc140-mt.dll\" \"%{cfg.targetdir}\""
+
 		}
 	filter { "action:vs2017 or vs2019", "platforms:*86" }
 		postbuildcommands {
-			"{COPY} \"../libraries/FBX_SDK/lib/vs2017/x86/%{buildCfg}/libfbxsdk.dll\" \"%{cfg.targetdir}\"",
-			"{COPY} \"../libraries/assimp/lib/x86/assimp-vc140-mt.dll\" \"%{cfg.targetdir}\""
+
 		}
 
 
@@ -132,19 +128,15 @@ project "Sail"
 	includedirs {
 		"libraries",
 		"Sail/src",
-		"%{IncludeDir.FBX_SDK}",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.ImGui}",
 		"%{IncludeDir.MiniMM}",
-		"%{IncludeDir.Assimp}"
 	}
 
 	links {
-		"libfbxsdk",
 		"GLFW",
 		"ImGui",
 		"MemoryManager",
-		"assimp-vc140-mt",
 		"WinMMx"
 	}
 
@@ -181,14 +173,10 @@ project "Sail"
 
 	filter { "action:vs2017 or vs2019", "platforms:*64" }
 		libdirs {
-			"libraries/FBX_SDK/lib/vs2017/x64/%{buildCfg}",
-			"libraries/assimp/lib/x64",
 			"libraries/WinMM/x64"
 		}
 	filter { "action:vs2017 or vs2019", "platforms:*86" }
 		libdirs {
-			"libraries/FBX_SDK/lib/vs2017/x86/%{buildCfg}",
-			"libraries/assimp/lib/x86",
 			"libraries/WinMM/x86"
 		}
 
@@ -249,3 +237,79 @@ project "Physics"
 	filter "configurations:Dev-Release"
 		defines { "NDEBUG", "DEVELOPMENT" }
 		optimize "On"
+
+-----------------------------------
+------- NOT FBX CONVERTER ---------
+-----------------------------------
+project "FBXToNotFBXConverter"
+	location "FBXToNotFBXConverter"
+	kind "ConsoleApp"
+	language "C++"
+	cppdialect "C++17"
+	staticruntime "on"
+
+	targetdir (binDir)
+	objdir (intermediatesDir)
+
+	files {
+		"%{prj.name}/src/**.h",
+		"%{prj.name}/src/**.hpp",
+		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/../Sail/src/Sail/resources/loaders/NotFBXLoader.cpp",
+		"%{prj.name}/../Sail/src/Sail/resources/loaders/NotFBXLoader.h",
+	}   
+
+	includedirs {
+		"libraries",
+		"%{prj.name}/src/",
+		"%{IncludeDir.FBX_SDK}",
+		"%{prj.name}/../Sail/src/Sail/resources/loaders/",
+	}
+
+	links {
+		"libfbxsdk",
+	}
+
+	defines { "NOMINMAX",				-- Removes min max macros which cause issues
+			  "WIN32_LEAN_AND_MEAN" }	-- Exclude some less used APIs to speed up the build process on windows
+
+	flags { "MultiProcessorCompile" }
+	
+	filter "system:windows"
+		systemversion "latest"
+		
+		defines {
+			"FBXSDK_SHARED",
+			"FBX_CONVERTER"
+		}
+
+	filter "configurations:Debug"
+		defines { "DEBUG", "DEVELOPMENT" }
+		symbols "On"
+		buildCfg = "debug"
+
+	filter "configurations:Release"
+		defines { "NDEBUG" }
+		optimize "On"
+
+	filter "configurations:Dev-Release"
+		defines { "NDEBUG", "DEVELOPMENT" }
+		optimize "On"
+
+	-- Copy dlls to executable path
+	filter { "action:vs2017 or vs2019", "platforms:*64" }
+		libdirs {
+			"libraries/FBX_SDK/lib/vs2017/x64/%{buildCfg}",
+		}
+		postbuildcommands {
+			"{COPY} \"../libraries/FBX_SDK/lib/vs2017/x64/%{buildCfg}/libfbxsdk.dll\" \"%{cfg.targetdir}\"",
+		}
+		
+	filter { "action:vs2017 or vs2019", "platforms:*86" }
+		libdirs {
+			"libraries/FBX_SDK/lib/vs2017/x86/%{buildCfg}",
+		}
+		postbuildcommands {
+			"{COPY} \"../libraries/FBX_SDK/lib/vs2017/x86/%{buildCfg}/libfbxsdk.dll\" \"%{cfg.targetdir}\"",
+		}
+	

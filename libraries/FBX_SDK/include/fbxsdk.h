@@ -8,7 +8,7 @@
    this software in either electronic or hard copy form.
  
 ****************************************************************************************/
-
+#pragma once
 //! \file fbxsdk.h
 #ifndef _FBXSDK_H_
 #define _FBXSDK_H_

@@ -6,8 +6,10 @@
 #include "AudioData.h"
 #include "Sail/api/Texture.h"
 //#include "ParsedScene.h"
-#include "loaders/AssimpLoader.h"
-#include "loaders/FBXLoader.h"
+
+#include <glm/ext.hpp>
+#include "Sail/graphics/geometry/Animation.h"
+#include "Sail/graphics/geometry/Model.h"
 
 #define LOAD_NOT_FBX
 
@@ -139,9 +141,6 @@ private:
 	// SoundManager containing all sounds
 	//std::unique_ptr<SoundManager> m_soundManager;
 
-
-	std::unique_ptr<AssimpLoader> m_assimpLoader;
-	std::unique_ptr<FBXLoader> m_fbxLoader;
 	Shader* m_defaultShader;
 };
 
