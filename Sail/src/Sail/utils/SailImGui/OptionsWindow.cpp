@@ -432,7 +432,7 @@ void OptionsWindow::updateMap() {
 
 }
 
-void OptionsWindow::drawCrosshair() {
+ jbscsddvdrvoid OptionsWindow::drawCrosshair() {
 	// Fetch current settings from settingsStorage
 	auto& stat = m_settings->applicationSettingsStatic;
 	auto& dynamic = m_settings->applicationSettingsDynamic;
