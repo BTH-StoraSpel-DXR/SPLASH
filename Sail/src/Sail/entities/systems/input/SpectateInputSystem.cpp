@@ -139,6 +139,7 @@ void SpectateInputSystem::processMouseInput(const float& dt) {
 void SpectateInputSystem::updateCameraPosition(float alpha) {
 	for (auto e : entities) {
 		TransformComponent* playerTrans = e->getComponent<TransformComponent>();
+		
 
 		glm::vec3 forwards(
 			std::cos(glm::radians(m_pitch)) * std::cos(glm::radians(m_yaw + 90)),
@@ -151,6 +152,11 @@ void SpectateInputSystem::updateCameraPosition(float alpha) {
 
 		m_cam->setCameraPosition(glm::vec3(playerTrans->getInterpolatedTranslation(alpha) + glm::vec3(0.f, 0.0f * 1.8f, 0.f)));
 		m_cam->setCameraDirection(forwards);
+
+		SpectatorComponent* specComp = e->getComponent<SpectatorComponent>();
+		if (specComp->lookAt) {
+			m_cam->setCameralookAt(specComp->lookAtVector);
+		}
 	}
 }
 

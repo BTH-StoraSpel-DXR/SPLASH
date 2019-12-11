@@ -38,6 +38,7 @@ void FlyingCameraController::update(float dt) {
 	//
 	// Forwards / backwards motion
 	//
+	lookAt(glm::vec3(0, 0, 0));
 
 	// Gamepad
 	//setCameraPosition(getCameraPosition() + getCameraDirection() * gpState.thumbSticks.leftY * movementSpeed);
@@ -120,4 +121,6 @@ void FlyingCameraController::update(float dt) {
 
 	setCameraDirection(forwards);
 
+
+	lookAt(glm::vec3(0, 0, 0));
 }
