@@ -5,9 +5,7 @@
 #include <map>
 #include <vector>
 
-#include "Animation.h"
-
-//class AnimationStack;
+class AnimationStack;
 
 
 class FBXLoader2 {

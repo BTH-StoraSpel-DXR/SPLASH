@@ -255,15 +255,12 @@ project "FBXToNotFBXConverter"
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.hpp",
 		"%{prj.name}/src/**.cpp",
-		"%{prj.name}/../Sail/src/Sail/resources/loaders/NotFBXLoader.cpp",
-		"%{prj.name}/../Sail/src/Sail/resources/loaders/NotFBXLoader.h",
 	}   
 
 	includedirs {
 		"libraries",
 		"%{prj.name}/src/",
 		"%{IncludeDir.FBX_SDK}",
-		"%{prj.name}/../Sail/src/Sail/resources/loaders/",
 	}
 
 	links {
