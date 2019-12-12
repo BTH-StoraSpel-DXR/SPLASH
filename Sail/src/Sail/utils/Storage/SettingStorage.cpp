@@ -254,8 +254,8 @@ void SettingStorage::createGameDefaultMap() {
 
 	auto& gameSettingMapD = gameSettingsDynamic["map"] = std::unordered_map<std::string, DynamicSetting>();
 	auto& gameSettingMapS = gameSettingsStatic["map"] = std::unordered_map<std::string, Setting>();
-	gameSettingMapD["sizeX"] =   DynamicSetting(6.0f,	2.0f,	30.0f);
-	gameSettingMapD["sizeY"] =   DynamicSetting(6.0f,	2.0f,	30.0f);
+	gameSettingMapD["sizeX"] =   DynamicSetting(6.0f,	7.0f,	30.0f);
+	gameSettingMapD["sizeY"] =   DynamicSetting(6.0f,	7.0f,	30.0f);
 	gameSettingMapD["tileSize"] =	DynamicSetting(7.0f, 1.0f, 30.0f);
 	gameSettingMapD["clutter"] = DynamicSetting(0.85f,	0.0f,	1.0f);
 	gameSettingMapD["seed"] =    DynamicSetting(0.0f,	0.0f,	1000000.0f);
@@ -278,7 +278,7 @@ void SettingStorage::createGameDefaultMap() {
 	gameSettingsDynamic["powerup"]["count"] = DynamicSetting(1.0f, 1.0f, 1.0f);
 
 
-	defaultMaps["Deathmatch"] = Setting(0, std::vector<Setting::Option>({
+	defaultMaps["Deathmatch"] = Setting(3, std::vector<Setting::Option>({
 		{"Random",		-1},
 		{"Berlin",		0},
 		{"Hamburg",		1},
