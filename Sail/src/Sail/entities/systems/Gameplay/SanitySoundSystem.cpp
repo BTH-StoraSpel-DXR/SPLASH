@@ -28,7 +28,7 @@ void SanitySoundSystem::update(float dt) {
 		//SanityComponent* sc = e->getComponent<SanityComponent>();
 		//TransformComponent* tc = e->getComponent<TransformComponent>();
 		//AudioComponent* ac = e->getComponent<AudioComponent>();
-		//CandleComponent* cc;
+		//CandleComponent* cc;.
 
 		//for (auto& child : e->getChildEntities()) {
 		//	if ((cc = child->getComponent<CandleComponent>())) {
