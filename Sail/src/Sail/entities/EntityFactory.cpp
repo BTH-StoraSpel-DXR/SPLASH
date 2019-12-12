@@ -367,15 +367,15 @@ void EntityFactory::CreateGenericPlayer(Entity::SPtr playerEntity, size_t lightI
 	ac->currentAnimation = stack->getAnimation(1);
 
 
-	auto candle = ECS::Instance()->createEntity(playerEntity->getName() + "Candle");
-	if (doNotAddToSystems) {
-		candle->tryToAddToSystems = false;
-	}
-	CreateCandle(candle, glm::vec3(3.f, 1.f, 1.f), lightIndex);
-	playerEntity->addChildEntity(candle.get());
+	//auto candle = ECS::Instance()->createEntity(playerEntity->getName() + "Candle");
+	//if (doNotAddToSystems) {
+	//	candle->tryToAddToSystems = false;
+	//}
+	//CreateCandle(candle, glm::vec3(3.f, 1.f, 1.f), lightIndex);
+	//playerEntity->addChildEntity(candle.get());
 
-	// Attach the something to the player's right hand
-	ac->rightHandEntity = candle.get();
+	//// Attach the something to the player's right hand
+	//ac->rightHandEntity = candle.get();
 	ac->rightHandPosition = glm::identity<glm::mat4>();
 	ac->rightHandPosition = glm::translate(ac->rightHandPosition, glm::vec3(-0.596f, 1.026f, 0.055f));
 	ac->rightHandPosition = ac->rightHandPosition * glm::toMat4(glm::quat(glm::vec3(1.178f, 0.646f, -0.300f)));
