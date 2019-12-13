@@ -65,163 +65,271 @@ void CSMain(int3 groupThreadID : SV_GroupThreadID,
     // If the luma variation is lower that a threshold (or if we are in a really dark area), we are not on an edge, don't perform any AA.
 	if (lumaRange < max(EDGE_THRESHOLD_MIN, lumaMax * EDGE_THRESHOLD_MAX)) {
 		finalColor = float4(colorCenter, 1.0f);
-		output[dispatchThreadID.xy] = finalColor;
-        return;
-	}
-    // Test edge detection
-    // output[dispatchThreadID.xy] = float4(1.f, 0.f, 0.f, 1.0f);
-    // return;
+		
+		//output[dispatchThreadID.xy] = finalColor;
+        //return;
+	} else {
 
-	float lumaDownLeft = rgbToLuma(input[dispatchThreadID.xy + uint2(-1, 1)].rgb);
-	float lumaUpRight = rgbToLuma(input[dispatchThreadID.xy + uint2(1, -1)].rgb);
-	float lumaUpLeft = rgbToLuma(input[dispatchThreadID.xy + uint2(-1, -1)].rgb);
-	float lumaDownRight = rgbToLuma(input[dispatchThreadID.xy + uint2(1, 1)].rgb);
-	
-	float lumaDownUp = lumaDown + lumaUp;
-	float lumaLeftRight = lumaLeft + lumaRight;
-	
-	float lumaLeftCorners = lumaDownLeft + lumaUpLeft;
-	float lumaDownCorners = lumaDownLeft + lumaDownRight;
-	float lumaRightCorners = lumaDownRight + lumaUpRight;
-	float lumaUpCorners = lumaUpRight + lumaUpLeft;
 
-	float edgeHorizontal = abs(-2.0f * lumaLeft + lumaLeftCorners) + abs(-2.0f * lumaCenter + lumaDownUp) * 2.0f + abs(-2.0f * lumaRight + lumaRightCorners);
-	float edgeVertical = abs(-2.0f * lumaUp + lumaUpCorners) + abs(-2.0f *lumaCenter + lumaLeftRight) * 2.0f + abs(-2.0f * lumaDown + lumaDownCorners);
+		// Test edge detection
+		// output[dispatchThreadID.xy] = float4(1.f, 0.f, 0.f, 1.0f);
+		// return;
 
-	if (edgeHorizontal > edgeVertical) {
-		isHorizontal = true;
-	}
+		float lumaDownLeft = rgbToLuma(input[dispatchThreadID.xy + uint2(-1, 1)].rgb);
+		float lumaUpRight = rgbToLuma(input[dispatchThreadID.xy + uint2(1, -1)].rgb);
+		float lumaUpLeft = rgbToLuma(input[dispatchThreadID.xy + uint2(-1, -1)].rgb);
+		float lumaDownRight = rgbToLuma(input[dispatchThreadID.xy + uint2(1, 1)].rgb);
 
-    // Select the two neighboring texels lumas in the opposite direction to the local edge.
-	if (isHorizontal) {
-		luma1 = lumaDown;
-		luma2 = lumaUp;
-	}
-	else {
-		luma1 = lumaLeft;
-		luma2 = lumaRight;
-	}
-    
-    // Compute gradients in this direction.
-	float gradient1 = luma1 - lumaCenter;
-	float gradient2 = luma2 - lumaCenter;
+		float lumaDownUp = lumaDown + lumaUp;
+		float lumaLeftRight = lumaLeft + lumaRight;
 
-    // Which direction is the steepest ?
-    bool is1Steepest = abs(gradient1) >= abs(gradient2);
+		float lumaLeftCorners = lumaDownLeft + lumaUpLeft;
+		float lumaDownCorners = lumaDownLeft + lumaDownRight;
+		float lumaRightCorners = lumaDownRight + lumaUpRight;
+		float lumaUpCorners = lumaUpRight + lumaUpLeft;
 
-    // Gradient in the corresponding direction, normalized.
-	float gradientScaled = 0.25f*max(abs(gradient1), abs(gradient2));
+		float edgeHorizontal = abs(-2.0f * lumaLeft + lumaLeftCorners) + abs(-2.0f * lumaCenter + lumaDownUp) * 2.0f + abs(-2.0f * lumaRight + lumaRightCorners);
+		float edgeVertical = abs(-2.0f * lumaUp + lumaUpCorners) + abs(-2.0f * lumaCenter + lumaLeftRight) * 2.0f + abs(-2.0f * lumaDown + lumaDownCorners);
 
-    // Choose the step size (one pixel) according to the edge direction.
-    float stepLength = isHorizontal ? invTextureSize.y : invTextureSize.x;
-    // float stepLength = 1.f; // Always one since we are sampling using integer coordinates (?)
-
-    // Average luma in the correct direction.
-    float lumaLocalAverage = 0.0;
-
-	if (is1Steepest) {
-        // Switch the direction
-		stepLength = -stepLength;
-		lumaLocalAverage = 0.5f*(luma1 + lumaCenter);
-	}
-	else {
-		lumaLocalAverage = 0.5f*(luma2 + lumaCenter);
-	}
-	
-    // Shift UV in the correct direction by half a pixel.
-	float2 currentTexCoord = dispatchThreadID.xy * invTextureSize;
-    float2 offset = 0.f;
-	if (isHorizontal) {
-		offset = float2(invTextureSize.x, 0.f);
-		currentTexCoord.y += stepLength * 0.5f;
-	}
-	else {
-		offset = float2(0.f, invTextureSize.y);
-		currentTexCoord.x += stepLength * 0.5f;
-	}
-
-    // Compute UVs to explore on each side of the edge, orthogonally. The QUALITY allows us to step faster.
-	float2 texCoord1 = currentTexCoord - offset;
-	float2 texCoord2 = currentTexCoord + offset;
-
-	for (int x = 0; x < ITERATIONS; x++) {
-		if (!reached1) {
-			lumaEnd1 = rgbToLuma(input.SampleLevel(CSss, texCoord1, 0).rgb);
-			lumaEnd1 -= lumaLocalAverage;
+		if (edgeHorizontal > edgeVertical) {
+			isHorizontal = true;
 		}
-		if (!reached2) {
-			lumaEnd2 = rgbToLuma(input.SampleLevel(CSss, texCoord2, 0).rgb);
-			lumaEnd2 -= lumaLocalAverage;
-		}
-        // If the luma deltas at the current extremities is larger than the local gradient, we have reached the side of the edge.
-        reached1 = abs(lumaEnd1) >= gradientScaled;
-		reached2 = abs(lumaEnd2) >= gradientScaled;
-        reachedBoth = reached1 && reached2;
-		if (reachedBoth) {
-			break;
+
+		// Select the two neighboring texels lumas in the opposite direction to the local edge.
+		if (isHorizontal) {
+			luma1 = lumaDown;
+			luma2 = lumaUp;
 		} else {
+			luma1 = lumaLeft;
+			luma2 = lumaRight;
+		}
+
+		// Compute gradients in this direction.
+		float gradient1 = luma1 - lumaCenter;
+		float gradient2 = luma2 - lumaCenter;
+
+		// Which direction is the steepest ?
+		bool is1Steepest = abs(gradient1) >= abs(gradient2);
+
+		// Gradient in the corresponding direction, normalized.
+		float gradientScaled = 0.25f * max(abs(gradient1), abs(gradient2));
+
+		// Choose the step size (one pixel) according to the edge direction.
+		float stepLength = isHorizontal ? invTextureSize.y : invTextureSize.x;
+		// float stepLength = 1.f; // Always one since we are sampling using integer coordinates (?)
+
+		// Average luma in the correct direction.
+		float lumaLocalAverage = 0.0;
+
+		if (is1Steepest) {
+			// Switch the direction
+			stepLength = -stepLength;
+			lumaLocalAverage = 0.5f * (luma1 + lumaCenter);
+		} else {
+			lumaLocalAverage = 0.5f * (luma2 + lumaCenter);
+		}
+
+		// Shift UV in the correct direction by half a pixel.
+		float2 currentTexCoord = dispatchThreadID.xy * invTextureSize;
+		float2 offset = 0.f;
+		if (isHorizontal) {
+			offset = float2(invTextureSize.x, 0.f);
+			currentTexCoord.y += stepLength * 0.5f;
+		} else {
+			offset = float2(0.f, invTextureSize.y);
+			currentTexCoord.x += stepLength * 0.5f;
+		}
+
+		// Compute UVs to explore on each side of the edge, orthogonally. The QUALITY allows us to step faster.
+		float2 texCoord1 = currentTexCoord - offset;
+		float2 texCoord2 = currentTexCoord + offset;
+
+		for (int x = 0; x < ITERATIONS; x++) {
 			if (!reached1) {
-				texCoord1 -= offset * QUALITY[x];
+				lumaEnd1 = rgbToLuma(input.SampleLevel(CSss, texCoord1, 0).rgb);
+				lumaEnd1 -= lumaLocalAverage;
 			}
 			if (!reached2) {
-				texCoord2 += offset * QUALITY[x];
+				lumaEnd2 = rgbToLuma(input.SampleLevel(CSss, texCoord2, 0).rgb);
+				lumaEnd2 -= lumaLocalAverage;
+			}
+			// If the luma deltas at the current extremities is larger than the local gradient, we have reached the side of the edge.
+			reached1 = abs(lumaEnd1) >= gradientScaled;
+			reached2 = abs(lumaEnd2) >= gradientScaled;
+			reachedBoth = reached1 && reached2;
+			if (reachedBoth) {
+				break;
+			} else {
+				if (!reached1) {
+					texCoord1 -= offset * QUALITY[x];
+				}
+				if (!reached2) {
+					texCoord2 += offset * QUALITY[x];
+				}
 			}
 		}
+
+		// Compute the distances to each extremity of the edge.
+		if (isHorizontal) {
+			distance1 = (dispatchThreadID.x * invTextureSize.x) - texCoord1.x;
+			distance2 = texCoord2.x - (dispatchThreadID.x * invTextureSize.x);
+		} else {
+			distance1 = (dispatchThreadID.y * invTextureSize.y) - texCoord1.y;
+			distance2 = texCoord2.y - (dispatchThreadID.y * invTextureSize.y);
+		}
+
+		// In which direction is the extremity of the edge closer ?
+		isDirection1 = distance1 < distance2;
+		float distanceFinal = min(distance1, distance2);
+
+		// Length of the edge.
+		float edgeThickness = distance1 + distance2;
+
+		// UV offset: read in the direction of the closest side of the edge.
+		float pixelOffset = -distanceFinal / edgeThickness + 0.5f; // Maybe multiply this by textureSize (?)
+
+		// Is the luma at center smaller than the local average ?
+		isLumaCenterSmaller = lumaCenter < lumaLocalAverage;
+
+		// If the luma at center is smaller than at its neighbour, the delta luma at each end should be positive (same variation).
+		// (in the direction of the closer side of the edge.)
+		bool correctVariation = ((isDirection1 ? lumaEnd1 : lumaEnd2) < 0.0f) != isLumaCenterSmaller;
+
+		// If the luma variation is incorrect, do not offset.
+		float finalOffset = correctVariation ? pixelOffset : 0.0f;
+
+		// Sub-pixel shifting
+		// Full weighted average of the luma over the 3x3 neighborhood.
+		float lumaAverage = (1.f / 12.f) * (2.f * (lumaDownUp + lumaLeftRight) + lumaLeftCorners + lumaRightCorners);
+
+		// Ratio of the delta between the global average and the center luma, over the luma range in the 3x3 neighborhood.
+		float subPixelOffset1 = clamp(abs(lumaAverage - lumaCenter) / lumaRange, 0.f, 1.f);
+		float subPixelOffset2 = (-2.f * subPixelOffset1 + 3.f) * subPixelOffset1 * subPixelOffset1;
+		// Compute a sub-pixel offset based on this delta.
+		float subPixelOffsetFinal = subPixelOffset2 * subPixelOffset2 * SUBPIXEL_QUALITY;
+
+		// Pick the biggest of the two offsets.
+		finalOffset = max(finalOffset, subPixelOffsetFinal);
+
+		// Compute the final UV coordinates.
+		float2 finalTexCoord = dispatchThreadID.xy * invTextureSize;
+		if (isHorizontal) {
+			finalTexCoord.y += finalOffset * stepLength;
+		} else {
+			finalTexCoord.x += finalOffset * stepLength;
+		}
+
+		// Read the color at the new UV coordinates, and use it.
+		finalColor = input.SampleLevel(CSss, finalTexCoord, 0).rgba;
+		//finalColor = float4(1.0, 0.0, 0.0, 1.0);
 	}
 
-    // Compute the distances to each extremity of the edge.
-	if (isHorizontal) {
-		distance1 = (dispatchThreadID.x * invTextureSize.x) - texCoord1.x;
-		distance2 = texCoord2.x - (dispatchThreadID.x * invTextureSize.x);
-	}
-	else {
-		distance1 = (dispatchThreadID.y * invTextureSize.y) - texCoord1.y;
-		distance2 = texCoord2.y - (dispatchThreadID.y * invTextureSize.y);
-	}
 
-    // In which direction is the extremity of the edge closer ?
-    isDirection1 = distance1 < distance2;
-	float distanceFinal = min(distance1, distance2);
 
-    // Length of the edge.
-	float edgeThickness = distance1 + distance2;
 
-    // UV offset: read in the direction of the closest side of the edge.
-	float pixelOffset = -distanceFinal / edgeThickness + 0.5f; // Maybe multiply this by textureSize (?)
+	float2 screen_pos = dispatchThreadID.xy;
+	float2 screenSize = textureSize;
+	//float2 orig_uv = (dispatchThreadID.xy + float2(0.5f, 0.5)) * invTextureSize;
+	float2 orig_uv = (dispatchThreadID.xy * invTextureSize);
+
+	float4 result = finalColor;
+
+	float zoom = 2.0;
+	//float2 adjusted_pos = (screen_pos - float2(screenSize.x / 5.0, screenSize.y / 25.0)) * 3.0;
+
+	//// Turn off FXAA on the left half
+	//if (adjusted_pos.x < screenSize.x / 4.0)
+	//	result = input[screen_pos];
+
+	//// draw a line in the middle
+	//if (adjusted_pos.x >= screenSize.x / 4.0 - 1.0 && adjusted_pos.x <= screenSize.x / 4.0 + 1.0)
+	//	result = result / 2.0;
+
+
+	////result = float4(dispatchThreadID.x, dispatchThreadID.y, 0.0, 1.0);
+	////result = float4(1.0, 0.0, 0.0, 1.0);
+	//// Each pixel writes to 9 pixels (3x zoom)
+	//output[adjusted_pos] = result;
+	//output[adjusted_pos + float2(0.0, 1.0)] = result;
+	//output[adjusted_pos + float2(0.0, 2.0)] = result;
+	//output[adjusted_pos + float2(1.0, 0.0)] = result;
+	//output[adjusted_pos + float2(2.0, 0.0)] = result;
+	//output[adjusted_pos + float2(1.0, 1.0)] = result;
+	//output[adjusted_pos + float2(1.0, 2.0)] = result;
+	//output[adjusted_pos + float2(2.0, 1.0)] = result;
+	//output[adjusted_pos + float2(2.0, 2.0)] = result;
+	//
+
+	//// Output the result to all corners but the top left one since that's already been written to
+	//if (orig_uv[0] >= 0.500 || orig_uv[1] > 0.5) {
+	//	output[screen_pos] = result;
+	//}
+
+
+	// BOTTOM RIGHT CORNER
+	// Turn off FXAA
+	//if (orig_uv[0] > 0.5 && orig_uv[1] > 0.5) result = input[screen_pos];
+
+	// TOP LEFT CORNER
+	// 3x zoomed in with FXAA on one half
+		//&& orig_uv[1] >= 0.04 && orig_uv[1] <= (0.04 + 1.0 / 3.0)) 
+
+	float left = 0.5 + 0.5 / zoom;
+	float right =  0.5 - 0.5 / zoom;
+
+	if (orig_uv[0] > right && orig_uv[0] < left && orig_uv[1] > right && orig_uv[1] < left)
+	{
+
+		//output[screen_pos] = float4(1.0,0.0,0.0,1.0);
+		//output[screen_pos] = result;
+
+
+		//float2 adjusted_pos = (screen_pos - float2(screenSize.x / 5.0, screenSize.y / 25.0)) * 3.0;
+		float2 mid = screenSize / 2.0;
+		float2 dif = (screen_pos - mid)*zoom;
+		float2 adjusted_pos = screen_pos + dif;
+		//float2 adjusted_pos = (screen_pos - float2(screenSize.x / 5.0, screenSize.y / 25.0)) * 3.0;
+		//result = float4(1.0, 0.0, 0.0, 1.0);
+
+		// Turn off FXAA on the left half
+		if (orig_uv[0] < 0.5) {
+			result = input[screen_pos];
+		} else {
+			//result = finalColor;
+		}
+			//result = float4(1.0, 1.0, 0.0, 1.0); //input[screen_pos];
+
+		// draw a line in the middle
+		//if (adjusted_pos.x >= screenSize.x / 4.0 - 1.0 && adjusted_pos.x <= screenSize.x / 4.0 + 1.0)
+		//	result = result / 2.0;
+
+
+		//output[screen_pos] = result;
 	
-    // Is the luma at center smaller than the local average ?
-    isLumaCenterSmaller = lumaCenter < lumaLocalAverage;
-	
-    // If the luma at center is smaller than at its neighbour, the delta luma at each end should be positive (same variation).
-    // (in the direction of the closer side of the edge.)
-    bool correctVariation = ((isDirection1 ? lumaEnd1 : lumaEnd2) < 0.0f) != isLumaCenterSmaller;
-	
-    // If the luma variation is incorrect, do not offset.
-    float finalOffset = correctVariation ? pixelOffset : 0.0f;
+		// Each pixel writes to 9 pixels (3x zoom)
+		output[adjusted_pos] = result;
+		output[adjusted_pos + float2(0.0, 1.0)] = result;
+		output[adjusted_pos + float2(0.0, 2.0)] = result;
+		output[adjusted_pos + float2(1.0, 0.0)] = result;
+		output[adjusted_pos + float2(2.0, 0.0)] = result;
+		output[adjusted_pos + float2(1.0, 1.0)] = result;
+		output[adjusted_pos + float2(1.0, 2.0)] = result;
+		output[adjusted_pos + float2(2.0, 1.0)] = result;
+		output[adjusted_pos + float2(2.0, 2.0)] = result;
 
-    // Sub-pixel shifting
-    // Full weighted average of the luma over the 3x3 neighborhood.
-	float lumaAverage = (1.f/12.f) * (2.f * (lumaDownUp + lumaLeftRight) + lumaLeftCorners + lumaRightCorners);
 
-	// Ratio of the delta between the global average and the center luma, over the luma range in the 3x3 neighborhood.
-    float subPixelOffset1 = clamp(abs(lumaAverage - lumaCenter) / lumaRange, 0.f, 1.f);
-    float subPixelOffset2 = (-2.f * subPixelOffset1 + 3.f) * subPixelOffset1 * subPixelOffset1;
-    // Compute a sub-pixel offset based on this delta.
-    float subPixelOffsetFinal = subPixelOffset2 * subPixelOffset2 * SUBPIXEL_QUALITY;
+		if (adjusted_pos.x <= mid.x+2 && adjusted_pos.x >= mid.x - 2) {
+			output[adjusted_pos] = float4(1.0, 1.0, 1.0, 1.0);
+		}
 
-    // Pick the biggest of the two offsets.
-    finalOffset = max(finalOffset, subPixelOffsetFinal);
-
-    // Compute the final UV coordinates.
-	float2 finalTexCoord = dispatchThreadID.xy * invTextureSize;
-	if (isHorizontal) {
-		finalTexCoord.y += finalOffset * stepLength;
-	} else {
-		finalTexCoord.x += finalOffset * stepLength;
 	}
 
-    // Read the color at the new UV coordinates, and use it.
-	finalColor = input.SampleLevel(CSss, finalTexCoord, 0).rgba;
+	// Output the result to all corners but the top left one since that's already been written to
+	if (orig_uv[0] >= 0.500 || orig_uv[1] > 0.5) {
+		//output[screen_pos] = result;
+	}
 
-    output[dispatchThreadID.xy] = finalColor;
+
+
+    //output[dispatchThreadID.xy] = finalColor;
 }

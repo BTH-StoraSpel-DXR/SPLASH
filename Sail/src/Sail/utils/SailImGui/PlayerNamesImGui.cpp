@@ -16,6 +16,8 @@ PlayerNamesImGui::~PlayerNamesImGui() {
 }
 
 void PlayerNamesImGui::renderWindow() {
+	return;
+
 	if (m_drawPlayers.empty()) {
 		return;
 	}
