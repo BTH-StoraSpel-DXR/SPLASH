@@ -42,9 +42,9 @@ FBXLoader::FBXLoader() {
 	
 }
 FBXLoader::~FBXLoader() {
-
-
-	
+	if (s_manager) {
+		s_manager->Destroy();
+	}
 }
 
 #pragma region sceneAndDataImporting
@@ -114,7 +114,9 @@ FbxScene* FBXLoader::makeScene(std::string filePath, std::string sceneName) {
 	FbxScene* lScene = FbxScene::Create(s_manager, sceneName.c_str());
 	static int counter = 0;
 	//SAIL_LOG("Trying to import scene "+ sceneName +" : " + std::to_string(counter));
+
 	importer->Import(lScene);
+	
 	//SAIL_LOG("imported scene : " + std::to_string(counter++));
 	importer->Destroy();
 
@@ -130,6 +132,8 @@ void FBXLoader::clearAllScenes() {
 		val = nullptr;
 	}
 	m_scenes.clear();
+	s_manager->Destroy();
+	s_manager = nullptr;
 }
 void FBXLoader::removeScene(const std::string& name) {
 	if (m_scenes.find(name) != m_scenes.end()) {
@@ -468,6 +472,12 @@ AnimationStack* FBXLoader::importAnimationStack(const std::string& filePath) {
 	m_sceneData[filePath].stack = stack;
 	fetchSkeleton(root, filePath, stack);
 	fetchAnimations(root, stack, filePath);
+
+	if (stack->boneCount() == 0 && stack->getAnimationCount() == 0) {
+		Memory::SafeDelete(stack);
+		m_sceneData.at(filePath).stack = nullptr;
+	}
+
 	return stack;
 }
 void FBXLoader::fetchAnimations(FbxNode* node, AnimationStack* stack, const std::string& name) {
@@ -659,6 +669,10 @@ Model* FBXLoader::fetchModel(const std::string& filePath, Shader* shader) {
 	m_sceneData[filePath].model = nullptr;
 	m_sceneData[filePath].hasModel = false;
 
+	if (!m_sceneData[filePath].hasModel && !m_sceneData[filePath].hasAnimation) {
+		m_sceneData.erase(filePath);
+	}
+
 	return temp;
 }
 AnimationStack* FBXLoader::fetchAnimationStack(const std::string& filePath, Shader* shader) {
@@ -671,6 +685,10 @@ AnimationStack* FBXLoader::fetchAnimationStack(const std::string& filePath, Shad
 	auto* temp = m_sceneData[filePath].stack;
 	m_sceneData[filePath].stack = nullptr;
 	m_sceneData[filePath].hasAnimation = false;
+
+	if (!m_sceneData[filePath].hasModel && !m_sceneData[filePath].hasAnimation) {
+		m_sceneData.erase(filePath);
+	}
 
 	return temp;
 }
@@ -787,6 +805,41 @@ void FBXLoader::printNodeTree(FbxNode * node, const std::string& indent) {
 	}
 }
 void FBXLoader::printAnimationStack(const FbxNode* node) {
+}
+
+unsigned int FBXLoader::getByteSize() const {
+	unsigned int size = 0;
+
+	size += sizeof(*this);
+
+	size += sizeof(FbxManager);
+	size += sizeof(FbxIOSettings);
+
+	size += sizeof(std::pair<std::string, FbxScene*>) * m_scenes.size();
+	for (auto& [key, val] : m_scenes) {
+		size += sizeof(unsigned char) * key.capacity();
+		size += sizeof(FbxScene);
+		// TODO: Maybe investigate FbxScene further
+	}
+
+	size += sizeof(std::pair<std::string, SceneData>) * m_sceneData.size();
+	for (auto& [key, val] : m_sceneData) {
+		size += sizeof(unsigned char) * key.capacity();
+		
+		if (val.model) {
+			size += val.model->getByteSize();
+		}
+		if (val.stack) {
+			size += val.stack->getByteSize();
+		}
+
+		size += sizeof(std::vector<unsigned long>) * val.cpToVertMap.capacity();
+		for (auto& vec : val.cpToVertMap) {
+			size += sizeof(unsigned long) * vec.capacity();
+		}
+	}
+
+	return size;
 }
 
 #pragma endregion

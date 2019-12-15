@@ -4,6 +4,7 @@
 #include "../../BaseComponentSystem.h"
 #include "Sail/netcode/NetworkedStructs.h"
 #include "Sail/events/EventReceiver.h"
+#include "MatchRecordSystem.h"
 
 class GameState;
 class NetworkSenderSystem;
@@ -51,6 +52,7 @@ protected:
 	void waterHitPlayer  (const Netcode::ComponentID id, const Netcode::ComponentID projectileID)    override;
 	virtual void spawnPowerup(const int type, const glm::vec3& pos, const Netcode::ComponentID compID, const Netcode::ComponentID parentCompID) override;
 	virtual void destroyPowerup(const Netcode::ComponentID compID, const Netcode::ComponentID playerId) override;
+	void setCenter(const Netcode::ComponentID compID, const glm::vec3 offset)                        override;
 
 	// AUDIO
 	void playerJumped (const Netcode::ComponentID id)                  override;

@@ -4,8 +4,12 @@
 #include "Sail/KeyBinds.h"
 #include "Sail/utils/SailImGui/SailImGui.h"
 #include "Sail/entities/ECS.h"
+#include "../SPLASH/src/game/events/SettingsEvent.h"
+#include "Sail/KeyCodes.h"
 
-OptionsWindow::OptionsWindow(bool showWindow) {
+OptionsWindow::OptionsWindow(bool showWindow) : 
+	m_keyToChange(nullptr)
+{
 	m_app = Application::getInstance();
 	m_settings = &m_app->getSettings();
 	m_levelSystem = ECS::Instance()->getSystem<LevelSystem>();
@@ -26,7 +30,6 @@ OptionsWindow::~OptionsWindow() {}
 
 void OptionsWindow::renderWindow() {
 	// Rendering a pause window in the middle of the game window.
-	
 	auto& stat = m_settings->applicationSettingsStatic;
 	auto& dynamic = m_settings->applicationSettingsDynamic;
 	float x[4] = { 
@@ -45,6 +48,7 @@ void OptionsWindow::renderWindow() {
 	ImGui::Spacing();
 	ImGui::Spacing();
 	ImGui::Spacing();
+#pragma region GRAPHICS
 	// GRAPHICS
 	ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered));
 	ImGui::Text("graphics");
@@ -52,7 +56,7 @@ void OptionsWindow::renderWindow() {
 	ImGui::Separator();
 
 
-	static std::vector<std::string> options = { "fullscreen","bloom","shadows","fxaa","watersimulation" };
+	static std::vector<std::string> options = { "fullscreen","bloom","shadows","fxaa","watersimulation","particles" };
 	for (auto & optionName : options) {
 		sopt = &stat["graphics"][optionName];
 		selected = sopt->selected;
@@ -60,6 +64,7 @@ void OptionsWindow::renderWindow() {
 		ImGui::SameLine(x[0]);
 		if (SailImGui::TextButton(std::string("<##"+ optionName).c_str())) {
 			sopt->setSelected(selected - 1);
+			EventDispatcher::Instance().emit(SettingsUpdatedEvent());
 		}
 		ImGui::SameLine(x[1]);
 		valueName = sopt->getSelected().name;
@@ -67,12 +72,14 @@ void OptionsWindow::renderWindow() {
 		ImGui::SameLine(x[2]);
 		if (SailImGui::TextButton(std::string(">##"+ optionName).c_str())) {
 			sopt->setSelected(selected + 1);
+			EventDispatcher::Instance().emit(SettingsUpdatedEvent());
 		}
 	}
-
 	ImGui::Spacing();
 	ImGui::Spacing();
 	ImGui::Spacing();
+#pragma endregion
+#pragma region SOUND
 	// SOUND
 	ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered));
 	ImGui::Text("Sound");
@@ -94,6 +101,8 @@ void OptionsWindow::renderWindow() {
 	ImGui::Spacing();
 	ImGui::Spacing();
 	ImGui::Spacing();
+#pragma endregion
+#pragma region XHAIR
 	// CROSSHAIR
 	ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered));
 	ImGui::Text("Crosshair");
@@ -152,9 +161,101 @@ void OptionsWindow::renderWindow() {
 	//	//drawCrosshair();
 	//}
 	//ImGui::EndChild();
+	ImGui::Spacing();
+	ImGui::Spacing();
+	ImGui::Spacing();
+#pragma endregion
+#pragma region KEYBINDS
+	ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered));
+	ImGui::Text("Keybinds");
+	ImGui::PopStyleColor();
+	ImGui::Separator();
+
+	std::vector < std::tuple<std::string, std::string, int*>> keybinds = {
+		{"forward",		 "forward",		&KeyBinds::MOVE_FORWARD},
+		{"backward",	 "backward",	&KeyBinds::MOVE_BACKWARD},
+		{"right",		 "right",		&KeyBinds::MOVE_RIGHT},
+		{"left",		 "left",		&KeyBinds::MOVE_LEFT},
+		{"jump",		 "up",			&KeyBinds::MOVE_UP},
+		{"down",		 "down",		&KeyBinds::MOVE_DOWN},
+		{"sprint",		 "sprint",		&KeyBinds::SPRINT},
+		{"throw/drop",	 "throw",		&KeyBinds::THROW_CHARGE},
+		{"light candle", "light",		 &KeyBinds::LIGHT_CANDLE},
+	};
+
+	static bool splf = false, cplf = false;
+
+	ImGui::Columns(2,"keybindcolumns",false);
+	for (auto& [name, setting, value] : keybinds) {
+		ImGui::Text(name.c_str());
+		ImGui::NextColumn();
+		if (m_keyToChange == value) {
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			ImGui::Button("",ImVec2(-1,0));
+			ImGui::PopItemFlag();
+		}
+		else {
+			if (ImGui::Button(std::string(KeyBinds::getName(*value) + "##" + name).c_str(), ImVec2(-1, 0))) {
+				m_keyToChange = value;
+			}
+		}
+		ImGui::NextColumn();
+		if (m_keyToChange == value) {
+			ImGui::Columns(1);
+
+			//TODO: Add popup for rebinding
+			int c = 0;
+
+
+			bool pressed = false;
+			if (ImGui::GetIO().InputQueueCharacters.size() > 0) {
+				c = ImGui::GetIO().InputQueueCharacters.front();
+				pressed = true;
+			}
+			if (!cplf && ImGui::GetIO().KeyCtrl) {
+				pressed = true;
+				c = SAIL_KEY_CONTROL;
+			}
+			if (!splf && ImGui::GetIO().KeyShift) {
+				pressed = true;
+				c = SAIL_KEY_SHIFT;
+			}
+
+			if(pressed) {
+				if (c > 96 && c < 123) {
+					c -= 32;
+				}
+				if (c == SAIL_KEY_ESCAPE) {
+					m_keyToChange = nullptr;
+				}
+				else {
+					if (KeyBinds::allowed(c)) {
+						*m_keyToChange = c;
+						m_keyToChange = nullptr;
+						m_settings->applicationSettingsDynamic["keybindings"][setting].setValue(c);
+					}
+				}
+			}
+			ImGui::Columns(2, "keybindcolumns", false);
+		}
+	}
+	ImGui::Columns(1);
+	if (ImGui::Button("Reset")) {
+		resetKeyBind();
+	}
+
+	cplf = ImGui::GetIO().KeyCtrl;
+	splf = ImGui::GetIO().KeyShift;
+
+#pragma endregion
+
+
+
 }
 
 bool OptionsWindow::renderGameOptions() {
+
+	ImGui::PushItemFlag(ImGuiItemFlags_Disabled, m_disabled);
 
 	float x[4] = {
 	ImGui::GetWindowContentRegionWidth() * 0.5f,
@@ -216,7 +317,7 @@ bool OptionsWindow::renderGameOptions() {
 	unsigned int selected = 0;
 	std::string valueName = "";
 
-	static std::vector<std::string> MapOptions = { "sprinkler", "Powerup" };
+	static std::vector<std::string> MapOptions = { "sprinkler", "Powerup", "bots" };
 	for (auto& optionName : MapOptions) {
 		sopt = &stat["map"][optionName];
 		selected = sopt->selected;
@@ -258,8 +359,9 @@ bool OptionsWindow::renderGameOptions() {
 	ImGui::Spacing();
 	ImGui::Spacing();
 
-
+	ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
 	if (ImGui::CollapsingHeader("Advanced Settings##map")) {
+		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, m_disabled);
 		SettingStorage::DynamicSetting* mapSizeX = &m_app->getSettings().gameSettingsDynamic["map"]["sizeX"];
 		SettingStorage::DynamicSetting* mapSizeY = &m_app->getSettings().gameSettingsDynamic["map"]["sizeY"];
 
@@ -311,7 +413,10 @@ bool OptionsWindow::renderGameOptions() {
 
 
 		ImGui::Unindent();
+
+		ImGui::PopItemFlag();
 	}
+	ImGui::PopItemFlag();
 
 	ImGui::Spacing();
 	ImGui::Spacing();
@@ -350,7 +455,10 @@ bool OptionsWindow::renderGameOptions() {
 	ImGui::PopItemFlag();
 	ImGui::PopStyleColor();
 
+	ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
 	if (ImGui::CollapsingHeader("Advanced Settings##game")) {
+		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, m_disabled);
+
 		ImGui::Indent();
 		bool powActive = stat["map"]["Powerup"].getSelected().value == 0.0f ? true : false;
 		if (!powActive) {
@@ -404,12 +512,65 @@ bool OptionsWindow::renderGameOptions() {
 			ImGui::PopStyleColor();
 		}
 
+
+		{
+			bool botsActive = stat["map"]["bots"].getSelected().value == 0.0f ? true : false;
+			if (!botsActive) {
+				ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+				ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			}
+
+			SailImGui::HeaderText("Bots ");
+			ImGui::Text("Count");
+			ImGui::SameLine(x[0]);
+			ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth() * 0.5f);
+			val = m_app->getSettings().gameSettingsDynamic["bots"]["count"].value;
+			if (ImGui::SliderFloat("##countbots",
+								   &val,
+								   m_app->getSettings().gameSettingsDynamic["bots"]["count"].minVal,
+								   m_app->getSettings().gameSettingsDynamic["bots"]["count"].maxVal,
+								   "%.0f"
+			)) {
+				m_app->getSettings().gameSettingsDynamic["bots"]["count"].setValue(val);
+				settingsChanged = true;
+			}
+
+
+			ImGui::Text("Powerup threshold");
+			if (ImGui::IsItemHovered()) {
+				ImGui::BeginTooltip();
+				ImGui::SetWindowFontScale(0.8f);
+				ImGui::Text("This option sets the amount of water a bot needs\nto clean up before a power up spawns on it");
+				ImGui::SetWindowFontScale(1.f);
+				ImGui::EndTooltip();
+			}
+			ImGui::SameLine(x[0]);
+			ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth() * 0.5f);
+			val = m_app->getSettings().gameSettingsDynamic["bots"]["waterStorage"].value;
+			if (ImGui::SliderFloat("##powerupThreshold",
+								   &val,
+								   m_app->getSettings().gameSettingsDynamic["bots"]["waterStorage"].minVal,
+								   m_app->getSettings().gameSettingsDynamic["bots"]["waterStorage"].maxVal,
+								   "%.0f"
+			)) {
+				m_app->getSettings().gameSettingsDynamic["bots"]["waterStorage"].setValue(val);
+				settingsChanged = true;
+			}
+
+			if (!botsActive) {
+				ImGui::PopItemFlag();
+				ImGui::PopStyleColor();
+			}
+		}
+		ImGui::PopItemFlag();
 	}
+	ImGui::PopItemFlag();
 
 	if (mapChanged) {
 		updateMap();
 	}
 
+	ImGui::PopItemFlag();
 
 	return settingsChanged;
 }
@@ -430,6 +591,10 @@ void OptionsWindow::updateMap() {
 	p = std::clamp(p, 0.0f, 1.0f);
 	count.value = p * count.maxVal;
 
+}
+
+void OptionsWindow::setDisabled(bool b) {
+	m_disabled = b;
 }
 
 void OptionsWindow::drawCrosshair() {
@@ -706,6 +871,16 @@ void OptionsWindow::drawMap() {
 		//	1
 		//);
 	}
+}
+
+void OptionsWindow::resetKeyBind(int key) {
+
+	for (auto& [bind, value] : m_settings->applicationSettingsDynamic["keybindingsDEFAULT"]) {
+		m_settings->applicationSettingsDynamic["keybindings"][bind].setValue(value.value);
+
+	}
+
+	m_app->loadKeybinds();
 }
 
 

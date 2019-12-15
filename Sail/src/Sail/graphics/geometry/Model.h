@@ -37,6 +37,4 @@ private:
 	std::vector<Mesh::Ptr> m_meshes;
 	bool m_isAnimated;
 	bool m_castShadows;
-
-	unsigned int m_totalByteSize;
 };

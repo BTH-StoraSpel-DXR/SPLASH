@@ -32,6 +32,7 @@ GameInputSystem::GameInputSystem() : BaseComponentSystem() {
 	registerComponent<SprintingComponent>(true, true, false);
 	registerComponent<AnimationComponent>(true, true, false);
 	registerComponent<NetworkSenderComponent>(false, true, true);
+	registerComponent<RagdollComponent>(false, true, true);
 	m_mapPointer = nullptr;
 
 	// cam variables
@@ -60,10 +61,10 @@ void GameInputSystem::update(float dt, float alpha) {
 
 void GameInputSystem::initialize(Camera* cam) {
 	// If a camera doesn't exist...
-	if ( m_cam == nullptr ) {
+	if (m_cam == nullptr) {
 		// ... Create it
 		m_cam = SAIL_NEW CameraController(cam);
-	} 
+	}
 	// If it does exist...
 	else {
 		// ... Delete it then create it!?!?
@@ -83,7 +84,7 @@ void GameInputSystem::stop() {
 
 void GameInputSystem::processKeyboardInput(const float& dt) {
 
-	for ( auto e : entities ) {
+	for (auto e : entities) {
 		// Get player movement inputs
 		Movement playerMovement = getPlayerMovementInput(e);
 
@@ -97,7 +98,7 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 		glm::vec3 forward = m_cam->getCameraDirection();
 
 		// Do flying movement if in spectator mode
-		if ( e->hasComponent<SpectatorComponent>() ) {
+		if (e->hasComponent<SpectatorComponent>()) {
 			if (m_killSoundUponDeath) {
 
 				NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
@@ -107,8 +108,8 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 				m_killSoundUponDeath = false;
 			}
 
-			if ( playerMovement.forwardMovement != 0.f || playerMovement.rightMovement != 0.f || playerMovement.upMovement != 0.f ) {
- 				forward = glm::normalize(forward);
+			if (playerMovement.forwardMovement != 0.f || playerMovement.rightMovement != 0.f || playerMovement.upMovement != 0.f) {
+				forward = glm::normalize(forward);
 
 				// Calculate right vector for player
 				glm::vec3 right = glm::cross(glm::vec3(0.f, 1.f, 0.f), forward);
@@ -118,25 +119,26 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 
 				auto transComp = e->getComponent<TransformComponent>();
 				float speed = 5.f;
-				glm::vec3 moveDir = ( playerMovement.forwardMovement * forward + playerMovement.rightMovement * right + playerMovement.upMovement * up );
+				glm::vec3 moveDir = (playerMovement.forwardMovement * forward + playerMovement.rightMovement * right + playerMovement.upMovement * up);
 				moveDir = glm::normalize(moveDir);
 				transComp->translate(moveDir * dt * playerMovement.speedModifier * 10.f);
 			}
 
 			// Else do normal movement
-		} else {
+		}
+		else {
 			auto collision = e->getComponent<CollisionComponent>();
 			auto movement = e->getComponent<MovementComponent>();
 			auto speedLimit = e->getComponent<SpeedLimitComponent>();
 			auto audioComp = e->getComponent<AudioComponent>();
 			auto transformComp = e->getComponent<TransformComponent>()->getTranslation();
 
-			m_playerPosHolder[0] = { transformComp.x, 0, transformComp.z};
+			m_playerPosHolder[0] = { transformComp.x, 0, transformComp.z };
 			m_playerPosHolder[1] = { transformComp.x + DETECTION_STEP_SIZE, 0, transformComp.z + DETECTION_STEP_SIZE };
 			m_playerPosHolder[2] = { transformComp.x + DETECTION_STEP_SIZE, 0, transformComp.z - DETECTION_STEP_SIZE };
 			m_playerPosHolder[3] = { transformComp.x - DETECTION_STEP_SIZE, 0, transformComp.z + DETECTION_STEP_SIZE };
 			m_playerPosHolder[4] = { transformComp.x - DETECTION_STEP_SIZE, 0, transformComp.z - DETECTION_STEP_SIZE };
-			
+
 			// Check for nearby water
 			for (int i = 0; i < 5; i++) {
 				if (m_isOnWaterHolder = Application::getInstance()->getRenderWrapper()->checkIfOnWater(m_playerPosHolder[i])) {
@@ -150,9 +152,9 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 			// Player puts down candle
 			toggleCandleCarry(e);
 
-			if ( Input::IsKeyPressed(KeyBinds::LIGHT_CANDLE) ) {
-				for ( auto child : e->getChildEntities() ) {
-					if ( child->hasComponent<CandleComponent>() ) {
+			if (Input::IsKeyPressed(KeyBinds::LIGHT_CANDLE)) {
+				for (auto child : e->getChildEntities()) {
+					if (child->hasComponent<CandleComponent>()) {
 						auto candle = child->getComponent<CandleComponent>();
 						if (!candle->isLit) {
 							candle->userReignition = true;
@@ -179,7 +181,8 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 					m_isPlayingRunningSound = true;
 					m_onGroundTimer = m_onGroundThreshold;
 
-				} else {
+				}
+				else {
 
 					m_onGroundTimer += dt;
 				}
@@ -192,13 +195,78 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 
 					m_onGroundTimer = 0.0f;
 					m_isPlayingRunningSound = false;
-				} else {
+				}
+				else {
 					m_fallTimer += dt;
 					m_onGroundTimer -= dt;
 				}
+
+#ifndef DEVELOPMENT
+				if (Input::IsKeyPressed(KeyBinds::TOGGLE_BOUNDINGBOXES) && !m_ragdolling && !m_ragdollSwitchWasPressed) {
+					//Ragdoll landing
+					auto* ragdollComp = e->addComponent<RagdollComponent>();
+					ragdollComp->localCenterOfMass = { 0.f, 1.0f, 0.f };
+					e->getComponent<TransformComponent>()->setCenter(ragdollComp->localCenterOfMass);
+					ragdollComp->addContactPoint(glm::vec3(0.0f, 0.4f, 0.0f), glm::vec3(0.4f));
+					ragdollComp->addContactPoint(glm::vec3(0.f, 1.4f, 0.3f), glm::vec3(0.4f));
+
+					NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
+						Netcode::MessageType::SET_CENTER,
+						SAIL_NEW Netcode::MessageSetCenter{
+							e->getComponent<NetworkReceiverComponent>()->m_id,
+							ragdollComp->localCenterOfMass
+						}, false
+					);
+
+					e->getComponent<AnimationComponent>()->pitch = 0.f;
+
+					e->getComponent<TransformComponent>()->getMatrixWithUpdate();
+
+					ECS::Instance()->getSystem<UpdateBoundingBoxSystem>()->update(0.0f);
+
+					glm::vec3 rotVec = glm::normalize(glm::cross(m_cam->getCameraDirection(), glm::vec3(0.0f, 1.0f, 0.0f)));
+					movement->rotation = rotVec * glm::pi<float>() * -3.0f;
+
+					m_cam->setCameraPosition(m_cam->getCameraPosition() - m_cam->getCameraDirection());
+
+					m_ragdolling = true;
+
+					m_ragdollSwitchWasPressed = true;
+				}
+#endif
 			}
 
-			if ( playerMovement.upMovement == 1.0f ) {
+#ifndef DEVELOPMENT
+			if (Input::IsKeyPressed(KeyBinds::TOGGLE_BOUNDINGBOXES)) {
+				if (m_ragdolling && !m_ragdollSwitchWasPressed) {
+					e->removeComponent<RagdollComponent>();
+
+					auto* transComp = e->getComponent<TransformComponent>();
+
+					transComp->setRotations(0.f, transComp->getRotations().y, 0.f);
+					transComp->translate(glm::vec3(0.0f, 0.9f, 0.0f));
+					transComp->setCenter(glm::vec3(0.f));
+					movement->rotation = { 0.f, 0.f, 0.f };
+
+					NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
+						Netcode::MessageType::SET_CENTER,
+						SAIL_NEW Netcode::MessageSetCenter{
+							e->getComponent<NetworkReceiverComponent>()->m_id,
+							glm::vec3(0.0f)
+						}, false
+					);
+
+					m_ragdolling = false;
+					ECS::Instance()->getSystem<UpdateBoundingBoxSystem>()->update(0.0f);
+				}
+				m_ragdollSwitchWasPressed = true;
+			}
+			else {
+				m_ragdollSwitchWasPressed = false;
+			}
+#endif
+
+			if (playerMovement.upMovement == 1.0f) {
 
 				if (!m_wasSpacePressed && collision->onGround) {
 
@@ -214,7 +282,8 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 					);
 				}
 				m_wasSpacePressed = true;
-			} else if (m_wasSpacePressed){
+			}
+			else if (m_wasSpacePressed) {
 				m_wasSpacePressed = false;
 			}
 
@@ -234,13 +303,13 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 			m_soundSwitchTimer += dt;
 
 			// Prevent division by zero
-			if ( playerMovement.forwardMovement != 0.0f || playerMovement.rightMovement != 0.0f ) {
+			if (playerMovement.forwardMovement != 0.0f || playerMovement.rightMovement != 0.0f) {
 
 				//speedLimit->maxSpeed = 1.0f;
 
 				// Calculate total movement
-				float acceleration = 70.0f - ( glm::length(movement->velocity) / speedLimit->maxSpeed ) * 20.0f;
-				if ( !collision->onGround ) {
+				float acceleration = 70.0f - (glm::length(movement->velocity) / speedLimit->maxSpeed) * 20.0f;
+				if (!collision->onGround) {
 					acceleration = acceleration * 0.5f;
 					// AUDIO TESTING (turn OFF looping running sound)
 					if (!m_isPlayingRunningSound) {
@@ -266,7 +335,7 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 					m_soundSwitchTimer = 0.0f;
 					// CORRIDOR
 					if (m_mapPointer->getAreaType(e->getComponent<TransformComponent>()->getTranslation().x, e->getComponent<TransformComponent>()->getTranslation().z) == 0) {
-						
+
 						if (m_isOnWaterHolder && !tempWaterMetal) {
 							NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
 								Netcode::MessageType::RUNNING_WATER_METAL_START,
@@ -327,7 +396,7 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 							tempTile = true;
 						}
 					}
-				} 
+				}
 
 				movement->accelerationToAdd =
 					glm::normalize(right * playerMovement.rightMovement + forward * playerMovement.forwardMovement * playerMovement.speedModifier)
@@ -335,7 +404,8 @@ void GameInputSystem::processKeyboardInput(const float& dt) {
 
 
 
-			} else {
+			}
+			else {
 
 				// AUDIO TESTING (turn OFF looping running sound)
 				// If-statement and relevant bools are to avoid sending unnecessary amount of messages/data
@@ -361,12 +431,12 @@ void GameInputSystem::processMouseInput(const float& dt) {
 	// Toggle cursor capture on right click
 	for (auto e : entities) {
 
-//#ifdef DEVELOPMENT
+		//#ifdef DEVELOPMENT
 		if (Input::WasMouseButtonJustPressed(KeyBinds::DISABLE_CURSOR)) {
 			Input::HideCursor(!Input::IsCursorHidden());
 		}
-//#endif
-		
+		//#endif
+
 		auto trans = e->getComponent<TransformComponent>();
 		auto rots = trans->getRotations();
 		m_pitch = (rots.z != 0.f) ? glm::degrees(-rots.z) : m_pitch;
@@ -395,7 +465,9 @@ void GameInputSystem::processMouseInput(const float& dt) {
 			m_yaw += 360;
 		}
 
-		trans->setRotations(0.f, glm::radians(-m_yaw), 0.f);
+		if (!m_ragdolling) {
+			trans->setRotations(0.f, glm::radians(-m_yaw), 0.f);
+		}
 
 		GunComponent* gc = e->getComponent<GunComponent>();
 
@@ -404,14 +476,13 @@ void GameInputSystem::processMouseInput(const float& dt) {
 			for (auto childE : e->getChildEntities()) {
 				if (childE->getName().find("WaterGun") != std::string::npos) {
 					TransformComponent* tc = childE->getComponent<TransformComponent>();
-					tc->setRotations(glm::radians(-m_pitch),0, 0);
+					tc->setRotations(glm::radians(-m_pitch), 0, 0);
 				}
 			}
 		}
 
 		// Manage the firing of the gun
 		if (Input::IsMouseButtonPressed(KeyBinds::SHOOT) && !e->hasComponent<SpectatorComponent>() && !e->getComponent<SprintingComponent>()->sprintedLastFrame) {
-
 			// Check if the player's candle is lit
 			bool isLit = true;
 			for (auto childE : e->getChildEntities()) {
@@ -433,7 +504,8 @@ void GameInputSystem::processMouseInput(const float& dt) {
 						}
 					}
 				}
-			} else {
+			}
+			else {
 				// Stop firing when the candle is no longer lit
 				if (gc->firing) {
 					if (auto nsc = e->getComponent<NetworkSenderComponent>()) {
@@ -443,7 +515,8 @@ void GameInputSystem::processMouseInput(const float& dt) {
 					gc->firing = false;
 				}
 			}
-		} else {
+		}
+		else {
 			if (gc) {
 				gc->firing = false;
 			}
@@ -453,30 +526,46 @@ void GameInputSystem::processMouseInput(const float& dt) {
 
 
 void GameInputSystem::updateCameraPosition(float alpha) {
-	for ( auto e : entities ) {
-		TransformComponent* playerTrans = e->getComponent<TransformComponent>();
-		BoundingBoxComponent* playerBB = e->getComponent<BoundingBoxComponent>();
-		AnimationComponent* animation = e->getComponent<AnimationComponent>();
+	if (!m_ragdolling) {
+		for (auto e : entities) {
+			TransformComponent* playerTrans = e->getComponent<TransformComponent>();
+			BoundingBoxComponent* playerBB = e->getComponent<BoundingBoxComponent>();
+			AnimationComponent* animation = e->getComponent<AnimationComponent>();
 
-		playerTrans->setRotations(0.f, glm::radians(-m_yaw), 0.f);
-		animation->pitch = glm::radians(-m_pitch);
 
-		const glm::vec3 camPos = playerTrans->getMatrixWithUpdate() * glm::vec4(animation->headPositionLocalCurrent, 1.f);
+			playerTrans->setRotations(0.f, glm::radians(-m_yaw), 0.f);
+			animation->pitch = glm::radians(-m_pitch);
 
-		m_cam->setCameraPosition(camPos);
+			const glm::vec3 camPos = playerTrans->getMatrixWithUpdate() * glm::vec4(animation->headPositionLocalCurrent, 1.f);
+
+			m_cam->setCameraPosition(camPos);
+
+
+		}
+
+		const float cosRadPitch = std::cosf(glm::radians(m_pitch));
+		const float sinRadPitch = std::sinf(glm::radians(m_pitch));
+		const float cosRadYaw = std::cosf(glm::radians(m_yaw + 90));
+		const float sinRadYaw = std::sinf(glm::radians(m_yaw + 90));
+
+		const glm::vec3 forwards = glm::normalize(glm::vec3(
+			cosRadPitch * cosRadYaw,
+			sinRadPitch,
+			cosRadPitch * sinRadYaw));
+
+		m_cam->setCameraDirection(forwards);
 	}
-
-	const float cosRadPitch = std::cosf(glm::radians(m_pitch));
-	const float sinRadPitch = std::sinf(glm::radians(m_pitch));
-	const float cosRadYaw = std::cosf(glm::radians(m_yaw + 90));
-	const float sinRadYaw = std::sinf(glm::radians(m_yaw + 90));
-	
-	const glm::vec3 forwards = glm::normalize(glm::vec3(
-		cosRadPitch * cosRadYaw,
-		sinRadPitch,
-		cosRadPitch * sinRadYaw));
-	
-	m_cam->setCameraDirection(forwards);
+	else {
+		for (auto e : entities) {
+			TransformComponent* playerTrans = e->getComponent<TransformComponent>();
+			glm::vec3 playerPos = playerTrans->getMatrixWithoutUpdate()[3];
+			glm::vec3 dir = playerPos - m_cam->getCameraPosition();
+			dir.y = 0.0f;
+			if (glm::length2(dir) > 0.0001f) {
+				m_cam->setCameraDirection(dir);
+			}
+		}
+	}
 }
 
 CameraController* GameInputSystem::getCamera() const {
@@ -519,12 +608,14 @@ void GameInputSystem::toggleCandleCarry(Entity* entity) {
 								throwingComp->isCharging = false;
 								//candleComp->candleToggleTimer = 0.f;
 							}
-						} else {
+						}
+						else {
 							// Torch isn't carried so try to pick it up
 							candleComp->isCarried = true;
 							candleComp->candleToggleTimer = 0.f;
 						}
-					} else if (candleComp->isCarried && throwingComp->wasChargingLastFrame) {
+					}
+					else if (candleComp->isCarried && throwingComp->wasChargingLastFrame) {
 						// We want to throw the torch
 						throwingComp->isCharging = false;
 						//candleComp->candleToggleTimer = 0.f;
@@ -535,7 +626,7 @@ void GameInputSystem::toggleCandleCarry(Entity* entity) {
 
 			return;
 		}
-	}	
+	}
 }
 
 Movement GameInputSystem::getPlayerMovementInput(Entity* e) {
@@ -563,8 +654,9 @@ Movement GameInputSystem::getPlayerMovementInput(Entity* e) {
 				sprintComp->doSprint = true;
 				playerMovement.speedModifier = sprintComp->sprintSpeedModifier;
 			}
-		// For spectator
-		} else {
+			// For spectator
+		}
+		else {
 			playerMovement.speedModifier = sprintComp->sprintSpeedModifier;
 		}
 	}

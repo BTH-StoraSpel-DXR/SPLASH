@@ -38,6 +38,7 @@ namespace DXRShaderCommon {
 #define METABALL_RADIUS 0.12f
 #define NUM_SHADOW_TEXTURES 14
 #define LIGHT_RADIUS 0.08 // TODO: tweak this!
+// #define ALLOW_SOFT_SHADOWS // This define is set in the program when soft shadows are enabled. Turning it off reduces VRAM usage by ~50mb because of the raypayload
 
 static const uint MESH_NO_FLAGS				 			= 	0;
 static const uint MESH_USE_INDICES 						= 	1 << 0;
@@ -58,7 +59,9 @@ struct RayPayload {
 	float4 metalnessRoughnessAOTwo;
 	float3 worldPositionOne;
 	float3 worldPositionTwo;
+#ifdef ALLOW_SOFT_SHADOWS
 	float shadowTwo[NUM_SHADOW_TEXTURES];
+#endif
 	uint recursionDepth;
 	float closestTvalue;
 };
@@ -109,7 +112,7 @@ struct SceneCBuffer {
 	bool doHardShadows;
 	float3 cameraDirection;
 	uint nMetaballGroups;
-	uint padding;
+	uint numShadowTextures;
 	float nearZ;
 	float farZ;
 	float padding2;

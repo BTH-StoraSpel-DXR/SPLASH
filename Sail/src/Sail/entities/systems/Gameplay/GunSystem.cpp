@@ -45,19 +45,21 @@ void GunSystem::update(float dt) {
 		GunComponent* gun = e->getComponent<GunComponent>();
 		// Gun is firing and is not overloaded
 		if (gun->firing && gun->gunOverloadTimer <= 0) {
+			bool powerWashActive = false;
 			// SHOOT
 			if (gun->projectileSpawnTimer <= 0.f) {
 					// Determine projectileSpeed based on how long the gun has been firing continuously
 				PowerUpComponent* powC = e->getComponent<PowerUpComponent>();
 				if (powC) {
 					if (powC->powerUps[PowerUps::POWERWASH].time > 0) {
-						gun->projectileSpeed = gun->baseProjectileSpeed * 2;
-					}
-					else {
+						powerWashActive = true;
+						gun->projectileSpeed = gun->baseProjectileSpeed;
+						gun->gunOverloadTimer = 0.f;
+						gun->gunOverloadvalue = 0.f;
+					} else {
 						alterProjectileSpeed(gun);
 					}
-				}
-				else {
+				} else {
 					alterProjectileSpeed(gun);
 				}
 
@@ -70,7 +72,7 @@ void GunSystem::update(float dt) {
 			}
 
 			// Overload the gun if necessary
-			if ((gun->gunOverloadvalue += dt) > gun->gunOverloadThreshold) {
+			if (!powerWashActive && (gun->gunOverloadvalue += dt) > gun->gunOverloadThreshold) {
 				overloadGun(e, gun);
 			}
 		} else { // Gun is not firing.
@@ -103,7 +105,7 @@ unsigned int GunSystem::getByteSize() const {
 #endif
 
 void GunSystem::alterProjectileSpeed(GunComponent* gun) {
-	gun->projectileSpeed = gun->baseProjectileSpeed + (gun->projectileSpeedRange * (gun->gunOverloadvalue/gun->gunOverloadThreshold));
+	gun->projectileSpeed = gun->baseProjectileSpeed + (gun->projectileSpeedRange * (gun->gunOverloadvalue / gun->gunOverloadThreshold));
 }
 
 void GunSystem::fireGun(Entity* e, GunComponent* gun, PowerUpComponent* powC) {
@@ -137,10 +139,12 @@ void GunSystem::fireGun(Entity* e, GunComponent* gun, PowerUpComponent* powC) {
 			glm::vec3 right = glm::normalize(glm::cross(gun->direction, glm::vec3(0.0f, 1.0f, 0.0f)));
 			glm::vec3 up = glm::normalize(glm::cross(vel.front(), right));
 
-			vel.push_back(glm::normalize(gun->direction + 0.3f*right + 0.3f*up) * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
-			vel.push_back(glm::normalize(gun->direction - 0.3f*right + 0.3f*up) * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
-			vel.push_back(glm::normalize(gun->direction + 0.3f*right - 0.3f*up ) * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
-			vel.push_back(glm::normalize(gun->direction - 0.3f*right - 0.3f*up) * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
+			const float spread = 0.15f;
+
+			vel.push_back(glm::normalize(gun->direction + spread*right + spread*up) * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
+			vel.push_back(glm::normalize(gun->direction - spread*right + spread*up) * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
+			vel.push_back(glm::normalize(gun->direction + spread*right - spread*up ) * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
+			vel.push_back(glm::normalize(gun->direction - spread*right - spread*up) * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);
 		}
 		else {
 			vel.push_back(gun->direction * gun->projectileSpeed + e->getComponent<MovementComponent>()->velocity);

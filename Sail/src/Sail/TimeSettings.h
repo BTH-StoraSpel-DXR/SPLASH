@@ -8,4 +8,4 @@ constexpr size_t TICKRATE = 64;
 
 
 //const float TIMESTEP = 1.0f / (5.0f*TICKRATE); // if you want slow-motion
-constexpr float TIMESTEP = 1.0f / static_cast<float>(TICKRATE);
+constexpr float TIMESTEP = 1.0f / static_cast<float>(TICKRATE);	

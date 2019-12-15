@@ -12,4 +12,5 @@ namespace SailImGui {
 	void rText(const char* fmt, const float end, ...);
 	void cText(const char* fmt, const float end, ...);
 	void HeaderText(const char* fmt, ...);
+	void cHeaderText(const char* fmt, const float end, ...);
 }

@@ -2,15 +2,15 @@
 #include "Transform.h"
 
 Transform::Transform(Transform* parent)
-	: Transform::Transform({ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, parent) 
+	: Transform::Transform({ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, parent)
 {}
 
 Transform::Transform(const glm::vec3& translation, Transform* parent)
-	: Transform(translation, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, parent) 
+	: Transform(translation, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, parent)
 {}
 
 Transform::Transform(const glm::vec3& translation, const glm::vec3& rotation, const glm::vec3& scale, Transform* parent)
-	: m_parent(parent) 
+	: m_parent(parent)
 {
 	m_data.m_current.m_translation = translation;
 	m_data.m_current.m_rotation = rotation;
@@ -27,6 +27,8 @@ Transform::Transform(const glm::vec3& translation, const glm::vec3& rotation, co
 	m_data.m_previous.m_forward = glm::vec3(0.0f);
 	m_data.m_previous.m_right = glm::vec3(0.0f);
 	m_data.m_previous.m_up = glm::vec3(0.0f);
+
+	m_center = { 0.f, 0.f, 0.f };
 
 	m_matNeedsUpdate = true;
 	m_parentUpdated = parent;
@@ -215,14 +217,14 @@ void Transform::setRotations(const glm::quat& rotations) {
 
 
 void Transform::setScale(const float scale) {
-	m_data.m_current.m_scale = glm::vec3(scale, scale, scale	);
+	m_data.m_current.m_scale = glm::vec3(scale, scale, scale);
 	m_matNeedsUpdate = true;
 	m_hasChanged |= 2;
 	treeNeedsUpdating();
 }
 
 void Transform::setScale(const float x, const float y, const float z) {
-	m_data.m_current.m_scale = glm::vec3(x, y, z	);
+	m_data.m_current.m_scale = glm::vec3(x, y, z);
 	m_matNeedsUpdate = true;
 	m_hasChanged |= 2;
 	treeNeedsUpdating();
@@ -297,7 +299,8 @@ glm::mat4 Transform::getRenderMatrix(float alpha) {
 	// If data hasn't changed use the CPU side transformMatrix
 	if (!m_hasChanged && !m_parentRenderUpdated) {
 		m_renderMatrix = getMatrixWithUpdate();
-	} else {
+	}
+	else {
 		// if the data has changed between updates then the matrix will be interpolated every frame
 		updateLocalRenderMatrix(alpha);
 
@@ -327,7 +330,8 @@ void Transform::updateLocalRenderMatrix(float alpha) {
 void Transform::updateRenderMatrix(float alpha) {
 	if (m_parent) {
 		m_renderMatrix = m_parent->getRenderMatrix(alpha) * m_localRenderMatrix;
-	} else {
+	}
+	else {
 		m_renderMatrix = m_localRenderMatrix;
 	}
 }
@@ -343,7 +347,8 @@ void Transform::updateLocalMatrix() {
 void Transform::updateMatrix() {
 	if (m_parent) {
 		m_transformMatrix = m_parent->getMatrixWithUpdate() * m_localTransformMatrix;
-	} else {
+	}
+	else {
 		m_transformMatrix = m_localTransformMatrix;
 	}
 }
@@ -379,7 +384,7 @@ void Transform::removeChild(Transform* Transform) {
 }
 
 void Transform::removeChildren() {
-	for ( auto child : m_children ) {
+	for (auto child : m_children) {
 		child->removeParent();
 	}
 	m_children.clear();
@@ -406,29 +411,15 @@ void Transform::clampRotation(float& axis) {
 void Transform::createTransformMatrix(glm::mat4& destination, const glm::vec3& translation, const glm::quat& rotation, const glm::vec3& scale) const {
 	glm::mat4 prev = glm::mat4(destination);
 
-	destination[3].x = m_center.x;
-	destination[3].y = m_center.y;
-	destination[3].z = m_center.z;
+	destination = glm::mat4(1.0f);
 
-	destination = glm::mat4_cast(rotation);
-	
-	// Column major means destination[0] is the first column, not the first row
-	destination[0].x *= scale.x;
-	destination[0].y *= scale.x;
-	destination[0].z *= scale.x;
+	destination = glm::translate(destination, translation);
 
-	destination[1].x *= scale.y;
-	destination[1].y *= scale.y;
-	destination[1].z *= scale.y;
+	destination = glm::translate(destination, m_center);
+	destination *= glm::toMat4(rotation);
+	destination = glm::translate(destination, -m_center);
 
-	destination[2].x *= scale.z;
-	destination[2].y *= scale.z;
-	destination[2].z *= scale.z;
-
-	// Apply translation
-	destination[3].x = translation.x;
-	destination[3].y = translation.y;
-	destination[3].z = translation.z;
+	destination = glm::scale(destination, scale);
 }
 
 const int Transform::getChange() {

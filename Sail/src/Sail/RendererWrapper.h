@@ -20,7 +20,9 @@ public:
 	Renderer* getParticleRenderer();
 	Renderer* getScreenSpaceRenderer();
 	PostProcessPipeline* getPostProcessPipeline();
+	unsigned int removeWaterPoint(const glm::vec3& worldPos, const glm::ivec3& posOffset, const glm::ivec3& negOffset);
 	bool checkIfOnWater(const glm::vec3& worldPos) const;
+	virtual std::pair<bool, glm::vec3> getNearestWaterPosition(const glm::vec3& position, const glm::vec3& maxOffset);
 	bool onEvent(const Event& event) override;
 
 private:
@@ -30,8 +32,8 @@ private:
 	std::unique_ptr<Renderer> m_rendererRaytrace;
 	std::unique_ptr<Renderer> m_rendererScreenSpace;
 	std::unique_ptr<Renderer> m_rendererParticles;
+	std::unique_ptr<PostProcessPipeline> m_postProcessPipeline;
 	Renderer* m_currentRenderer;
-	std::shared_ptr<PostProcessPipeline> m_postProcessPipeline;
 
 	bool m_doPostProcessing;
 };

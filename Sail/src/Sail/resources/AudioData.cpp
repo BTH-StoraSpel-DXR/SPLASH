@@ -7,7 +7,7 @@ AudioData::AudioData() {
 }
 
 AudioData::AudioData(const std::string& filename, IXAudio2* xAudio2) {
-	this->load(filename, xAudio2);
+	load(filename, xAudio2);
 }
 
 AudioData::~AudioData() {
@@ -23,7 +23,7 @@ XAUDIO2_BUFFER* AudioData::getSoundBuffer() {
 }
 
 WAVEFORMATEXTENSIBLE* AudioData::getFormat() {
-	return &this->m_data.m_formatWAV;
+	return &m_data.m_formatWAV;
 }
 
 unsigned int AudioData::getByteSize() const {

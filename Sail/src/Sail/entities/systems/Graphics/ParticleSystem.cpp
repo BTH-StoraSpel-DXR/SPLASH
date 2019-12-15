@@ -20,97 +20,127 @@ ParticleSystem::ParticleSystem() {
 	registerComponent<TransformComponent>(false, true, false);
 	registerComponent<RenderInActiveGameComponent>(true, false, false);
 
-	m_dispatcher = std::unique_ptr<ComputeShaderDispatcher>(ComputeShaderDispatcher::Create());
+	m_enabled = false;
 }
 
 ParticleSystem::~ParticleSystem() {
 	stop();
 }
 
+bool ParticleSystem::isEnabled() const {
+	return m_enabled;
+}
+
+void ParticleSystem::setEnabled(bool state) {
+	if (state) {
+		//Enable
+		if (!m_dispatcher) {
+			m_dispatcher = std::unique_ptr<ComputeShaderDispatcher>(ComputeShaderDispatcher::Create());
+		}
+
+		Application::getInstance()->getResourceManager().getShaderSet<ParticleComputeShader>();
+	}
+	else {
+		//Disable
+		stop();
+	}
+
+	m_enabled = state;
+}
+
 void ParticleSystem::update(float dt) {
-	for (auto& e : entities) {
-		auto* partComponent = e->getComponent<ParticleEmitterComponent>();
+	if (m_enabled) {
+		for (auto& e : entities) {
+			auto* partComponent = e->getComponent<ParticleEmitterComponent>();
 
-		if (!partComponent->hasBeenCreatedInSystem()) {
-			initEmitter(e, partComponent);
+			if (!partComponent->hasBeenCreatedInSystem() && partComponent->isActive) {
+				initEmitter(e, partComponent);
+			}
+
+			// Place emitter at entities transform
+			if (e->hasComponent<TransformComponent>()) {
+				TransformComponent* trans = e->getComponent<TransformComponent>();
+				partComponent->position = trans->getMatrixWithoutUpdate() * glm::vec4(partComponent->offset, 1.f);
+			}
+
+			glm::vec3 velocityToAdd(0.f);
+			if (e->getParent() && e->getParent()->hasComponent<MovementComponent>() && e->hasComponent<CandleComponent>()) {
+				if (e->getComponent<CandleComponent>()->isCarried) {
+					velocityToAdd = e->getParent()->getComponent<MovementComponent>()->oldVelocity;
+				}
+			}
+
+			partComponent->velocity = partComponent->constantVelocity + velocityToAdd;
+
+			partComponent->updateTimers(dt);
 		}
-
-		// Place emitter at entities transform
-		if (e->hasComponent<TransformComponent>()) {
-			TransformComponent* trans = e->getComponent<TransformComponent>();
-			partComponent->position = trans->getMatrixWithoutUpdate() * glm::vec4(partComponent->offset, 1.f);
-		}
-
-		glm::vec3 velocityToAdd(0.f);
-		if (e->getParent() && e->getParent()->hasComponent<MovementComponent>() && e->hasComponent<CandleComponent>()) {
-			if (e->getComponent<CandleComponent>()->isCarried) {
-				velocityToAdd = e->getParent()->getComponent<MovementComponent>()->oldVelocity;
+		// Mark removed emitters as dead
+		for (auto& it : m_emitters) {
+			if (!it.first->hasComponent<ParticleEmitterComponent>()) {
+				it.second.isDead = true;
 			}
 		}
-
-		partComponent->velocity = partComponent->constantVelocity + velocityToAdd;
-
-		partComponent->updateTimers(dt);
-	}
-	// Mark removed emitters as dead
-	for (auto& it : m_emitters) {
-		if (!it.first->hasComponent<ParticleEmitterComponent>()) {
-			it.second.isDead = true;
-		}
-	}
-	// Remove from m_emitters those which are dead and is not in use by any renderers/not used for 2 frames
-	// Also removed emitters from entities marked for removal, this might or might not fix a crash. Investigate this
-	for (auto& it = std::begin(m_emitters); it != std::end(m_emitters);) {
-		if (it->second.framesDead >= 2 || it->first->isAboutToBeDestroyed()) {
-			delete[] it->second.physicsBufferDefaultHeap;
-			it = m_emitters.erase(it);
-		} else {
-			++it;
+		// Remove from m_emitters those which are dead and is not in use by any renderers/not used for 2 frames
+		// Also removed emitters from entities marked for removal, this might or might not fix a crash. Investigate this
+		for (auto& it = std::begin(m_emitters); it != std::end(m_emitters);) {
+			if (it->second.framesDead >= 2 || it->first->isAboutToBeDestroyed()) {
+				delete[] it->second.physicsBufferDefaultHeap;
+				it = m_emitters.erase(it);
+			}
+			else {
+				++it;
+			}
 		}
 	}
 }
 
 void ParticleSystem::updateOnGPU(ID3D12GraphicsCommandList4* cmdList, const glm::vec3& cameraPos) {
-	// Increase dead frame count on dead emitters
-	for (auto& it : m_emitters) {
-		auto& emitterData = it.second;
-		if (emitterData.isDead) {
-			emitterData.framesDead++;
-		}
-	}
-
-	m_dispatcher->begin(cmdList);
-	for (auto& e : entities) {
-		auto* emitterComp = e->getComponent<ParticleEmitterComponent>();
-
-		if (!emitterComp || !emitterComp->hasBeenCreatedInSystem()) {
-			continue;
+	if (m_enabled) {
+		// Increase dead frame count on dead emitters
+		for (auto& it : m_emitters) {
+			auto& emitterData = it.second;
+			if (emitterData.isDead) {
+				emitterData.framesDead++;
+			}
 		}
 
-		auto& emitterData = m_emitters.at(e);
-		emitterData.model->getMesh(0)->getMaterial()->setAlbedoTexture(emitterComp->getTextureName());
+		m_dispatcher->begin(cmdList);
+		for (auto& e : entities) {
+			auto* emitterComp = e->getComponent<ParticleEmitterComponent>();
 
-		emitterComp->updateOnGPU(cmdList, cameraPos, emitterData, *m_dispatcher);
+			if (!emitterComp || !emitterComp->hasBeenCreatedInSystem()) {
+				continue;
+			}
+
+			auto& emitterData = m_emitters.at(e);
+			emitterData.model->getMesh(0)->getMaterial()->setAlbedoTexture(emitterComp->getTextureName());
+
+			emitterComp->updateOnGPU(cmdList, cameraPos, emitterData, *m_dispatcher);
+		}
 	}
 }
 
 void ParticleSystem::submitAll() const {
-	Renderer* renderer = Application::getInstance()->getRenderWrapper()->getParticleRenderer();
-	Renderer::RenderFlag flags = Renderer::MESH_DYNAMIC;
-	flags |= Renderer::IS_VISIBLE_ON_SCREEN;
-	for (auto& e : entities) {
-		auto* emitterComp = e->getComponent<ParticleEmitterComponent>();
+	if (m_enabled) {
+		if (ECS::Instance()->getSystem<ParticleSystem>()) {
+			Renderer* renderer = Application::getInstance()->getRenderWrapper()->getParticleRenderer();
+			Renderer::RenderFlag flags = Renderer::MESH_DYNAMIC;
+			flags |= Renderer::IS_VISIBLE_ON_SCREEN;
+			for (auto& e : entities) {
+				auto* emitterComp = e->getComponent<ParticleEmitterComponent>();
 
-		if (!emitterComp || !emitterComp->hasBeenCreatedInSystem()) {
-			continue;
+				if (!emitterComp || !emitterComp->hasBeenCreatedInSystem()) {
+					continue;
+				}
+
+				renderer->submit(
+					m_emitters.at(e).model.get(),
+					glm::identity<glm::mat4>(),
+					flags,
+					1
+				);
+			}
 		}
-
-		renderer->submit(
-			m_emitters.at(e).model.get(),
-			glm::identity<glm::mat4>(),
-			flags,
-			1
-		);
 	}
 }
 
@@ -143,7 +173,7 @@ void ParticleSystem::initEmitter(Entity* owner, ParticleEmitterComponent* compon
 	free(scrapData);
 
 
-	component->setAsCreatedInSystem();
+	component->setAsCreatedInSystem(true);
 }
 
 void ParticleSystem::stop() {
@@ -154,4 +184,8 @@ void ParticleSystem::stop() {
 	}
 
 	m_emitters.clear();
+
+	for (auto& e : entities) {
+		e->getComponent<ParticleEmitterComponent>()->setAsCreatedInSystem(false);
+	}
 }

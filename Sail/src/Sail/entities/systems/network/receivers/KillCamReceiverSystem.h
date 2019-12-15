@@ -20,7 +20,7 @@ public:
 	// Packets from the past five seconds are saved so that they can be replayed in the killcam.
 	static constexpr size_t KILLCAM_DURATION   = 3;
 	static constexpr size_t REPLAY_BUFFER_SIZE = TICKRATE * KILLCAM_DURATION;
-	static constexpr size_t SLOW_MO_MULTIPLIER = 16;
+	static constexpr size_t SLOW_MO_MULTIPLIER = 20;
 
 public:
 	KillCamReceiverSystem();
@@ -38,8 +38,6 @@ public:
 	void updatePerFrame(float dt, float alpha);
 	void stop() override;
 
-	bool startKillCam();
-	void stopMyKillCam();
 
 	void prepareUpdate();
 	void processReplayData(float dt);
@@ -54,6 +52,13 @@ public:
 	}
 #endif
 private:
+	void initEntities();
+	bool startKillCam();
+	void stopMyKillCam();
+
+	bool onEvent(const Event& event) override;
+
+
 	void destroyEntity   (const Netcode::ComponentID entityID)                                       override;
 	void enableSprinklers()                                                                          override;
 	void endMatch        (const GameDataForOthersInfo& info)                                         override;
@@ -74,6 +79,7 @@ private:
 	void spawnProjectile (const ProjectileInfo& info)                                                override;
 	void submitWaterPoint(const glm::vec3& point)                                                    override;
 	void waterHitPlayer  (const Netcode::ComponentID id, const Netcode::ComponentID killerID)        override;
+	void setCenter(const Netcode::ComponentID compID, const glm::vec3 offset)                        override;
 
 	// AUDIO
 	void playerJumped (const Netcode::ComponentID id)                  override;
@@ -101,7 +107,6 @@ private:
 	Entity* findFromNetID(const Netcode::ComponentID id) const override;
 
 
-	bool onEvent(const Event& event) override;
 
 private:
 	struct NetcodeDataRingBuffer {
@@ -143,17 +148,18 @@ private:
 	// the same time
 	NetcodeDataRingBuffer m_myKillCamData;	
 
-	bool m_hasStarted   = false;
+	bool m_hasInitialized = false;
+	bool m_isPlaying      = false;
 	bool m_isFinalKillCam = false;
+	bool m_trackingProjectile  = false;
 
 	SlowMotionSetting m_slowMotionState = SlowMotionSetting::DISABLE;
 	size_t m_killCamTickCounter = 0; // Counts ticks in the range [ 0, SLOW_MO_MULTIPLIER )
 
-	Netcode::ComponentID m_idOfKillingProjectile = Netcode::UNINITIALIZED;
+	Netcode::ComponentID m_killingProjectileID = Netcode::UNINITIALIZED;
 
 	Entity* m_killerPlayer     = nullptr;
 	Entity* m_killerProjectile = nullptr;
-	bool m_trackingProjectile  = false;
 
 	CameraController* m_cam = nullptr;
 

@@ -185,14 +185,16 @@ void GameDataTracker::renderPlacement() {
 		ImGui::GetWindowContentRegionWidth()*a[3]
 	};
 
-	ImGui::PushFont(handler->getFont("Beb40"));
+	//ImGui::PushFont(handler->getFont("Beb40"));
+	ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("Header2"));
 	ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered));
 	SailImGui::cText("SCOREBOARD", ImGui::GetWindowContentRegionWidth());
+	ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("text"));
 	ImGui::PopStyleColor();
-	ImGui::PopFont();
+	//ImGui::PopFont();
 	ImGui::Separator();
-	std::string map = "not implemented yet"; // m_app->getSettings().gameSettingsStatic["map"]["names"].getSelected().name; 
 	std::string gamemode = m_app->getSettings().gameSettingsStatic["gamemode"]["types"].getSelected().name;
+	std::string map = m_app->getSettings().defaultMaps[gamemode].getSelected().name; 
 
 	ImGui::Text(map.c_str());
 	ImGui::SameLine();
@@ -216,6 +218,7 @@ void GameDataTracker::renderPlacement() {
 
 	if (ImGui::BeginChild("##SCOREBOARD", ImVec2(0, 0))) {
 		// key = placement, value = index in playerlist
+		ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("smalltext"));
 		for (auto& [key, value] : tempPlacementMap) {
 			Player* player = NWrapperSingleton::getInstance().getPlayer(value);
 
@@ -225,7 +228,8 @@ void GameDataTracker::renderPlacement() {
 			if (player) {
 				
 				if (me) {
-					ImGui::PushFont(handler->getFont("Beb24"));
+					ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("text"));
+					//ImGui::PushFont(handler->getFont("Beb24"));
 				}
 				glm::vec3 tempC(m_app->getSettings().getColor(m_app->getSettings().teamColorIndex(player->team)));
 				ImVec4 col(
@@ -258,7 +262,9 @@ void GameDataTracker::renderPlacement() {
 			SailImGui::rText(std::to_string(m_hostPlayerTracker[value].damageTaken).c_str(), 0);
 
 			if (me) {
-				ImGui::PopFont();
+				//ImGui::PopFont();
+				ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("smalltext"));
+
 			}
 		}
 	}
@@ -269,7 +275,7 @@ void GameDataTracker::renderPersonalStats() {
 
 
 
-	std::string localStatsString = "Bullets fired: " + std::to_string(m_loggedData.bulletsFired);
+	std::string localStatsString = "water wasted: " + std::to_string(m_loggedData.bulletsFired) + "L";
 	ImGui::Text(localStatsString.c_str());
 
 	localStatsString = "Distance walked: " + std::to_string((int)m_loggedData.distanceWalked) + "m";

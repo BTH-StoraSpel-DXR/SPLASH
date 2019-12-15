@@ -5,29 +5,35 @@
 #include "..//..//components/CollisionComponent.h"
 #include "..//..//components/BoundingBoxComponent.h"
 #include "..//..//components/RagdollComponent.h"
+#include "..//..//components/RenderInActiveGameComponent.h"
+#include "..//..//components/RenderInReplayComponent.h"
 #include "..//..//Physics/Intersection.h"
 
 #include "Sail/Application.h"
 
-CollisionSystem::CollisionSystem() {
+template <typename T>
+CollisionSystem<T>::CollisionSystem() {
 	registerComponent<MovementComponent>(true, true, true);
 	registerComponent<TransformComponent>(true, true, true);
 	registerComponent<CollisionComponent>(true, true, true);
 	registerComponent<BoundingBoxComponent>(true, true, true);
 	registerComponent<RagdollComponent>(false, true, false);
+	registerComponent<T>(true, false, false);
 
 	m_octree = nullptr;
 }
 
-CollisionSystem::~CollisionSystem() {
+template <typename T>
+CollisionSystem<T>::~CollisionSystem() {
 }
 
-void CollisionSystem::provideOctree(Octree* octree) {
+template <typename T>
+void CollisionSystem<T>::provideOctree(Octree* octree) {
 	m_octree = octree;
 }
 
-
-void CollisionSystem::update(float dt) {
+template <typename T>
+void CollisionSystem<T>::update(float dt) {
 	constexpr size_t NR_OF_JOBS = 16;
 	constexpr size_t LAST_JOB = NR_OF_JOBS - 1;
 	const size_t entitiesPerJob = entities.size() / NR_OF_JOBS;
@@ -91,12 +97,14 @@ void CollisionSystem::update(float dt) {
 }
 
 #ifdef DEVELOPMENT
-unsigned int CollisionSystem::getByteSize() const {
+template <typename T>
+unsigned int CollisionSystem<T>::getByteSize() const {
 	return BaseComponentSystem::getByteSize() + sizeof(*this);
 }
 #endif
 
-bool CollisionSystem::collisionUpdatePart(float dt, size_t start, size_t end) {
+template <typename T>
+bool CollisionSystem<T>::collisionUpdatePart(float dt, size_t start, size_t end) {
 	for (size_t i = start; i < end; ++i) {
 		Entity* e = entities[i];
 
@@ -116,7 +124,8 @@ bool CollisionSystem::collisionUpdatePart(float dt, size_t start, size_t end) {
 	return true;
 }
 
-bool CollisionSystem::surfaceFromCollisionPart(float dt, size_t start, size_t end) {
+template <typename T>
+bool CollisionSystem<T>::surfaceFromCollisionPart(float dt, size_t start, size_t end) {
 	for (size_t i = start; i < end; ++i) {
 		Entity* e = entities[i];
 
@@ -134,7 +143,8 @@ bool CollisionSystem::surfaceFromCollisionPart(float dt, size_t start, size_t en
 	return true;
 }
 
-bool CollisionSystem::rayCastCollisionPart(float dt, size_t start, size_t end) {
+template <typename T>
+bool CollisionSystem<T>::rayCastCollisionPart(float dt, size_t start, size_t end) {
 	for (size_t i = start; i < end; ++i) {
 		Entity* e = entities[i];
 
@@ -175,7 +185,8 @@ bool CollisionSystem::rayCastCollisionPart(float dt, size_t start, size_t end) {
 	return true;
 }
 
-void CollisionSystem::collisionUpdate(Entity* e, const float dt) {
+template <typename T>
+void CollisionSystem<T>::collisionUpdate(Entity* e, const float dt) {
 	//Update collision data
 	CollisionComponent* collision = e->getComponent<CollisionComponent>();
 	std::vector<Octree::CollisionInfo> collisions;
@@ -198,7 +209,8 @@ void CollisionSystem::collisionUpdate(Entity* e, const float dt) {
 
 // Modifies Entity e's Movement- and CollisionComponent
 // Neither of which is used in the rest of updatePart() so modifying them should be fine
-const bool CollisionSystem::handleCollisions(Entity* e, std::vector<Octree::CollisionInfo>& collisions, const float dt) {
+template <typename T>
+const bool CollisionSystem<T>::handleCollisions(Entity* e, std::vector<Octree::CollisionInfo>& collisions, const float dt) {
 	MovementComponent* movement = e->getComponent<MovementComponent>();
 	CollisionComponent* collision = e->getComponent<CollisionComponent>();
 	const BoundingBox* boundingBox = e->getComponent<BoundingBoxComponent>()->getBoundingBox();
@@ -231,7 +243,8 @@ const bool CollisionSystem::handleCollisions(Entity* e, std::vector<Octree::Coll
 	return collisionFound;
 }
 
-const bool CollisionSystem::handleRagdollCollisions(Entity* e, std::vector<Octree::CollisionInfo>& collisions, bool calculateMomentum, const float dt) {
+template <typename T>
+const bool CollisionSystem<T>::handleRagdollCollisions(Entity* e, std::vector<Octree::CollisionInfo>& collisions, bool calculateMomentum, const float dt) {
 	MovementComponent* movementComp = e->getComponent<MovementComponent>();
 	TransformComponent* transComp = e->getComponent<TransformComponent>();
 	RagdollComponent* ragdollComp = e->getComponent<RagdollComponent>();
@@ -321,7 +334,8 @@ const bool CollisionSystem::handleRagdollCollisions(Entity* e, std::vector<Octre
 	return collisionFound;
 }
 
-void CollisionSystem::gatherCollisionInformation(Entity* e, const BoundingBox* boundingBox, std::vector<Octree::CollisionInfo>& collisions, std::vector<Octree::CollisionInfo>& trueCollisions, glm::vec3& sumVec, std::vector<int>& groundIndices, const float dt) {
+template <typename T>
+void CollisionSystem<T>::gatherCollisionInformation(Entity* e, const BoundingBox* boundingBox, std::vector<Octree::CollisionInfo>& collisions, std::vector<Octree::CollisionInfo>& trueCollisions, glm::vec3& sumVec, std::vector<int>& groundIndices, const float dt) {
 	CollisionComponent* collision = e->getComponent<CollisionComponent>();
 
 	const size_t collisionCount = collisions.size();
@@ -365,7 +379,8 @@ void CollisionSystem::gatherCollisionInformation(Entity* e, const BoundingBox* b
 	}
 }
 
-void CollisionSystem::updateVelocityVec(Entity* e, glm::vec3& velocity, std::vector<Octree::CollisionInfo>& collisions, glm::vec3& sumVec, std::vector<int>& groundIndices, const float dt) {
+template <typename T>
+void CollisionSystem<T>::updateVelocityVec(Entity* e, glm::vec3& velocity, std::vector<Octree::CollisionInfo>& collisions, glm::vec3& sumVec, std::vector<int>& groundIndices, const float dt) {
 	CollisionComponent* collision = e->getComponent<CollisionComponent>();
 
 	const size_t collisionCount = collisions.size();
@@ -416,7 +431,8 @@ void CollisionSystem::updateVelocityVec(Entity* e, glm::vec3& velocity, std::vec
 	//------------
 }
 
-const bool CollisionSystem::rayCastCheck(Entity* e, const BoundingBox* boundingBox, const glm::vec3& velocity, const float& dt) const {
+template <typename T>
+const bool CollisionSystem<T>::rayCastCheck(Entity* e, const BoundingBox* boundingBox, const glm::vec3& velocity, const float& dt) const {
 	if (glm::abs(velocity.x * dt) > glm::abs(boundingBox->getHalfSize().x)
 		|| glm::abs(velocity.y * dt) > glm::abs(boundingBox->getHalfSize().y)
 		|| glm::abs(velocity.z * dt) > glm::abs(boundingBox->getHalfSize().z)) {
@@ -426,7 +442,8 @@ const bool CollisionSystem::rayCastCheck(Entity* e, const BoundingBox* boundingB
 	return false;
 }
 
-void CollisionSystem::rayCastUpdate(Entity* e, BoundingBox* boundingBox, float& dt) {
+template <typename T>
+void CollisionSystem<T>::rayCastUpdate(Entity* e, BoundingBox* boundingBox, float& dt) {
 	MovementComponent* movement = e->getComponent<MovementComponent>();
 	TransformComponent* transform = e->getComponent<TransformComponent>();
 	CollisionComponent* collision = e->getComponent<CollisionComponent>();
@@ -459,7 +476,8 @@ void CollisionSystem::rayCastUpdate(Entity* e, BoundingBox* boundingBox, float& 
 	}
 }
 
-void CollisionSystem::rayCastRagdollUpdate(Entity* e, float& dt) {
+template <typename T>
+void CollisionSystem<T>::rayCastRagdollUpdate(Entity* e, float& dt) {
 	MovementComponent* movement = e->getComponent<MovementComponent>();
 	TransformComponent* transform = e->getComponent<TransformComponent>();
 	CollisionComponent* collision = e->getComponent<CollisionComponent>();
@@ -510,7 +528,8 @@ void CollisionSystem::rayCastRagdollUpdate(Entity* e, float& dt) {
 	}
 }
 
-glm::vec3 CollisionSystem::surfaceFromCollision(Entity* e, BoundingBox* boundingBox, std::vector<Octree::CollisionInfo>& collisions) {
+template <typename T>
+glm::vec3 CollisionSystem<T>::surfaceFromCollision(Entity* e, BoundingBox* boundingBox, std::vector<Octree::CollisionInfo>& collisions) {
 	glm::vec3 distance(0.0f);
 	TransformComponent* transform = e->getComponent<TransformComponent>();
 
@@ -530,7 +549,8 @@ glm::vec3 CollisionSystem::surfaceFromCollision(Entity* e, BoundingBox* bounding
 	return distance;
 }
 
-void CollisionSystem::surfaceFromRagdollCollision(Entity* e, std::vector<Octree::CollisionInfo>& collisions) {
+template <typename T>
+void CollisionSystem<T>::surfaceFromRagdollCollision(Entity* e, std::vector<Octree::CollisionInfo>& collisions) {
 	RagdollComponent* ragdollComp = e->getComponent<RagdollComponent>();
 	for (size_t i = 0; i < ragdollComp->contactPoints.size(); i++) {
 		glm::vec3 distance = surfaceFromCollision(e, &ragdollComp->contactPoints[i].boundingBox, collisions);
@@ -543,7 +563,8 @@ void CollisionSystem::surfaceFromRagdollCollision(Entity* e, std::vector<Octree:
 	}
 }
 
-glm::vec3 CollisionSystem::getAngularVelocity(Entity* e, const glm::vec3& offset, const glm::vec3& centerOfMass) {
+template <typename T>
+glm::vec3 CollisionSystem<T>::getAngularVelocity(Entity* e, const glm::vec3& offset, const glm::vec3& centerOfMass) {
 	TransformComponent* transComp = e->getComponent<TransformComponent>();
 	MovementComponent* movementComp = e->getComponent<MovementComponent>();
 
@@ -561,3 +582,7 @@ glm::vec3 CollisionSystem::getAngularVelocity(Entity* e, const glm::vec3& offset
 
 	return bbMovement;
 }
+
+
+template class CollisionSystem<RenderInActiveGameComponent>;
+template class CollisionSystem<RenderInReplayComponent>;

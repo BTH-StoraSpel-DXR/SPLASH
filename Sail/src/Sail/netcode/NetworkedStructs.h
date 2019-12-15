@@ -42,6 +42,7 @@ namespace Netcode {
 	
 	// Used to signify NetworkMessages sent Internally
 	static constexpr PlayerID    MESSAGE_FROM_SELF_ID = 255;
+	static constexpr PlayerID    UNINITIALIZED_PLAYER = 255;
 #pragma endregion
 
 	static constexpr ComponentID generateID(PlayerID playerID, ComponentID counter) {
@@ -127,6 +128,7 @@ namespace Netcode {
 		STOP_THROWING,
 		SPAWN_POWER_UP,
 		DESTROY_POWER_UP,
+		SET_CENTER,
 		EMPTY,
 		COUNT
 	}; 
@@ -164,6 +166,7 @@ namespace Netcode {
 		"ENABLE_SPRINKLERS",
 		"START_THROWING",
 		"STOP_THROWING",
+		"SET_CENTER",
 		"EMPTY",
 		"COUNT"
 	};
@@ -421,5 +424,11 @@ namespace Netcode {
 		~MessageStopThrowing() {}
 		Netcode::ComponentID playerCompID;
 	};
-
+	class MessageSetCenter : public MessageData {
+	public:
+		MessageSetCenter(Netcode::ComponentID id, glm::vec3 offset) : compID(id), centerOffset(offset) {}
+		~MessageSetCenter() {}
+		Netcode::ComponentID compID;
+		glm::vec3 centerOffset;
+	};
 }

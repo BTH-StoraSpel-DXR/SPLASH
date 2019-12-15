@@ -414,15 +414,15 @@ template <typename T>
 void AnimationSystem<T>::initDebugAnimations() {
 	Application* app = Application::getInstance();
 	auto* shader = &app->getResourceManager().getShaderSet<GBufferOutShader>();
-	std::string name = "Doc.fbx";
+	std::string name = "Doc";
 
 	auto* wireframeShader = &Application::getInstance()->getResourceManager().getShaderSet<WireframeShader>();
-	Model* lightModel = &app->getResourceManager().getModel("Torch.fbx", shader);
+	Model* lightModel = &app->getResourceManager().getModel("Torch", shader);
 	lightModel->getMesh(0)->getMaterial()->setAlbedoTexture("pbr/Torch/Torch_Albedo.tga");
 	lightModel->getMesh(0)->getMaterial()->setNormalTexture("pbr/Torch/Torch_NM.tga");
 	lightModel->getMesh(0)->getMaterial()->setMetalnessRoughnessAOTexture("pbr/Torch/Torch_MRAO.tga");
 	//Wireframe bounding box model
-	Model* boundingBoxModel = &Application::getInstance()->getResourceManager().getModel("boundingBox.fbx", wireframeShader);
+	Model* boundingBoxModel = &Application::getInstance()->getResourceManager().getModel("boundingBox", wireframeShader);
 	boundingBoxModel->getMesh(0)->getMaterial()->setColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
 

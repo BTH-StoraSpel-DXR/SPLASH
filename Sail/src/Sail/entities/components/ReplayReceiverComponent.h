@@ -11,6 +11,7 @@ public:
 
 	Netcode::ComponentID m_id;
 	Netcode::EntityType m_entityType;
+	bool m_wasAlive = true;
 
 #ifdef DEVELOPMENT
 	const unsigned int getByteSize() const override {

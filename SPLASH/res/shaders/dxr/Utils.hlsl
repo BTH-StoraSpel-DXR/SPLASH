@@ -33,9 +33,11 @@ namespace Utils {
         RayPayload payload;
         payload.recursionDepth = 0;
         payload.closestTvalue = 0;
+#ifdef ALLOW_SOFT_SHADOWS
         for (uint i = 0; i < NUM_SHADOW_TEXTURES; i++) {
             payload.shadowTwo[i] = 0.f;
         }
+#endif
         payload.albedoOne = 0.f;
         payload.albedoTwo = 0.f;
         payload.normalOne = 0.f;

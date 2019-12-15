@@ -60,6 +60,8 @@ unsigned int SpectateInputSystem::getByteSize() const {
 
 void SpectateInputSystem::processKeyboardInput(const float& dt) {
 
+	constexpr bool USE_WASD_FOR_HORIZONTAL = true;
+
 	for (auto e : entities) {
 
 		SpectateMovement playerMovement = getPlayerMovementInput(e);
@@ -74,23 +76,28 @@ void SpectateInputSystem::processKeyboardInput(const float& dt) {
 		playerMovement.speedModifier = currentMoveSpeed;
 
 		if (playerMovement.forwardMovement != 0.f || playerMovement.rightMovement != 0.f || playerMovement.upMovement != 0.f) {
-			forward = glm::normalize(forward);
+			
+			glm::vec3 up, right;
 
-			// Calculate right vector for player
-			glm::vec3 right = glm::cross(glm::vec3(0.f, 1.f, 0.f), forward);
-			right = glm::normalize(right);
-
-			glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
-
+			// Used different controls depending on setting
+			if constexpr (USE_WASD_FOR_HORIZONTAL) {
+				forward = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z));
+				up = glm::vec3(0.f, 1.f, 0.f);
+				right = glm::normalize(glm::cross(up, forward));
+			} else {
+				forward = glm::normalize(forward);
+				right = glm::normalize(glm::cross(glm::vec3(0.f, 1.f, 0.f), forward));
+				up = glm::cross(forward, right);
+			}
+			
+			// Apply movement
 			auto transComp = e->getComponent<TransformComponent>();
 			float speed = 10.f;
 			glm::vec3 moveDir = (playerMovement.forwardMovement * forward + playerMovement.rightMovement * right + playerMovement.upMovement * up);
 			moveDir = glm::normalize(moveDir);
 			transComp->translate(moveDir * dt * playerMovement.speedModifier * speed);
 		}
-
 	}
-
 }
 
 void SpectateInputSystem::processMouseInput(const float& dt) {

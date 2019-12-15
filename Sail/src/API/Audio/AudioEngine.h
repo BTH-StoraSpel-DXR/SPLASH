@@ -56,6 +56,7 @@ struct soundStruct {
 	IXAudio2SubmixVoice* xAPOsubMixVoice = nullptr;
 	HrtfEnvironment      environment = HrtfEnvironment::Outdoors;
 	Microsoft::WRL::ComPtr<IXAPOHrtfParameters> hrtfParams;
+	bool lowpassFiltered = false;
 };
 
 class AudioEngine

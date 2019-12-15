@@ -8,8 +8,19 @@
 LobbyHostState::LobbyHostState(StateStack& stack)
 	: LobbyState(stack) {
 
-	NWrapperSingleton::getInstance().setPlayerID(HOST_ID); 
-	NWrapperSingleton::getInstance().startUDP();	
+	MatchRecordSystem* mrs = NWrapperSingleton::getInstance().recordSystem;
+	if (!(mrs && mrs->status == 2)) {
+		NWrapperSingleton::getInstance().setPlayerID(HOST_ID); 
+		NWrapperSingleton::getInstance().startUDP();
+	}
+
+	m_isHost = true;
+
+	if (!mrs) {
+		mrs = new MatchRecordSystem();
+		mrs->status = 0;
+	}
+
 }
 
 LobbyHostState::~LobbyHostState() {

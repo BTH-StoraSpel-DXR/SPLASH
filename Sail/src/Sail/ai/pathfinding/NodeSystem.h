@@ -47,7 +47,7 @@ public:
 	NodeSystem();
 	~NodeSystem();
 
-	void setNodes(const std::vector<Node>& nodes, const std::vector<std::vector<unsigned int>>& connections, unsigned int xMax, unsigned int zMax);
+	void setNodes(const std::vector<Node>& nodes, const std::vector<std::vector<unsigned int>>& connections, const unsigned int xMax, const unsigned int zMax);
 
 	std::vector<NodeSystem::Node> getPath(const NodeSystem::Node& from, const NodeSystem::Node& to);
 	std::vector<NodeSystem::Node> getPath(const glm::vec3& from, const glm::vec3& to);
@@ -55,20 +55,27 @@ public:
 	const NodeSystem::Node& getNearestNode(const glm::vec3& position) const;
 	unsigned int getDistance2(unsigned int n1, unsigned int n2) const;
 	const std::vector<NodeSystem::Node>& getNodes() const;
-	const unsigned int getAverageSearchTime() const;
+	const std::vector<std::vector<unsigned int>>& getConnections() const;
 	const unsigned int getXMax() const;
 	const unsigned int getZMax() const;
 
 	void stop();
 
 #ifdef _DEBUG_NODESYSTEM
+	void colorPath(const std::vector<NodeSystem::Node>& path, const unsigned int colourID);
+	// Returns the highest colour ID, m_maxColourID = white
+	unsigned int getMaxColourID() { return m_maxColourID; };
 	void setDebugModelAndScene(Shader* shader);
-	std::vector<Entity::SPtr>& getNodeEntities();
-	Model* m_connectionModel;
 	std::vector<Entity::SPtr> m_nodeEntities;
+	std::vector<std::vector<std::pair<unsigned int, Entity::SPtr>>> m_connectionEntities;
 	Shader* m_shader;
+
+	std::vector<Model*> m_pathNodes;
+	Model* m_blockedNode;
+	const unsigned int m_maxColourID = 12;
 #endif
 #ifdef DEVELOPMENT
+	const unsigned int getAverageSearchTime() const;
 	unsigned int getByteSize() const;
 #endif
 
@@ -78,9 +85,11 @@ private:
 	std::vector<std::vector<unsigned int>> m_connections;
 	std::vector<NodeSystem::Node> m_nodes;
 
+#ifdef DEVELOPMENT
 	const static unsigned int NUM_SEARCH_TIMES = 10;
 	float m_pathSearchTimes[NUM_SEARCH_TIMES];
 	unsigned int m_currSearchTimeIndex = 0;
+#endif
 
 	unsigned int m_xMax = 0;
 	unsigned int m_zMax = 0;

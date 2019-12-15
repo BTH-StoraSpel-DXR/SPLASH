@@ -25,6 +25,7 @@ ParticleEmitterComponent::ParticleEmitterComponent()
 	atlasSize = glm::uvec2(1U, 1U);
 	drag = 0.0f;
 	maxNumberOfParticles = 300;
+	isActive = false;
 
 
 	init();
@@ -83,8 +84,8 @@ bool ParticleEmitterComponent::hasBeenCreatedInSystem() {
 	return m_hasBeenCreatedInSystem;
 }
 
-void ParticleEmitterComponent::setAsCreatedInSystem() { 
-	m_hasBeenCreatedInSystem = true;
+void ParticleEmitterComponent::setAsCreatedInSystem(bool created) { 
+	m_hasBeenCreatedInSystem = created;
 }
 
 const std::string& ParticleEmitterComponent::getTextureName() const {
@@ -127,7 +128,7 @@ void ParticleEmitterComponent::updateTimers(float dt) {
 		}
 	}
 
-	if (spawnTimer >= spawnRate) {
+	if (spawnTimer >= spawnRate && isActive) {
 		//Spawn the correct number of particles
 		int particlesToSpawn = (int)glm::floor(spawnTimer / glm::max(spawnRate, 0.0001f));
 		spawnParticles(particlesToSpawn);

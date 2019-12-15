@@ -129,7 +129,6 @@ void AudioSystem::initialize() {
 #pragma endregion
 #pragma region MISCELLANEOUS
 	m_audioEngine->loadSound("miscellaneous/re_ignition_candle.wav");
-	m_audioEngine->loadSound("miscellaneous/guitar.wav");
 	// Throwing
 	m_audioEngine->loadSound("miscellaneous/throwing/start_throw.wav");
 	for (int i = 1; i < 8; i++) {

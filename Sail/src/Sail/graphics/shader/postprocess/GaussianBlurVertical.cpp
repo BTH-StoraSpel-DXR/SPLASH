@@ -2,6 +2,7 @@
 #include "GaussianBlurVertical.h"
 #include "Sail/Application.h"
 
+
 GaussianBlurVertical::GaussianBlurVertical()
 	: Shader("postprocess/GaussianBlurVertical.hlsl")
 {

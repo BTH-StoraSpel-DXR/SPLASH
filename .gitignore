@@ -63,6 +63,9 @@ plan\.txt
 # Imgui configs
 /SPLASH/imgui.ini
 
+# replays
+*.SPLASH
+
 #bin
 bin/*
 /libraries/glm/out/build

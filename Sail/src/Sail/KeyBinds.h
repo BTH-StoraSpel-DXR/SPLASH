@@ -1,9 +1,11 @@
 #pragma once
+#include <string>
 
 namespace KeyBinds {
 	// Initializes the key codes
 	void init();
-
+	std::string getName(const int value);
+	bool allowed(const int value);
 	// Player controls
 	extern int MOVE_FORWARD;
 	extern int MOVE_BACKWARD;
@@ -35,6 +37,7 @@ namespace KeyBinds {
 	extern int TOGGLE_SPHERE;	// Collision
 	extern int TOGGLE_SUN;
 	extern int TOGGLE_ROOM_LIGHTS;
+	extern int UNLOAD_CPU_TEXTURES;
 
 	// Application
 	extern int ALT_KEY;

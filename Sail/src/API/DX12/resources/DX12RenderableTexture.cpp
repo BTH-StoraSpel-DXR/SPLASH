@@ -4,11 +4,11 @@
 #include "Sail/api/Window.h"
 #include "../DX12Utils.h"
 
-RenderableTexture* RenderableTexture::Create(unsigned int width, unsigned int height, const std::string& name, Texture::FORMAT format, bool createDepthStencilView, bool createOnlyDSV, unsigned int arraySize) {
-	return SAIL_NEW DX12RenderableTexture(1, width, height, format, createDepthStencilView, createOnlyDSV, 0U, 0U, name, arraySize);
+RenderableTexture* RenderableTexture::Create(unsigned int width, unsigned int height, const std::string& name, Texture::FORMAT format, bool createDepthStencilView, bool createOnlyDSV, unsigned int arraySize, bool singleBuffer) {
+	return SAIL_NEW DX12RenderableTexture(1, width, height, format, createDepthStencilView, createOnlyDSV, singleBuffer, 0U, 0U, name, arraySize); // TODO: change singleBuffer back when issues with soft shadows are fixed!!
 }
 
-DX12RenderableTexture::DX12RenderableTexture(UINT aaSamples, unsigned int width, unsigned int height, Texture::FORMAT format, bool createDepthStencilView, bool createOnlyDSV, UINT bindFlags, UINT cpuAccessFlags, const std::string& name, unsigned int arraySize)
+DX12RenderableTexture::DX12RenderableTexture(UINT aaSamples, unsigned int width, unsigned int height, Texture::FORMAT format, bool createDepthStencilView, bool createOnlyDSV, bool singleBuffer, UINT bindFlags, UINT cpuAccessFlags, const std::string& name, unsigned int arraySize)
 	: m_width(width)
 	, m_height(height)
 	, m_cpuRtvDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, Application::getInstance()->getAPI<DX12API>()->getNumGPUBuffers())
@@ -23,13 +23,19 @@ DX12RenderableTexture::DX12RenderableTexture(UINT aaSamples, unsigned int width,
 
 	m_format = convertFormat(format);
 
-	const auto& numSwapBuffers = context->getNumGPUBuffers();
-	m_rtvHeapCDHs.resize(numSwapBuffers);
-	m_dsvHeapCDHs.resize(numSwapBuffers);
-	if (m_hasDepthTextures) {
-		m_depthStencilBuffers.resize(numSwapBuffers);
+	m_numSwapBuffers = context->getNumGPUBuffers();
+	if (singleBuffer) {
+		// RenderableTextures are not multi-buffered, consecutive frames will use the same render textures.
+		useOneResource = true;
+		m_numSwapBuffers = 1;
 	}
-	for (unsigned int i = 0; i < numSwapBuffers; i++) {
+
+	m_rtvHeapCDHs.resize(m_numSwapBuffers);
+	m_dsvHeapCDHs.resize(m_numSwapBuffers);
+	if (m_hasDepthTextures) {
+		m_depthStencilBuffers.resize(m_numSwapBuffers);
+	}
+	for (unsigned int i = 0; i < m_numSwapBuffers; i++) {
 		m_rtvHeapCDHs[i] = m_cpuRtvDescHeap.getCPUDescriptorHandleForIndex(i);
 		m_dsvHeapCDHs[i] = m_cpuDsvDescHeap.getCPUDescriptorHandleForIndex(i);
 	}
@@ -45,8 +51,8 @@ void DX12RenderableTexture::begin(void* cmdList) {
 
 	//transitionStateTo(dxCmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-	const D3D12_CPU_DESCRIPTOR_HANDLE* dsvCdh = (m_hasDepthTextures) ? &m_dsvHeapCDHs[context->getSwapIndex()] : &context->getDepthStencilViewCDH();
-	dxCmdList->OMSetRenderTargets(1, &m_rtvHeapCDHs[context->getSwapIndex()], true, dsvCdh);
+	const D3D12_CPU_DESCRIPTOR_HANDLE* dsvCdh = (m_hasDepthTextures) ? &m_dsvHeapCDHs[getSwapIndex()] : &context->getDepthStencilViewCDH();
+	dxCmdList->OMSetRenderTargets(1, &m_rtvHeapCDHs[getSwapIndex()], true, dsvCdh);
 
 	dxCmdList->RSSetViewports(1, context->getViewport());
 	dxCmdList->RSSetScissorRects(1, context->getScissorRect());
@@ -67,9 +73,9 @@ void DX12RenderableTexture::clear(const glm::vec4& color, void* cmdList) {
 
 	// Resource state must be set to render target before clearing
 	transitionStateTo(dxCmdList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	dxCmdList->ClearRenderTargetView(m_rtvHeapCDHs[context->getSwapIndex()], clearColor, 0, nullptr);
+	dxCmdList->ClearRenderTargetView(m_rtvHeapCDHs[getSwapIndex()], clearColor, 0, nullptr);
 	if (m_hasDepthTextures) {
-		dxCmdList->ClearDepthStencilView(m_dsvHeapCDHs[context->getSwapIndex()], D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		dxCmdList->ClearDepthStencilView(m_dsvHeapCDHs[getSwapIndex()], D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 	}
 }
 
@@ -92,27 +98,27 @@ void DX12RenderableTexture::resize(int width, int height) {
 }
 
 ID3D12Resource* DX12RenderableTexture::getResource(int frameIndex) const {
-	int i = (frameIndex == -1) ? context->getSwapIndex() : frameIndex;
+	unsigned int i = (frameIndex == -1 || m_numSwapBuffers == 1) ? getSwapIndex() : frameIndex;
 	return textureDefaultBuffers[i].Get();
 }
 
 ID3D12Resource* DX12RenderableTexture::getDepthResource() const {
-	return m_depthStencilBuffers[context->getSwapIndex()].Get();
+	return m_depthStencilBuffers[getSwapIndex()].Get();
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE DX12RenderableTexture::getDepthSrvCDH(int frameIndex) const {
 	assert(m_hasDepthTextures); // Tried to get depth srv without a valid depth stencil resource
-	int i = (frameIndex == -1) ? context->getSwapIndex() : frameIndex;
+	unsigned int i = (frameIndex == -1 || m_numSwapBuffers == 1) ? getSwapIndex() : frameIndex;
 	return depthSrvHeapCDHs[i];
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE DX12RenderableTexture::getRtvCDH(int frameIndex) const {
-	int i = (frameIndex == -1) ? context->getSwapIndex() : frameIndex;
+	unsigned int i = (frameIndex == -1 || m_numSwapBuffers == 1) ? getSwapIndex() : frameIndex;
 	return m_rtvHeapCDHs[i];
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE DX12RenderableTexture::getDsvCDH(int frameIndex) const {
-	int i = (frameIndex == -1) ? context->getSwapIndex() : frameIndex;
+	unsigned int i = (frameIndex == -1 || m_numSwapBuffers == 1) ? getSwapIndex() : frameIndex;
 	return m_dsvHeapCDHs[i];
 }
 
@@ -137,6 +143,9 @@ DXGI_FORMAT DX12RenderableTexture::convertFormat(Texture::FORMAT format) const {
 	case Texture::R16G16B16A16_FLOAT:
 		dxgiFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
 		break;
+	case Texture::R32G32B32A32_FLOAT:
+		dxgiFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
+		break;
 	default:
 		dxgiFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 		break;
@@ -146,7 +155,7 @@ DXGI_FORMAT DX12RenderableTexture::convertFormat(Texture::FORMAT format) const {
 
 void DX12RenderableTexture::createTextures() {	
 	context->waitForGPU();
-	for (unsigned int i = 0; i < context->getNumGPUBuffers(); i++) {
+	for (unsigned int i = 0; i < m_numSwapBuffers; i++) {
 		D3D12_RESOURCE_DESC textureDesc = {};
 		textureDesc.Format = m_format;
 		textureDesc.Width = m_width;
@@ -203,7 +212,7 @@ void DX12RenderableTexture::createTextures() {
 }
 
 void DX12RenderableTexture::createDepthTextures() {
-	for (unsigned int i = 0; i < context->getNumGPUBuffers(); i++) {
+	for (unsigned int i = 0; i < m_numSwapBuffers; i++) {
 
 		D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
 		depthOptimizedClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -246,4 +255,8 @@ void DX12RenderableTexture::createDepthTextures() {
 		srvDesc.Texture2D.MipLevels = 1;
 		context->getDevice()->CreateShaderResourceView(m_depthStencilBuffers[i].Get(), &srvDesc, depthSrvHeapCDHs[i]);
 	}
+}
+
+unsigned int DX12RenderableTexture::getSwapIndex() const {
+	return (m_numSwapBuffers == 1) ? 0 : context->getSwapIndex();
 }

@@ -23,6 +23,7 @@ public:
 
 	const std::map<std::string, ImFont*>& getFontMap();
 	ImFont* getFont(const std::string& font);
+	float getFontScaling(const std::string& type);
 	void showMetrics(const bool show);
 
 protected:
@@ -31,4 +32,5 @@ protected:
 protected:
 	bool m_showMetrics;
 	std::map<std::string, ImFont*> m_fonts;
+	std::map<std::string, float> m_scaling;
 };

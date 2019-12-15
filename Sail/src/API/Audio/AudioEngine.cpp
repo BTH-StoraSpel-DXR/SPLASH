@@ -132,8 +132,10 @@ int AudioEngine::beginSound(const std::string& filename, Audio::EffectType effec
 	m_sound[indexValue].xAPOsubMixVoice->SetVolume(volume);
 
 	bool useFilter = false;
+	m_sound[indexValue].lowpassFiltered = false;
 	if (effectType == Audio::EffectType::PROJECTILE_LOWPASS) {
 		useFilter = true;
+		m_sound[indexValue].lowpassFiltered = true;
 	}
 
 	//			   										  xAPO
@@ -532,6 +534,10 @@ void AudioEngine::setStreamVolume(int index, float value) {
 }
 
 void AudioEngine::updateProjectileLowPass(float frequency, int indexToSource) {
+	if (m_sound[indexToSource].lowpassFiltered == false) {
+		return;
+	}
+
 	// Create new lowpass filter with updated frequency.
 	XAUDIO2_FILTER_PARAMETERS lowPassFilter = createLowPassFilter(frequency);
 
@@ -636,7 +642,7 @@ HRESULT AudioEngine::initXAudio2() {
 #ifdef DEVELOPMENT
 	//flags |= XAUDIO2_DEBUG_ENGINE;
 #endif
-
+	
 	HRESULT hr = XAudio2Create(&m_xAudio2, flags);
 
 	// HRTF APO expects mono audio data at 48kHz and produces stereo output at 48kHz
@@ -661,10 +667,10 @@ HRESULT AudioEngine::initXAudio2() {
 	return hr;
 }
 
-
 int AudioEngine::fetchSoundIndex() {
 	m_currSoundIndex++;
 	m_currSoundIndex %= SOUND_COUNT;
+
 	return m_currSoundIndex;
 }
 

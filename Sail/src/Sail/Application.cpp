@@ -10,8 +10,6 @@
 #include "entities/systems/Systems.h"
 #include "events/EventDispatcher.h"
 
-
-
 // If this is defined then fixed update will run every frame which speeds up/slows down
 // the game depending on how fast the program can run
 //#define PERFORMANCE_SPEED_TEST
@@ -74,21 +72,17 @@ Application::Application(int windowWidth, int windowHeight, const char* windowTi
 	ECS::Instance()->createSystem<LevelSystem>()->generateMap();
 	m_settingStorage.gameSettingsDynamic["map"]["count"].maxVal = ECS::Instance()->getSystem<LevelSystem>()->powerUpSpawnPoints.size();
 
-
-
-
 	// Initialize imgui
 	m_imguiHandler->init();
 
 	// Register devices to use raw input from hardware
 	//m_input.registerRawDevices(*m_window.getHwnd());
 
-	// Load the missing texture texture
-	m_resourceManager.loadTexture("missing.tga");
 	m_chatWindow = std::make_unique<ChatWindow>(true);
 	ImVec2 size(400, 300);
 	m_chatWindow->setSize(size);
 	m_chatWindow->setPosition(ImVec2(30,m_window->getWindowHeight()-size.y-30));
+
 }
 
 Application::~Application() {
@@ -108,6 +102,7 @@ int Application::startGameLoop() {
 
 	// Initialize key bindings
 	KeyBinds::init();
+	loadKeybinds();
 
 	m_delta = 0.0f;
 	float currentTime = m_timer.getTimeSince<float>(startTime);
@@ -284,5 +279,39 @@ float Application::getDelta() const {
 
 float Application::getFixedUpdateDelta() const {
 	return m_fixedUpdateDelta;
+}
+
+void Application::loadKeybinds() {
+
+	KeyBinds::MOVE_FORWARD = (int)m_settingStorage.applicationSettingsDynamic["keybindings"]["forward"].value;
+	KeyBinds::MOVE_BACKWARD = (int)m_settingStorage.applicationSettingsDynamic["keybindings"]["backward"].value;
+	KeyBinds::MOVE_RIGHT = (int)m_settingStorage.applicationSettingsDynamic["keybindings"]["right"].value;
+	KeyBinds::MOVE_LEFT = (int)m_settingStorage.applicationSettingsDynamic["keybindings"]["left"].value;
+	KeyBinds::MOVE_UP = (int)m_settingStorage.applicationSettingsDynamic["keybindings"]["up"].value;
+	KeyBinds::MOVE_DOWN = (int)m_settingStorage.applicationSettingsDynamic["keybindings"]["down"].value;
+	KeyBinds::SPRINT = (int)m_settingStorage.applicationSettingsDynamic["keybindings"]["sprint"].value;
+	KeyBinds::THROW_CHARGE = (int)m_settingStorage.applicationSettingsDynamic["keybindings"]["throw"].value;
+	KeyBinds::LIGHT_CANDLE = (int)m_settingStorage.applicationSettingsDynamic["keybindings"]["light"].value;
+}
+
+void Application::startAudio() {
+	// Create the system if it doesn't exist.
+	ECS* ecsPtr = ECS::Instance();
+	if (!ecsPtr->getSystem<AudioSystem>()) {
+		ecsPtr->createSystem<AudioSystem>();
+
+		while (audioEntitiesQueue.size() != 0) {
+			// Add the one in the back
+			ecsPtr->addEntityToSystems(audioEntitiesQueue.back());
+			// Pop it
+			audioEntitiesQueue.pop_back();
+		}
+		
+		SAIL_LOG("Audio was created successfully");
+	}
+}
+
+void Application::addToAudioComponentQueue(Entity* ac) {
+	this->audioEntitiesQueue.push_back(ac);
 }
 

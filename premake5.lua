@@ -19,6 +19,7 @@ IncludeDir["FBX_SDK"] = "libraries/FBX_SDK/include"
 IncludeDir["ImGui"] = "libraries/imgui"
 IncludeDir["MiniMM"] = "libraries/MemoryManager"
 IncludeDir["Assimp"] = "libraries/assimp/include"
+IncludeDir["zlib"] = "libraries/zlib"
 
 buildcfg = "release"
 
@@ -136,7 +137,8 @@ project "Sail"
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.ImGui}",
 		"%{IncludeDir.MiniMM}",
-		"%{IncludeDir.Assimp}"
+		"%{IncludeDir.Assimp}",
+		"%{IncludeDir.zlib}"
 	}
 
 	links {
@@ -145,7 +147,8 @@ project "Sail"
 		"ImGui",
 		"MemoryManager",
 		"assimp-vc140-mt",
-		"WinMMx"
+		"WinMMx",
+		"zlibstatic"
 	}
 
 	flags { "MultiProcessorCompile" }
@@ -183,7 +186,8 @@ project "Sail"
 		libdirs {
 			"libraries/FBX_SDK/lib/vs2017/x64/%{buildCfg}",
 			"libraries/assimp/lib/x64",
-			"libraries/WinMM/x64"
+			"libraries/WinMM/x64",
+			"libraries/zlib"
 		}
 	filter { "action:vs2017 or vs2019", "platforms:*86" }
 		libdirs {

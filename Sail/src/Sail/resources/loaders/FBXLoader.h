@@ -8,7 +8,7 @@
 
 class AnimationStack;
 
-class FBXLoader {
+class FBXLoader final {
 public:
 	FBXLoader();
 	~FBXLoader();
@@ -25,6 +25,8 @@ public:
 
 	Model* fetchModel(const std::string& filePath, Shader* shader);
 	AnimationStack* fetchAnimationStack(const std::string& filePath, Shader* shader = nullptr);
+
+	unsigned int getByteSize() const;
 
 private:
 	void fetchGeometry(FbxNode* node, Mesh::Data& mesh, const std::string& name);

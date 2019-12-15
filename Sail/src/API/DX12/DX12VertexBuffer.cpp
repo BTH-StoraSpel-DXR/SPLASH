@@ -3,28 +3,30 @@
 #include "Sail/Application.h"
 #include "DX12Utils.h"
 
-VertexBuffer* VertexBuffer::Create(const InputLayout& inputLayout, const Mesh::Data& modelData) {
-	return SAIL_NEW DX12VertexBuffer(inputLayout, modelData);
+VertexBuffer* VertexBuffer::Create(const InputLayout& inputLayout, const Mesh::Data& modelData, bool allowCpuUpdates) {
+	return SAIL_NEW DX12VertexBuffer(inputLayout, modelData, allowCpuUpdates);
 }
 
-VertexBuffer* VertexBuffer::Create(const InputLayout& inputLayout, unsigned int numVertices) {
-	return SAIL_NEW DX12VertexBuffer(inputLayout, numVertices);
+VertexBuffer* VertexBuffer::Create(const InputLayout& inputLayout, unsigned int numVertices, bool allowCpuUpdates) {
+	return SAIL_NEW DX12VertexBuffer(inputLayout, numVertices, allowCpuUpdates);
 }
 
 
 
 // TODO: Take in usage (Static or Dynamic) and create a default heap for static only
 // TODO: updateData and/or setData
-DX12VertexBuffer::DX12VertexBuffer(const InputLayout& inputLayout, const Mesh::Data& modelData)
+DX12VertexBuffer::DX12VertexBuffer(const InputLayout& inputLayout, const Mesh::Data& modelData, bool allowCpuUpdates)
 	: VertexBuffer(inputLayout, modelData.numVertices)
+	, m_allowCpuUpdates(allowCpuUpdates)
 {
 	void* vertices = getVertexData(modelData);
 
 	init(vertices);
 }
 
-DX12VertexBuffer::DX12VertexBuffer(const InputLayout& inputLayout, unsigned int numVertices)
+DX12VertexBuffer::DX12VertexBuffer(const InputLayout& inputLayout, unsigned int numVertices, bool allowCpuUpdates)
 	: VertexBuffer(inputLayout, numVertices)
+	, m_allowCpuUpdates(allowCpuUpdates)
 {
 	void* zeroData = malloc(inputLayout.getVertexSize() * numVertices);
 	memset(zeroData, 0, inputLayout.getVertexSize() * numVertices);
@@ -35,6 +37,7 @@ void DX12VertexBuffer::init(void* data) {
 	m_context = Application::getInstance()->getAPI<DX12API>();
 	auto numSwapBuffers = m_context->getNumGPUBuffers();
 
+	m_initFrameCount = 0;
 	m_hasBeenUpdated.resize(numSwapBuffers, false);
 	m_hasBeenInitialized.resize(numSwapBuffers, false);
 	m_uploadVertexBuffers.resize(numSwapBuffers);
@@ -88,6 +91,12 @@ ID3D12Resource* DX12VertexBuffer::getBuffer(int frameOffset) const {
 }
 
 void DX12VertexBuffer::update(Mesh::Data& data) {
+	if (!m_allowCpuUpdates) {
+		assert(false);
+		Logger::Error("update() was called on a VertexBuffer with CPU access disabled!");
+		return;
+	}
+
 	auto frameIndex = m_context->getSwapIndex();
 	void* vertices = getVertexData(data);
 	// Place verticies in the buffer
@@ -118,8 +127,14 @@ void DX12VertexBuffer::resetHasBeenUpdated() {
 }
 
 bool DX12VertexBuffer::init(ID3D12GraphicsCommandList4* cmdList) {
+	// This method is called at least once every frame that this texture is used for rendering
+
 	for (unsigned int i = 0; i < m_context->getNumGPUBuffers(); i++) {
 		if (m_hasBeenInitialized[i]) {
+			// Release the upload heap as soon as the texture has been uploaded to the GPU, but make sure it doesnt happen on the same frame as the upload
+			if (!m_allowCpuUpdates && m_uploadVertexBuffers[i] && m_initFrameCount != m_context->getFrameCount() && m_queueUsedForUpload->getCompletedFenceValue() > m_initFenceVal) {
+				m_uploadVertexBuffers[i].ReleaseAndGetAddressOf();
+			}
 			continue;
 		}
 
@@ -128,8 +143,37 @@ bool DX12VertexBuffer::init(ID3D12GraphicsCommandList4* cmdList) {
 		// Transition to usage state
 		DX12Utils::SetResourceTransitionBarrier(cmdList, m_defaultVertexBuffers[i].Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 		DX12Utils::SetResourceUAVBarrier(cmdList, m_defaultVertexBuffers[i].Get());
+
+		// Signal is only required for the last buffer, since both will be uploaded when the last one is
+		if (!m_allowCpuUpdates && i == 1) {
+			auto type = cmdList->GetType();
+			m_queueUsedForUpload = (type == D3D12_COMMAND_LIST_TYPE_DIRECT) ? m_context->getDirectQueue() : m_context->getComputeQueue();
+			// Schedule a signal to be called directly after this command list has executed
+			// This allows us to know when the data has been uploaded to the GPU
+			m_queueUsedForUpload->scheduleSignal([this](UINT64 signaledValue) {
+				m_initFenceVal = signaledValue;
+			});
+			m_initFrameCount = m_context->getFrameCount();
+		}
+
 		m_hasBeenInitialized[i] = true;
 	}
+
 	return true;
+}
+
+unsigned int DX12VertexBuffer::getByteSize() const {
+	unsigned int size = 0;
+
+	size += sizeof(*this);
+
+	size += sizeof(wComPtr<ID3D12Resource>) * m_uploadVertexBuffers.capacity();
+	size += m_byteSize * m_uploadVertexBuffers.size();
+
+	size += sizeof(wComPtr<ID3D12Resource>) * m_defaultVertexBuffers.capacity();
+
+	size += sizeof(bool) * (m_hasBeenInitialized.capacity() + m_hasBeenUpdated.capacity());
+
+	return size;
 }
 

@@ -35,6 +35,7 @@ public:
 	float spawnRate;
 	float spawnTimer;
 	int maxNumberOfParticles;
+	bool isActive;
 
 
 #ifdef DEVELOPMENT
@@ -73,7 +74,7 @@ private:
 
 	// Used in ParticleSystem
 	bool hasBeenCreatedInSystem();
-	void setAsCreatedInSystem();
+	void setAsCreatedInSystem(bool created);
 	const std::string& getTextureName() const;
 
 public:

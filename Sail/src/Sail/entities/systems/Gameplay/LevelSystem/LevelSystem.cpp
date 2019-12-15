@@ -5,6 +5,7 @@
 #include "Sail/entities/components/Components.h"
 #include "Sail/entities/components/MapComponent.h"
 #include <random>
+#include <algorithm>
 
 LevelSystem::LevelSystem():BaseComponentSystem() {
 	registerComponent<MapComponent>(true,true,true);
@@ -71,10 +72,11 @@ void LevelSystem::generateMap() {
 		for (int i = 0; i < tile.sizex; i++) {
 			for (int j = 0; j < tile.sizey; j++) {
 				tileArr[tile.posx + i][tile.posy + j][1] = 0;
+				botSpawnPoints.push_back(glm::vec3((tile.posx + i-0.5f)*tileSize, 0.3f,( tile.posy + j-0.5f)*tileSize));
 			}
 		}
 	}
-
+	std::shuffle(botSpawnPoints.begin(), botSpawnPoints.end(), std::default_random_engine{});
 	//create rooms from blocks
 	splitBlock();
 	//add rooms with individual type to type-layer
@@ -133,6 +135,7 @@ void LevelSystem::destroyWorld() {
 	spawnPoints.clear();
 	extraSpawnPoints.clear();
 	powerUpSpawnPoints.clear();
+	botSpawnPoints.clear();
 	while(chunks.size()>0){
 		chunks.pop();
 	}
@@ -1365,16 +1368,25 @@ glm::vec3 LevelSystem::getPowerUpPosition(int index) {
 	}
 }
 
-glm::vec3 LevelSystem::getSpawnPoint() {
+glm::vec3 LevelSystem::getSpawnPoint(int id) {
 	// Gets the spawn points with the 4 corners first, then randomized spawn points around the edges of the map
 	glm::vec3 spawnLocation;
-	if (spawnPoints.size() > 0) {
-		spawnLocation = spawnPoints.front();
-		spawnPoints.erase(spawnPoints.begin());
+	if (spawnPoints.size() > 0 && id<spawnPoints.size()) {
+		spawnLocation = spawnPoints.at(id);
 	}
-	else if (extraSpawnPoints.size() > 0) {
-		spawnLocation = extraSpawnPoints.front();
-		extraSpawnPoints.erase(extraSpawnPoints.begin());
+	else if (extraSpawnPoints.size() > 0 && (id-spawnPoints.size())<extraSpawnPoints.size()) {
+		spawnLocation = extraSpawnPoints.at(id - spawnPoints.size());
+	}
+	else {
+		spawnLocation = glm::vec3(((tileSize / 2.f) + ((Utils::rnd() * (tileSize - 1.f) * 2.f) - (tileSize - 1.f))) * (xsize - 1), 1.f, ((tileSize / 2.f) + ((Utils::rnd() * (tileSize - 1.f) * 2.f) - (tileSize - 1.f))) * (ysize - 1));
+		SAIL_LOG_ERROR("No more spawn locations available.");
+	}
+	return spawnLocation;
+}
+glm::vec3 LevelSystem::getBotSpawnPoint(int id) {
+	glm::vec3 spawnLocation;
+	if (botSpawnPoints.size() > 0 && id < botSpawnPoints.size()) {
+		spawnLocation = botSpawnPoints.at(id);
 	}
 	else {
 		spawnLocation = glm::vec3(((tileSize / 2.f) + ((Utils::rnd() * (tileSize - 1.f) * 2.f) - (tileSize - 1.f))) * (xsize - 1), 1.f, ((tileSize / 2.f) + ((Utils::rnd() * (tileSize - 1.f) * 2.f) - (tileSize - 1.f))) * (ysize - 1));
@@ -1464,6 +1476,7 @@ void LevelSystem::stop() {
 	spawnPoints.clear();
 	extraSpawnPoints.clear();
 	powerUpSpawnPoints.clear();
+	botSpawnPoints.clear();
 }
 
 void LevelSystem::generateClutter() {
@@ -1758,6 +1771,8 @@ void LevelSystem::addClutterModel(const std::vector<Model*>& clutterModels, Mode
 
 		MovementComponent* mc = e2->addComponent<MovementComponent>();
 		AudioComponent* ac = e2->addComponent<AudioComponent>();
+		SAIL_LOG("Adding Saftblandare to AudioQueue");
+		Application::getInstance()->addToAudioComponentQueue(&*e2);
 		SpotlightComponent* sc = e2->addComponent<SpotlightComponent>();
 		sc->light.setColor(glm::vec3(1.0f, 0.2f, 0.0f));
 		sc->light.setPosition(glm::vec3(0, tileHeight * 5 - 0.05, 0));

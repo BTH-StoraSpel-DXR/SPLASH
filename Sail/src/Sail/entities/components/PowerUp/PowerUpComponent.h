@@ -11,6 +11,17 @@ enum PowerUps {
 	NUMPOWUPS
 };
 
+// For colors
+namespace PowerUpColorTeams {
+	static const int teams[] = {
+		2, // RUNSPEED  (green)
+		3, // STAMINA   (yellow)
+		0, // SHOWER    (blue)
+		1  // POWERWASH (red)
+	};
+}
+
+
 class PowerUpComponent : public Component<PowerUpComponent> {
 public:
 	struct PowerUp {

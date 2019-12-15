@@ -4,6 +4,7 @@
 class Octree;
 class Camera;
 
+template <typename T>
 class OctreeAddRemoverSystem final : public BaseComponentSystem
 {
 public:

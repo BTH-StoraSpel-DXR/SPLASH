@@ -124,7 +124,8 @@ void ChatWindow::renderChat(float dt) {
 
 
 	if (ImGui::Begin("##CHATWINDOW", nullptr, chatFlags)) {
-		ImGui::PushFont(m_imguiHandler->getFont("Beb20"));
+		//ImGui::PushFont(m_imguiHandler->getFont("Beb20"));
+		ImGui::SetWindowFontScale(m_imguiHandler->getFontScaling("smalltext"));
 #ifdef DEVELOPMENT
 		ImGui::Checkbox("Focus", &m_retainFocus); 
 		ImGui::SameLine();
@@ -139,6 +140,8 @@ void ChatWindow::renderChat(float dt) {
 		}
 #endif
 		if (ImGui::BeginChild("##CHATTEXT", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()))) {
+			ImGui::SetWindowFontScale(m_imguiHandler->getFontScaling("smalltext"));
+
 			if (alpha <= 0.02f) {
 				ImVec4 txtCol(ImGui::GetStyleColorVec4(ImGuiCol_Text));
 				txtCol.w = 0.0f;
@@ -183,7 +186,7 @@ void ChatWindow::renderChat(float dt) {
 			}
 		}
 		ImGui::EndChild();
-		ImGui::PopFont();
+		//ImGui::PopFont();
 		static bool sentThisFrame = false;
 		static bool justSent = false;
 		static bool releasedEnter = true;

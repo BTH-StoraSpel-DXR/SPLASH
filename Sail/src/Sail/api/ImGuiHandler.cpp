@@ -2,6 +2,7 @@
 #include "ImGuiHandler.h"
 #include "imgui.h"
 
+#define USE_ONLY_ONE_FONT
 
 void ImGuiHandler::applySailStyle() {
 	auto& style = ImGui::GetStyle();
@@ -15,6 +16,7 @@ void ImGuiHandler::applySailStyle() {
 	style.GrabRounding = 3.0f;
 	style.TabRounding = 3.0f;
 	style.WindowTitleAlign = ImVec2(0.5f, 0.5f);
+
 
 	ImVec4* colors = style.Colors;
 	colors[ImGuiCol_Text] = ImVec4(0.95f, 0.96f, 0.98f, 1.00f);
@@ -76,6 +78,13 @@ ImFont* ImGuiHandler::getFont(const std::string& font) {
 	return m_fonts[font];
 }
 
+float ImGuiHandler::getFontScaling(const std::string& type) {
+	if (m_scaling.find(type) != m_scaling.end()) {
+		return m_scaling.at(type);
+	}
+	return 1.0f;
+}
+
 void ImGuiHandler::showMetrics(const bool show) {
 	m_showMetrics = show;
 }
@@ -83,9 +92,22 @@ void ImGuiHandler::showMetrics(const bool show) {
 void ImGuiHandler::addFonts() {
 	ImGuiIO& io = ImGui::GetIO();
 	const std::string defaultPath = "res/fonts/";
+	const float size = 30;
+	m_fonts["Beb60"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), size);
 
 
-	m_fonts["Beb20"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 20);
+	m_scaling["BigHeader"] =	(70.0f/size); // 60
+	m_scaling["Header0"] =	(60.0f/size); // 60
+	m_scaling["Header1"] =	(42.0f/size); // 42
+	m_scaling["Header2"] =	(40.0f/size); //40
+	m_scaling["text"] =		(27.0f/size); // 27
+	m_scaling["smalltext"] =		(24.0f/size); // 20
+
+
+
+
+
+#ifndef USE_ONLY_ONE_FONT
 	m_fonts["Beb24"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 24);
 	m_fonts["Beb27"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 27);
 	m_fonts["Beb30"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 30);
@@ -93,11 +115,5 @@ void ImGuiHandler::addFonts() {
 	m_fonts["Beb50"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 50);
 	m_fonts["Beb60"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 60);
 	m_fonts["Beb70"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "BebasNeue.ttf").c_str(), 70);
-	m_fonts["Rob15"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "Roboto.ttf").c_str(), 15);
-	m_fonts["Rob30"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "Roboto.ttf").c_str(), 30);
-	m_fonts["Rob50"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "Roboto.ttf").c_str(), 50);
-	m_fonts["Hack15"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "Hack.ttf").c_str(), 15);
-	m_fonts["Hack30"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "Hack.ttf").c_str(), 30);
-	m_fonts["Hack50"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "Hack.ttf").c_str(), 50);
-	m_fonts["Splash20"] = io.Fonts->AddFontFromFileTTF(std::string(defaultPath + "Splash.ttf").c_str(), 20);
+#endif
 }

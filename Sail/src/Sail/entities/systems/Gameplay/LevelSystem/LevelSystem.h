@@ -74,7 +74,8 @@ public:
 	void destroyWorld();
 	void addClutterModel(const std::vector<Model*>& clutterModels, Model* bb);
 	glm::vec3 getPowerUpPosition(int index);
-	glm::vec3 getSpawnPoint();
+	glm::vec3 getSpawnPoint(int id);
+	glm::vec3 getBotSpawnPoint(int id);
 	void stop();
 	const int getAreaType(float posX, float posY);
 	const int getRoomIDFromWorldPos(float posX, float posY);
@@ -108,6 +109,7 @@ public:
 	std::vector<glm::vec3> spawnPoints;
 	std::vector<glm::vec3> extraSpawnPoints;
 	std::vector<glm::vec3> powerUpSpawnPoints;
+	std::vector<glm::vec3> botSpawnPoints;
 private:
 	std::queue<Rect> chunks;
 	std::queue<Rect> blocks;

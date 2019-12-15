@@ -10,7 +10,6 @@ public:
 
 	virtual const Shader::ComputeSettings* getComputeSettings() const override;
 	virtual std::pair<std::string, void*> getComputeInputForIndex(Shader::ComputeShaderInput& input, unsigned int index) override;
-	virtual RenderableTexture* getComputeOutputForIndex(Shader::ComputeShaderOutput& output, unsigned int index) override;
 	virtual Shader::ComputeShaderOutput* getComputeOutput() override;
 
 private:

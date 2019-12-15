@@ -278,7 +278,7 @@ void rayGen() {
 		return; // Stop here, all code below is for soft shadows
 	}
 
-
+#ifdef ALLOW_SOFT_SHADOWS
 	//////////////////////////
 	//     Soft shadows     //
 	//////////////////////////
@@ -299,8 +299,7 @@ void rayGen() {
 
 	uint shadowTextureIndex = 0;
 	int lightIndex = 0;
-	[unroll]
-	while (shadowTextureIndex < NUM_SHADOW_TEXTURES) {
+	while (shadowTextureIndex < CB_SceneData.numShadowTextures) {
 		float firstBounceShadow = getShadowAmount(randSeed, worldPosition, worldNormal, lightIndex);
 		if (lightIndex == -1) {
 			// No more lights available!
@@ -333,7 +332,7 @@ void rayGen() {
 	lOutputMetalnessRoughnessAO[launchIndex] = float4(metalnessTwo, roughnessTwo, aoTwo, emissivenessTwo);
 	lOutputPositionsOne[launchIndex] = float4(worldPosition, 1.0f);
 	lOutputPositionsTwo[launchIndex] = float4(worldPositionTwo, 1.0f);
-	
+#endif
 }
 
 [shader("miss")]
@@ -422,7 +421,8 @@ void closestHitTriangle(inout RayPayload payload, in BuiltInTriangleIntersection
 	
 	// Initialize a random seed
 	uint randSeed = Utils::initRand( DispatchRaysIndex().x + DispatchRaysIndex().y * DispatchRaysDimensions().x, CB_SceneData.frameCount );
-	
+
+#ifdef ALLOW_SOFT_SHADOWS	
 	if (!CB_SceneData.doHardShadows) {
 		// Soft shadows only
 		// Write shadows for each light
@@ -431,7 +431,7 @@ void closestHitTriangle(inout RayPayload payload, in BuiltInTriangleIntersection
 		[unroll] // THIS IS REQUIRED FOR SOME REASON
 		while (shadowTextureIndex < NUM_SHADOW_TEXTURES) {
 			float shadowAmount = getShadowAmount(randSeed, worldPosition, normalInWorldSpace, lightIndex);
-			if (lightIndex == -1) {
+			if (lightIndex == -1 || shadowTextureIndex >= CB_SceneData.numShadowTextures) {
 				// No more lights available!
 				break;
 			}
@@ -439,6 +439,7 @@ void closestHitTriangle(inout RayPayload payload, in BuiltInTriangleIntersection
 			shadowTextureIndex++;
 		}
 	}
+#endif
 
 	payload.albedoTwo.rgb = albedoColor.rgb; // TODO: store alpha and use as team color amount
 	payload.normalTwo = normalInWorldSpace;

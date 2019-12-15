@@ -18,18 +18,16 @@
 
 bool NWrapperHost::host(int port) {
 	bool result = m_network->host(port);
-
-	m_unusedPlayerIds.clear();
-	for (Netcode::PlayerID id = 1; id < NWrapperSingleton::getInstance().getPlayerLimit(); id++) {
-		m_unusedPlayerIds.push_back(id);
-	}
-
 	return result;
 }
 
 bool NWrapperHost::connectToIP(char*) {
 	// Do nothing. clients connect to hosts, not the other way around.
 	return false;
+}
+
+void NWrapperHost::setAllowJoining(bool b) {
+	m_network->setAllowJoining(b);
 }
 
 void NWrapperHost::setLobbyName(std::string name) {
@@ -89,19 +87,16 @@ const std::string& NWrapperHost::getLobbyName() {
 
 void NWrapperHost::playerJoined(TCP_CONNECTION_ID tcp_id) {
 	// Generate an ID for the client that joined and send that information.
+	Netcode::PlayerID id = NWrapperSingleton::getInstance().reservePlayerID();
 
-	if (m_unusedPlayerIds.empty()) {
+	if (id == 255) {
 		m_network->kickConnection(tcp_id);
 		return;
 	} else {
-		Netcode::PlayerID newPlayerId = m_unusedPlayerIds.front();
-		SAIL_LOG("New PLayer ID: " + std::to_string(newPlayerId));
-
-		if (NWrapperSingleton::getInstance().playerJoined(Player{ newPlayerId, "NoName" }, false)) {
-			m_unusedPlayerIds.pop_front();
-			m_connectionsMap.insert(std::pair<TCP_CONNECTION_ID, unsigned char>(tcp_id, newPlayerId));
+		if (NWrapperSingleton::getInstance().playerJoined(Player{ id, "NoName" }, false)) {
+			m_connectionsMap.insert(std::pair<TCP_CONNECTION_ID, unsigned char>(tcp_id, id));
 			//Send the newPlayerId to the new player and request a name, which upon retrieval will be sent to all clients.
-			char msg[3] = {ML_NAME_REQUEST, newPlayerId, ML_NULL};
+			char msg[3] = {ML_NAME_REQUEST, id, ML_NULL};
 			m_network->send(msg, sizeof(msg), tcp_id);
 		} else {
 			m_network->kickConnection(tcp_id);
@@ -120,7 +115,7 @@ void NWrapperHost::playerDisconnected(TCP_CONNECTION_ID tcp_id) {
 	Netcode::PlayerID playerID = m_connectionsMap.at(tcp_id);
 	m_connectionsMap.erase(tcp_id);
 
-	m_unusedPlayerIds.push_back(playerID);
+	NWrapperSingleton::getInstance().freePlayerID(playerID);
 	PlayerLeftReason reason = m_network->wasKicked(tcp_id) ? PlayerLeftReason::KICKED : PlayerLeftReason::CONNECTION_LOST;
 	
 	char msg[] = { ML_DISCONNECT, playerID, (char)reason, ML_NULL};

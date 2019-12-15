@@ -178,6 +178,7 @@ void ConsoleCommands::renderWindow() {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
 		static char buf[256] = "";
 		if (ImGui::Begin("Console", &open, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove)) {
+			ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("smalltext"));
 			auto* window = Application::getInstance()->getWindow();
 			auto windowHeight = glm::min((float)window->getWindowHeight(), 200.f);
 			float ease = EaseOut(m_animTime, 0.01f, windowHeight, 1.0f);
@@ -185,6 +186,7 @@ void ConsoleCommands::renderWindow() {
 			ImGui::SetWindowPos(ImVec2(0.f, 0.f), ImGuiCond_Always);
 
 			ImGui::BeginChild("ScrollingRegion", ImVec2(0, -23), false, ImGuiWindowFlags_HorizontalScrollbar);
+			ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("smalltext"));
 
 			for (int i = 0; i < getLog().size(); i++) {
 				//ImGui::TextUnformatted(getLog()[i].c_str());

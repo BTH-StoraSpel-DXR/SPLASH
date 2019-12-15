@@ -28,6 +28,7 @@ public:
 	
 	void queueEvent(NetworkSenderEvent* event);
 	void pushDataToBuffer(const std::string& data);
+	void setDataBuffer(const std::queue<std::string>& data);
 
 #ifdef DEVELOPMENT
 	unsigned int getByteSize() const override;

@@ -5,8 +5,7 @@
 //=============================================================================
 #include "GaussianBlurCommon.hlsl"
 
-Texture2D input : register(t0);
-RWTexture2D<float4> output : register(u10) : SAIL_RGBA16_FLOAT;
+RWTexture2D<float4> inoutput : register(u10) : SAIL_IGNORE;
 
 cbuffer CSData : register(b0) {
     float textureSizeDifference;
@@ -23,25 +22,25 @@ void CSMain(int3 groupThreadID : SV_GroupThreadID,
 	//
 
 	float2 inputSize;
-	input.GetDimensions(inputSize.x, inputSize.y);
+	inoutput.GetDimensions(inputSize.x, inputSize.y);
 
 	// This thread group runs N threads.  To get the extra 2*BlurRadius pixels, 
 	// have 2*BlurRadius threads sample an extra pixel.
 	if(groupThreadID.x < blurRadius) {
 		// Clamp out of bound samples that occur at image borders.
 		int x = max(dispatchThreadID.x - blurRadius, 0);
-		cache[groupThreadID.x] = input[int2(x, dispatchThreadID.y) * textureSizeDifference];
+		cache[groupThreadID.x] = inoutput[int2(x, dispatchThreadID.y) * textureSizeDifference];
 		// cache[groupThreadID.x] = float4(0, 0.5, 0, 1);
 	}
 	if(groupThreadID.x >= N-blurRadius) {
 		// Clamp out of bound samples that occur at image borders.
 		int x = min(dispatchThreadID.x + blurRadius, inputSize.x-1);
-		cache[groupThreadID.x+2*blurRadius] = input[int2(x, dispatchThreadID.y) * textureSizeDifference];
+		cache[groupThreadID.x+2*blurRadius] = inoutput[int2(x, dispatchThreadID.y) * textureSizeDifference];
 		// cache[groupThreadID.x] = float4(0, 0.5, 0, 1);
 	}
 
 	// Clamp out of bound samples that occur at image borders.
-	cache[groupThreadID.x+blurRadius] = input[min(dispatchThreadID.xy, inputSize.xy-1) * textureSizeDifference];
+	cache[groupThreadID.x+blurRadius] = inoutput[min(dispatchThreadID.xy, inputSize.xy-1) * textureSizeDifference];
 
 	// Wait for all threads to finish.
 	GroupMemoryBarrierWithGroupSync();
@@ -59,5 +58,5 @@ void CSMain(int3 groupThreadID : SV_GroupThreadID,
 		blurColor += weights[i+blurRadius] * cache[k];
 	}
 	
-	output[dispatchThreadID.xy] = blurColor;
+	inoutput[dispatchThreadID.xy] = blurColor;
 }

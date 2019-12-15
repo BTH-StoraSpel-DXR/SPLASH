@@ -14,6 +14,7 @@
 #include "Sail/entities/Entity.h"
 #include "Sail/utils/Utils.h"
 
+#include "Sail/../../libraries/gzip/decompress.hpp"
 
 // DO NOT IMPLEMENT ANY BEHAVIOR, EMIT EVENTS, OR IN ANY WAY CHANGE STATE IN RECEIVERBASE
 // This class is just used to call functions in the classes that inherit from it
@@ -98,7 +99,10 @@ void ReceiverBase::processData(float dt, std::queue<std::string>& data, const bo
 
 	// Process all messages in the buffer
 	while (!data.empty()) {
-		std::istringstream is(data.front());
+		const char* compressedPtr = data.front().data();
+		std::string decompressedData = gzip::decompress(compressedPtr, data.front().size());
+
+		std::istringstream is(decompressedData);
 		Netcode::InArchive ar(is);
 
 		ar(senderID);
@@ -108,7 +112,10 @@ void ReceiverBase::processData(float dt, std::queue<std::string>& data, const bo
 		if (ignoreFromSelf && senderID == m_playerID) { data.pop(); continue; }
 
 		// If the message was sent internally to ourself then correct the senderID
-		if (senderID == Netcode::MESSAGE_FROM_SELF_ID) { senderID = m_playerID; }
+		MatchRecordSystem* mrs = NWrapperSingleton::getInstance().recordSystem;
+		if (senderID == Netcode::MESSAGE_FROM_SELF_ID) {
+			if (mrs && mrs->status == 2) { senderID = 0; } else { senderID = m_playerID; };
+		}
 
 		// -+-+-+-+-+-+-+-+ Process data from senderComponents -+-+-+-+-+-+-+-+ 
 
@@ -453,6 +460,16 @@ void ReceiverBase::processData(float dt, std::queue<std::string>& data, const bo
 				ar(compID);
 				ar(pickedByPlayer);
 				destroyPowerup(compID, pickedByPlayer);
+			}
+			break;
+			case Netcode::MessageType::SET_CENTER: 
+			{
+				Netcode::ComponentID compID;
+				glm::vec3 offset;
+
+				ar(compID);
+				ArchiveHelpers::loadVec3(ar, offset);
+				setCenter(compID, offset);
 			}
 			break;
 			default:

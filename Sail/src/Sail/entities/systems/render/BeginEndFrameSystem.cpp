@@ -13,6 +13,7 @@ BeginEndFrameSystem::~BeginEndFrameSystem() {
 void BeginEndFrameSystem::renderNothing() {
 	RendererWrapper* renderWrapper = Application::getInstance()->getRenderWrapper();
 	Renderer* renderer = renderWrapper->getCurrentRenderer();
+	renderer->setLightSetup(nullptr);
 	renderer->begin(nullptr);
 	renderer->end();
 	renderer->present((renderWrapper->getDoPostProcessing()) ? renderWrapper->getPostProcessPipeline() : nullptr);

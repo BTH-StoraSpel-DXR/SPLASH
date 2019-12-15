@@ -12,6 +12,8 @@ public:
 
 	bool host(int port = 54000);
 	bool connectToIP(char* = "127.0.0.1:54000");
+	virtual void setAllowJoining(bool b);
+
 	void setLobbyName(std::string name);
 	void updateServerDescription();
 
@@ -26,7 +28,6 @@ private:
 	std::map<TCP_CONNECTION_ID, Netcode::PlayerID> m_connectionsMap;
 	std::string m_lobbyName = "";
 	std::string m_serverDescription = "";
-	std::deque<Netcode::PlayerID> m_unusedPlayerIds;
 
 	void sendChatMsg(std::string msg);
 

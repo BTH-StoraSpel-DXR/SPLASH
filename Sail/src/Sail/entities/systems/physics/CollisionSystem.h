@@ -3,6 +3,7 @@
 #include "..//..//Physics/Octree.h"
 #include "..//..//Physics/BoundingBox.h"
 
+template <typename T>
 class CollisionSystem final : public BaseComponentSystem {
 public:
 	CollisionSystem();

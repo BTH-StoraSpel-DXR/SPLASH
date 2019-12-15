@@ -138,7 +138,6 @@ void shade(float3 worldPosition, float3 worldNormal, float3 albedo, float emissi
 				uint start = (x == indMin.x) ? floor(((floatIndMin.x - floor(floatIndMin.x)) * 4.f) % 4) : 0;
 				uint end = (x == indMax.x) ? floor(((floatIndMax.x - floor(floatIndMax.x)) * 4.f) % 4) : 3;
 
-				[unroll]
 				for (uint index = start; index <= end; index++) {
 					uint up = Utils::unpackQuarterFloat(packedR, index);
 					if (up > 0) {

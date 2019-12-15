@@ -194,7 +194,7 @@ void DX12ForwardRenderer::recordCommands(PostProcessPipeline* postProcessPipelin
 		bool usePostProcessOutput = false;
 		if (postProcessPipeline) {
 			// Run post processing
-			RenderableTexture* renderOutput = postProcessPipeline->run(m_outputTexture.get(), cmdList.Get());
+			RenderableTexture* renderOutput = postProcessPipeline->run(m_outputTexture.get(), nullptr, cmdList.Get());
 			if (renderOutput) {
 				usePostProcessOutput = true;
 

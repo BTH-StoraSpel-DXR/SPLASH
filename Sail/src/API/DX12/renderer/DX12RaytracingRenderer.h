@@ -24,7 +24,9 @@ public:
 	virtual void submit(Mesh* mesh, const glm::mat4& modelMatrix, RenderFlag flags, int teamColorID, bool castShadows) override;
 	virtual void submitMetaball(RenderCommandType type, Material* material, const glm::vec3& pos, RenderFlag flags, int group) override;
 	virtual void submitWaterPoint(const glm::vec3& pos) override;
+	virtual unsigned int removeWaterPoint(const glm::vec3& pos, const glm::ivec3& posOffset, const glm::ivec3& negOffset) override;
 	virtual bool checkIfOnWater(const glm::vec3& pos) override;
+	virtual std::pair<bool, glm::vec3> getNearestWaterPosition(const glm::vec3& position, const glm::vec3& maxOffset) override;
 
 	virtual void setTeamColors(const std::vector<glm::vec3>& teamColors);
 	virtual void updateMetaballAABB();
@@ -33,7 +35,7 @@ public:
 	DXRBase* getDXRBase();
 
 private:
-	void createSoftShadowsTextures();
+	void createSoftShadowsTextures(unsigned int numPlayers);
 	DX12RenderableTexture* runDenoising(ID3D12GraphicsCommandList4* cmdList);
 	DX12RenderableTexture* runShading(ID3D12GraphicsCommandList4* cmdList, DX12RenderableTexture* shadows);
 	bool onResize(const WindowResizeEvent& event);
@@ -50,6 +52,7 @@ private:
 	DX12API::Command m_commandDirectCopy;
 	DX12API::Command m_commandCompute;
 	DX12API::Command m_commandComputePostProcess;
+	unsigned int m_numShadowTextures;
 
 	DX12RenderableTexture** m_gbufferTextures;
 	DX12Texture* m_brdfTexture;

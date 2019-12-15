@@ -159,7 +159,7 @@ bool CandleHealthSystem::onEvent(const Event& event) {
 		// Damage the candle
 		// TODO: Replace 10.0f with game settings damage
 		if (e.hitterID == Netcode::SPRINKLER_COMP_ID) {
-			candle->getComponent<CandleComponent>()->hitWithWater(1.0f, CandleComponent::DamageSource::SPRINKLER, e.hitterID);
+			candle->getComponent<CandleComponent>()->hitWithWater(0.3f, CandleComponent::DamageSource::SPRINKLER, e.hitterID);
 		} else {
 			int dmg = candle->getComponent<CandleComponent>()->hitWithWater(7.0f, CandleComponent::DamageSource::PLAYER, e.hitterID);
 			if (dmg > 0) {

@@ -153,3 +153,13 @@ void SailImGui::HeaderText(const char* fmt, ...) {
 	ImGui::PopStyleColor();
 }
 
+void SailImGui::cHeaderText(const char* fmt, const float end, ...) {	
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ((end - ImGui::GetCursorPosX()) * 0.5f) - (ImGui::CalcTextSize(fmt).x * 0.5f) - ImGui::GetStyle().ItemSpacing.x * 0.5f);
+	ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered));
+	va_list args;
+	va_start(args, fmt);
+	ImGui::TextV(fmt, args);
+	va_end(args);
+	ImGui::PopStyleColor();
+}
+

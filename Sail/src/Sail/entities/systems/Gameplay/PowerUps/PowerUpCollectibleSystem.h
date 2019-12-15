@@ -10,6 +10,7 @@ public:
 	PowerUpCollectibleSystem();
 	~PowerUpCollectibleSystem();
 	void init(std::vector<Entity*>* playerList);
+	void stop() override;
 	void setSpawnPoints(std::vector<glm::vec3>& points);
 	void setRespawnTime(const float time);
 	void setDuration(const float time);

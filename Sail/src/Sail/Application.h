@@ -95,6 +95,10 @@ public:
 	const UINT getFPS() const;
 	float getDelta() const;
 	float getFixedUpdateDelta() const;
+	void loadKeybinds();
+
+	void startAudio();
+	void addToAudioComponentQueue(Entity* ac);
 
 private:
 
@@ -112,7 +116,6 @@ private:
 	SettingStorage m_settingStorage;
 	std::unique_ptr<ChatWindow> m_chatWindow;
 	Camera* m_cameraRef;
-
 	// Timer
 	Timer m_timer;
 	UINT m_fps;
@@ -120,4 +123,7 @@ private:
 	float m_fixedUpdateDelta;
 
 	static std::atomic_bool s_isRunning;
+	// Vector with entities that have audioComponents on them, as these
+	// need to be attached to the audiosystem if it is created later.
+	std::vector<Entity*> audioEntitiesQueue;
 };

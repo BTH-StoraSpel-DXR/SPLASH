@@ -96,7 +96,7 @@ bool Network::host(unsigned short port, USHORT hostFlags) {
 	if (m_initializedStatus != INITIALIZED_STATUS::INITIALIZED) {
 		return false;
 	}
-
+	m_allowConnections = true;
 	m_connections.clear();
 	m_connections.reserve(128);
 
@@ -193,6 +193,10 @@ bool Network::join(const char* IP_adress, unsigned short hostport) {
 	m_initializedStatus = INITIALIZED_STATUS::IS_CLIENT;
 
 	return true;
+}
+
+void Network::setAllowJoining(bool b) {
+	m_allowConnections = b;
 }
 
 bool Network::send(const char* message, size_t size, TCP_CONNECTION_ID receiverID) {
@@ -667,7 +671,7 @@ void Network::waitForNewConnections() {
 
 		inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
 
-		if (true) {
+		if (m_allowConnections) {
 			Connection* conn = SAIL_NEW Connection;
 			conn->isConnected = true;
 			conn->socket = clientSocket;
@@ -684,6 +688,12 @@ void Network::waitForNewConnections() {
 
 			conn->thread = SAIL_NEW std::thread(&Network::listen, this, conn); //Create new listening thread for the new connection
 			m_connections[conn->tcp_id] = conn;
+		} else {
+			//TODO: send event that a connection was denied joining(maybe)?
+
+			//Close connection if m_allowConnections == false
+			closesocket(clientSocket);
+			continue;
 		}
 	}
 }

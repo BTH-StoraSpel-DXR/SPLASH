@@ -82,11 +82,11 @@ bool EndGameState::render(float dt, float alpha) {
 
 bool EndGameState::renderImgui(float dt) {
 
-	ImGui::PushFont(m_imguiHandler->getFont("Beb20"));
-	ImGui::PushFont(m_imguiHandler->getFont("Beb50"));
+	//ImGui::PushFont(m_imguiHandler->getFont("Beb20"));
+	//ImGui::PushFont(m_imguiHandler->getFont("Beb50"));
 	renderMenu();
 
-	ImGui::PopFont();
+	//ImGui::PopFont();
 	renderScore();
 
 	renderPersonalStats();
@@ -97,7 +97,7 @@ bool EndGameState::renderImgui(float dt) {
 	//WORK IN PROGRESS
 	//renderWinners();
 
-	ImGui::PopFont();
+	//ImGui::PopFont();
 
 	return true;
 }
@@ -128,7 +128,10 @@ void EndGameState::renderMenu() {
 	ImGui::SetNextWindowPos(ImVec2(m_padding, m_padding));
 	ImGui::SetNextWindowSize(ImVec2(300,700));
 	if (ImGui::Begin("##GameOverMenu", nullptr, m_standaloneButtonflags)) {
-		if (NWrapperSingleton::getInstance().isHost()) {
+		ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("Header1"));
+
+		MatchRecordSystem*& mrs = NWrapperSingleton::getInstance().recordSystem;
+		if (NWrapperSingleton::getInstance().isHost() && !(mrs && mrs->status == 2)) {
 			if (SailImGui::TextButton("Lobby")) {
 				NWrapperSingleton::getInstance().getNetworkWrapper()->setClientState(States::JoinLobby);
 				this->requestStackPop();
@@ -160,6 +163,8 @@ void EndGameState::renderScore() {
 	ImGui::SetNextWindowSize(size);
 	ImGui::SetNextWindowSizeConstraints(ImVec2(786,400),ImVec2(4000,4000));
 	if (ImGui::Begin("##PLACEMENTS", nullptr, m_backgroundOnlyflags)) {
+		ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("smalltext"));
+
 		GameDataTracker::getInstance().renderPlacement();
 	}
 	ImGui::End();
@@ -175,12 +180,14 @@ void EndGameState::renderPersonalStats() {
 	ImGui::SetNextWindowPos(pos);
 	ImGui::SetNextWindowSize(size);
 	if (ImGui::Begin("##PERSONALSTATS", nullptr, m_backgroundOnlyflags)) {
-		ImGui::PushFont(m_imguiHandler->getFont("Beb30"));
+		ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("text"));
+		//ImGui::PushFont(m_imguiHandler->getFont("Beb30"));
 		ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered));
 		ImGui::Text("Personal Stats");
 		ImGui::Separator();
 		ImGui::PopStyleColor();
-		ImGui::PopFont();
+		//ImGui::PopFont();
+		ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("smalltext"));
 		GameDataTracker::getInstance().renderPersonalStats();
 
 		
@@ -203,12 +210,14 @@ void EndGameState::renderFunStats() {
 	ImGui::SetNextWindowSize(size);
 	ImGui::SetNextWindowSizeConstraints(ImVec2(300, 200), ImVec2(4000, 4000));
 	if (ImGui::Begin("##FUNSTATS", nullptr, m_backgroundOnlyflags)) {
-		ImGui::PushFont(m_imguiHandler->getFont("Beb30"));
+		ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("text"));
+		//ImGui::PushFont(m_imguiHandler->getFont("Beb30"));
 		ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered));
 		ImGui::Text("Tidbits");
 		ImGui::Separator();
 		ImGui::PopStyleColor();
-		ImGui::PopFont();
+		ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("smalltext"));
+		//ImGui::PopFont();
 		GameDataTracker::getInstance().renderFunStats();
 	}
 	ImGui::End();
@@ -230,6 +239,7 @@ void EndGameState::renderWinners() {
 	ImGui::SetNextWindowSize(size);
 	ImGui::SetNextWindowSizeConstraints(ImVec2(786, 200), ImVec2(4000, 4000));
 	if (ImGui::Begin("##FUNSTATS", nullptr, m_backgroundOnlyflags)) {
+
 		GameDataTracker::getInstance().renderWinners();
 	}
 	ImGui::End();

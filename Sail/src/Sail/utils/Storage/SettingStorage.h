@@ -35,10 +35,10 @@ public:
 
 		void setValue(const float& _value) {
 			value = _value;
-			if (value < minVal) {
+			if (value <= minVal) {
 				value = minVal;
 			}
-			if (value > maxVal) {
+			if (value >= maxVal) {
 				value = maxVal;
 			}
 		}
@@ -58,7 +58,7 @@ public:
 	bool deSerialize(const std::string& msg, std::unordered_map<std::string, std::unordered_map<std::string, Setting>>& stat, std::unordered_map<std::string, std::unordered_map<std::string, DynamicSetting>>& dynamic);
 
 	const int teamColorIndex(const int team);
-	glm::vec3 getColor(const int team);
+	glm::vec3 getColor(const int colorIndex);
 
 	void setMap(const int mode, const int index, const int playerCount);
 

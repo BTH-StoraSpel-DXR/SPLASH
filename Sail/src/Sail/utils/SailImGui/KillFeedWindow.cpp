@@ -31,7 +31,7 @@ void KillFeedWindow::renderWindow() {
 		ImGui::SetNextWindowSizeConstraints(minSize, maxSize);
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.f, 0.f, 0.f, 0.05f));
 		ImGui::Begin("Kill Feed", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar);
-
+		ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("smalltext"));
 		float alpha = 1.f;
 		bool nothingToDisplay = true;
 		for (int i = static_cast<int>(m_kills.size()) - 1; i > -1; i--) {

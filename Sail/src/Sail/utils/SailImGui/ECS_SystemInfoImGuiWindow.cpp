@@ -5,6 +5,8 @@
 #include "../../entities/ECS.h"
 #include "../../entities/components/Components.h"
 
+#include "Sail/Application.h"
+
 ECS_SystemInfoImGuiWindow::ECS_SystemInfoImGuiWindow(bool showWindow) {
 	selectedEntity = nullptr;
 	oldSelected = nullptr;
@@ -33,9 +35,13 @@ void ECS_SystemInfoImGuiWindow::renderWindow() {
 	
 
 	if (ImGui::Begin("ECS System Entities")) {
+		ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("smalltext"));
 
 		oldSelected = selectedEntity;
 		if(ImGui::BeginChild("SYSTEMS", ImVec2(260, 0), false)) {
+			ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("smalltext"));
+
+
 			for (auto const& [key, val] : *systemMap) {
 				std::string name(key.name());
 
@@ -67,6 +73,7 @@ void ECS_SystemInfoImGuiWindow::renderWindow() {
 		ImGui::EndChild();
 		ImGui::SameLine();
 		if (ImGui::BeginChild("ENTITY", ImVec2(0, 0), false)) {
+			ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("smalltext"));
 			if (selectedEntity) {
 				ImGui::Text(std::string("Name: " + selectedEntity->getName()).c_str());
 				ImGui::Text(std::string("ID: " + std::to_string(selectedEntity->getID())).c_str());

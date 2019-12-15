@@ -19,11 +19,15 @@
 #include <string>
 #include <vector>
 
+
+#include "Sail/../../libraries/gzip/compress.hpp"
+
 //#define _LOG_TO_FILE
 #if defined(DEVELOPMENT) && defined(_LOG_TO_FILE)
 #include <fstream>
 static std::ofstream out("LogFiles/NetworkSenderSystem.cpp.log");
 #endif
+
 
 NetworkSenderSystem::NetworkSenderSystem() : BaseComponentSystem() {
 	registerComponent<NetworkSenderComponent>(true, true, true);
@@ -155,33 +159,44 @@ void NetworkSenderSystem::update() {
 	m_nrOfEventsToSendToSelf = 0;
 
 
-	// -+-+-+-+-+-+-+-+ send the serialized archive over the network -+-+-+-+-+-+-+-+ 
-	std::string binaryDataToSendToOthers = osToOthers.str();
+	// -+-+-+-+-+-+-+-+ compress and send the serialized archive over the network -+-+-+-+-+-+-+-+ 
+	std::string uncompOthers    = osToOthers.str();
+	const char* uncompOthersPtr = uncompOthers.data();
+	std::string compOthers      = gzip::compress(uncompOthersPtr, uncompOthers.size());
+
 	if (NWrapperSingleton::getInstance().isHost()) {
-		NWrapperSingleton::getInstance().getNetworkWrapper()->sendSerializedDataAllClients(binaryDataToSendToOthers);
+		//Host's message is included here
+		m_HOSTONLY_dataToForward.push(compOthers);
+		MatchRecordSystem* mrs = NWrapperSingleton::getInstance().recordSystem;
+		if (mrs) {
+			if (mrs->status == 1) {
+				mrs->recordPackages(m_HOSTONLY_dataToForward);
+			}
+		}
 
 		// Host doesn't get their messages sent back to them so we need to send them to the killCamReceiverSystem from here
-		m_killCamSystem->handleIncomingData(binaryDataToSendToOthers);
+		m_killCamSystem->handleIncomingData(compOthers);
 	} else {
-		NWrapperSingleton::getInstance().getNetworkWrapper()->sendSerializedDataToHost(binaryDataToSendToOthers);
+		NWrapperSingleton::getInstance().getNetworkWrapper()->sendSerializedDataToHost(compOthers);
 	}
 
 
-	// -+-+-+-+-+-+-+-+ send Events directly to our own ReceiverSystem -+-+-+-+-+-+-+-+ 
-	std::string binaryDataToSendToSelf = osToSelf.str();
-	m_receiverSystem->pushDataToBuffer(binaryDataToSendToSelf);
+	// -+-+-+-+-+-+-+-+ compress and send Events directly to our own ReceiverSystem -+-+-+-+-+-+-+-+ 
+	std::string uncompSelf    = osToSelf.str();
+	const char* uncompSelfPtr = uncompSelf.data();
+	std::string compSelf      = gzip::compress(uncompSelfPtr, uncompSelf.size());
 
-
+	m_receiverSystem->pushDataToBuffer(compSelf);
 
 	// -+-+-+-+-+-+-+-+ Host forwards all messages to all clients -+-+-+-+-+-+-+-+ 
 	std::scoped_lock lock(m_forwardBufferLock);
 	// The host forwards all the incoming messages they have to all the clients
 	while (!m_HOSTONLY_dataToForward.empty()) {
-		std::string dataFromClient = m_HOSTONLY_dataToForward.front();
-
+		std::string& dataFromClient = m_HOSTONLY_dataToForward.front();
 
 		// This if statement shouldn't be needed since m_dataToForwardToClients will be empty unless you're the host
-		if (NWrapperSingleton::getInstance().isHost()) {
+		MatchRecordSystem* mrs = NWrapperSingleton::getInstance().recordSystem;
+		if (NWrapperSingleton::getInstance().isHost() || (mrs && mrs->status == 2)) {
 			NWrapperSingleton::getInstance().getNetworkWrapper()->sendSerializedDataAllClients(dataFromClient);
 		}
 		m_HOSTONLY_dataToForward.pop();
@@ -213,6 +228,10 @@ void NetworkSenderSystem::queueEvent(NetworkSenderEvent* event) {
 void NetworkSenderSystem::pushDataToBuffer(const std::string& data) {
 	std::lock_guard<std::mutex> lock(m_forwardBufferLock);
 	m_HOSTONLY_dataToForward.push(data);
+}
+
+void NetworkSenderSystem::setDataBuffer(const std::queue<std::string>& data) {
+	m_HOSTONLY_dataToForward = data;
 }
 
 #ifdef DEVELOPMENT
@@ -564,6 +583,14 @@ void NetworkSenderSystem::writeEventToArchive(NetworkSenderEvent* event, Netcode
 
 		ar(data->powerUpComponentID);
 		ar(data->pickedByPlayer);
+	}
+	break;
+	case Netcode::MessageType::SET_CENTER:
+	{
+		Netcode::MessageSetCenter* data = static_cast<Netcode::MessageSetCenter*>(event->data);
+
+		ar(data->compID);
+		ArchiveHelpers::saveVec3(ar, data->centerOffset);
 	}
 	break;
 	default:

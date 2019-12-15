@@ -76,4 +76,7 @@ private:
 
 	// #netcodeNote not thread safe, might cause issues
 	float m_yaw, m_pitch, m_roll;
+
+	bool m_ragdolling = false;
+	bool m_ragdollSwitchWasPressed = false;
 };

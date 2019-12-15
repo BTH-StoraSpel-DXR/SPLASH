@@ -39,6 +39,7 @@ void ProjectileSystem::update(float dt) {
 		auto projectileCollisions = collisionComp->collisions;
 		
 		bool collidedThisTick = false;
+		bool collidedWithCandle = false;
 
 		for (auto& collision : projectileCollisions) {
 			collidedThisTick = true;
@@ -63,6 +64,7 @@ void ProjectileSystem::update(float dt) {
 			if (collision.entity->hasComponent<CandleComponent>() && e->hasComponent<LocalOwnerComponent>()) {
 				CandleComponent* cc = collision.entity->getComponent<CandleComponent>();
 				
+				collidedWithCandle = true;
 
 				// If that candle isn't our own
 				if (!(collision.entity->hasComponent<LocalOwnerComponent>() && cc->isCarried) && !cc->wasHitByMeThisTick) {
@@ -97,7 +99,7 @@ void ProjectileSystem::update(float dt) {
 			//e->getComponent<NetworkSenderComponent>()->addMessageType(Netcode::MessageType::UPDATE_PROJECTILE_ONCE);
 
 			// The projectile owner is responsible for destroying their own projectiles
-			if (!e->isAboutToBeDestroyed() && e->hasComponent<LocalOwnerComponent>() && Utils::rnd() < DESTRUCTION_PROBABILITY) {
+			if (!e->isAboutToBeDestroyed() && e->hasComponent<LocalOwnerComponent>() && (collidedWithCandle || Utils::rnd() < DESTRUCTION_PROBABILITY)) {
 				e->getComponent<NetworkSenderComponent>()->addMessageType(Netcode::MessageType::DESTROY_ENTITY);
 			
 				// This is fine since NetworkSenderSystem will run before EntityRemovalSystem

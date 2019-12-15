@@ -44,13 +44,12 @@ TonemapShader::TonemapShader()
 	// Specify dispatch requirements
 	m_settings.usesCBV_SRV_UAV = true;
 	m_settings.numInputTextures = 1;
-	m_settings.numOutputTextures = 1;
+	m_settings.numOutputTextures = 0;
 
 	// Compute shader runs 256 x threads, therefore divide resolution by that when dispatching
 	m_settings.threadGroupXScale = 1.f / 256.f;
 
 	m_output = std::make_unique<PostProcessPipeline::PostProcessOutput>();
-	m_output->outputTexture = getPipeline()->getRenderableTexture("output");
 
 }
 TonemapShader::~TonemapShader() {}

@@ -70,6 +70,11 @@ public:
 	*/
 	bool join(const char* host_ip, unsigned short hostport);
 	/*
+		Allow or disallow new connections as host.
+	*/
+	virtual void setAllowJoining(bool b);
+
+	/*
 		Send a message to connection "receiverID".
 		If SetupClient has been called, any number passed to receiverID will all send to the connected host.
 		If SetupHost has been called, passing -1 to receiverID will send the message to all connected clients.
@@ -175,6 +180,7 @@ private:
 	bool m_shutdown = false;
 	bool m_shutdownUDP = false;
 	char m_serverMetaDesc[HOST_META_DESC_SIZE];
+	bool m_allowConnections = true;
 
 	//TCP CONNECTION
 	SOCKET m_soc = 0;

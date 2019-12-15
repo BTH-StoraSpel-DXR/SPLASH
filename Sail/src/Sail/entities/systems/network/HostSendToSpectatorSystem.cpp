@@ -8,9 +8,10 @@
 #include "Sail/entities/Entity.h"
 
 #include "Network/NWrapperSingleton.h"
-#include "Sail/../../libraries/cereal/archives/portable_binary.hpp"
 
-#include "../src/Network/NWrapperSingleton.h"
+#include "cereal/archives/portable_binary.hpp"
+#include "gzip/compress.hpp"
+
 
 HostSendToSpectatorSystem::HostSendToSpectatorSystem() {
 	registerComponent<NetworkSenderComponent>(true, true, true);
@@ -99,8 +100,11 @@ void HostSendToSpectatorSystem::sendEntityCreationPackage(Netcode::PlayerID Play
 
 
 	// -+-+-+-+-+-+-+-+ send the serialized archive over the network -+-+-+-+-+-+-+-+ 
-	std::string binaryData = dataString.str();
-	NWrapperSingleton::getInstance().getNetworkWrapper()->sendSerializedDataToClient(binaryData, PlayerId);
+	std::string uncompressed = dataString.str();
+	const char* uncompressedPtr = uncompressed.data();
+	std::string compressed = gzip::compress(uncompressedPtr, uncompressed.size());
+
+	NWrapperSingleton::getInstance().getNetworkWrapper()->sendSerializedDataToClient(compressed, PlayerId);
 }
 
 #ifdef DEVELOPMENT

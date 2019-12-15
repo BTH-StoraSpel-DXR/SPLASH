@@ -14,7 +14,7 @@ NodeSystem::~NodeSystem() {
 
 }
 
-void NodeSystem::setNodes(const std::vector<Node>& nodes, const std::vector<std::vector<unsigned int>>& connections, unsigned int xMax, unsigned int zMax) {
+void NodeSystem::setNodes(const std::vector<Node>& nodes, const std::vector<std::vector<unsigned int>>& connections, const unsigned int xMax, const unsigned int zMax) {
 #ifdef _DEBUG_NODESYSTEM
 	if ( m_shader == nullptr ) {
 		SAIL_LOG_ERROR("Shader need to be set in the node system during debug.");
@@ -31,38 +31,51 @@ void NodeSystem::setNodes(const std::vector<Node>& nodes, const std::vector<std:
 	int currNodeEntity = 0;
 	for ( int i = 0; i < m_nodes.size(); i++ ) {
 		m_nodeEntities.push_back(ECS::Instance()->createEntity("Node " + std::to_string(i)));
-		m_nodeEntities[currNodeEntity]->addComponent<TransformComponent>(m_nodes[i].position)->setScale(0.5f);
+		m_nodeEntities[currNodeEntity]->addComponent<TransformComponent>(m_nodes[i].position)->setScale(0.2f);
 		m_nodeEntities[currNodeEntity]->addComponent<RealTimeComponent>();
 		m_nodeEntities[currNodeEntity]->addComponent<CullingComponent>();
 		m_nodeEntities[currNodeEntity]->addComponent<RenderInActiveGameComponent>();
 		if (m_nodes[i].blocked) {
-			auto blockedNodeModel = &Application::getInstance()->getResourceManager().getModelCopy("sphere.fbx", m_shader);
-			blockedNodeModel->getMesh(0)->getMaterial()->setAlbedoTexture("missing.tga");
-			blockedNodeModel->getMesh(0)->getMaterial()->setColor(glm::vec4(1.f, 0.f, 0.f, 1.f));
-			blockedNodeModel->setCastShadows(false);
-			m_nodeEntities[currNodeEntity++]->addComponent<ModelComponent>(blockedNodeModel);
+			m_nodeEntities[currNodeEntity++]->addComponent<ModelComponent>(m_blockedNode);
 		} else {
-			auto nodeModel = &Application::getInstance()->getResourceManager().getModelCopy("sphere.fbx", m_shader);
-			nodeModel->getMesh(0)->getMaterial()->setAlbedoTexture("missing.tga");
-			nodeModel->getMesh(0)->getMaterial()->setColor(glm::vec4(0.f, 1.f, 0.f, 1.f));
-			nodeModel->setCastShadows(false);
-			m_nodeEntities[currNodeEntity++]->addComponent<ModelComponent>(nodeModel);
+			m_nodeEntities[currNodeEntity++]->addComponent<ModelComponent>(m_pathNodes[m_maxColourID]);
 		}
 	}
 
 
 	for (int i = 0; i < m_nodes.size(); i++) {
 		auto currNodeConnections = m_connections[i];
+		m_connectionEntities.push_back(std::vector<std::pair<unsigned int, Entity::SPtr>>());
+		int currConnIndex = 0;
 		for (int j = 0; j < currNodeConnections.size(); j++) {
-			glm::vec3 pos = m_nodes[i].position;
-			glm::vec3 dir = m_nodes[currNodeConnections[j]].position - pos;
-			pos += glm::normalize(dir) * glm::length(dir) * 0.5f;
-			m_nodeEntities.push_back(ECS::Instance()->createEntity("Connection " + std::to_string(i)));
-			m_nodeEntities[currNodeEntity]->addComponent<TransformComponent>(pos)->setScale(0.25f);
-			m_nodeEntities[currNodeEntity]->addComponent<RealTimeComponent>();
-			m_nodeEntities[currNodeEntity]->addComponent<ModelComponent>(m_connectionModel);
-			m_nodeEntities[currNodeEntity]->addComponent<CullingComponent>();
-			m_nodeEntities[currNodeEntity++]->addComponent<RenderInActiveGameComponent>();
+			// Only add forward-connections (to save mesh space)
+			if (currNodeConnections[j] > i) {
+				glm::vec3 pos = m_nodes[i].position;
+				glm::vec3 dir = m_nodes[currNodeConnections[j]].position - pos;
+				auto dirLength = glm::length(dir);
+				auto normalizedDir = glm::normalize(dir);
+				pos += normalizedDir * dirLength * 0.5f;
+				m_connectionEntities[i].emplace_back(currNodeConnections[j], ECS::Instance()->createEntity("Connection " + std::to_string(i)).get());
+				float dirX = normalizedDir.x;
+				float dirZ = normalizedDir.z;
+				// To avoid division by zero
+				dirZ = dirZ != 0 ? dirZ : 0.001f;
+				float yaw = 0.f;
+				if (dirZ < 0.f) {
+					yaw = glm::atan(dirX / dirZ) - glm::pi<float>();
+				} else {
+					yaw = glm::atan(dirX / dirZ);
+				}
+
+				auto transComp = m_connectionEntities[i][currConnIndex].second->addComponent<TransformComponent>(pos);
+				transComp->setRotations(0.f, yaw, 0.f);
+				transComp->setScale(0.01f, 0.01f, dirLength * 1.5f);
+				m_connectionEntities[i][currConnIndex].second->addComponent<RealTimeComponent>();
+
+				m_connectionEntities[i][currConnIndex].second->addComponent<ModelComponent>(m_pathNodes[m_maxColourID]);
+				m_connectionEntities[i][currConnIndex].second->addComponent<CullingComponent>();
+				m_connectionEntities[i][currConnIndex++].second->addComponent<RenderInActiveGameComponent>();
+			}
 		}
 	}
 #endif
@@ -71,17 +84,19 @@ void NodeSystem::setNodes(const std::vector<Node>& nodes, const std::vector<std:
 std::vector<NodeSystem::Node> NodeSystem::getPath(const NodeSystem::Node& from, const NodeSystem::Node& to) {
 	std::vector<NodeSystem::Node> nPath;
 	if (from.index != to.index && !m_nodes[to.index].blocked && !m_nodes[from.index].blocked && m_connections[to.index].size() > 0 && m_connections[from.index].size() > 0) {
+#ifdef DEVELOPMENT
 		auto start = std::chrono::high_resolution_clock::now();
+#endif
 		auto path = aStar(from.index, to.index);
+#ifdef DEVELOPMENT
 		m_pathSearchTimes[m_currSearchTimeIndex % NUM_SEARCH_TIMES] = 
 			static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count());
-
-		/*if (m_pathSearchTimes[m_currSearchTimeIndex % NUM_SEARCH_TIMES] > 5000) {
+		if (m_pathSearchTimes[m_currSearchTimeIndex % NUM_SEARCH_TIMES] > 5000) {
 			SAIL_LOG("Finding a path (" + Utils::toStr(from.position) + "->" + Utils::toStr(to.position) + ") took " + 
 					 std::to_string(static_cast<float>(m_pathSearchTimes[m_currSearchTimeIndex % NUM_SEARCH_TIMES]) / 1000.f) + "ms, size of path: " + std::to_string(path.size()));
-		}*/
+		}
 		m_currSearchTimeIndex++;
-		//auto path = BFS(from.index, to.index);
+#endif
 		
 		size_t size = path.size();
 		for ( size_t i = size - 1; i < size; i-- ) {
@@ -100,7 +115,7 @@ const NodeSystem::Node& NodeSystem::getNearestNode(const glm::vec3& position) co
 	unsigned int index = 0;
 
 	for ( unsigned int i = 0; i < m_nodes.size(); i++ ) {
-		if (!m_nodes[i].blocked) {
+		if (!m_nodes[i].blocked && m_connections[m_nodes[i].index].size() > 0) {
 			float d = glm::distance2(m_nodes[i].position, position);
 			if (d < dist && !m_nodes[i].blocked) {
 				index = i;
@@ -120,12 +135,8 @@ const std::vector<NodeSystem::Node>& NodeSystem::getNodes() const {
 	return m_nodes;
 }
 
-const unsigned int NodeSystem::getAverageSearchTime() const {
-	float searchTime = 0.f;
-	for (unsigned int i = 0; i < std::min(m_currSearchTimeIndex, NUM_SEARCH_TIMES); i++) {
-		searchTime += m_pathSearchTimes[i];
-	}
-	return searchTime / static_cast<float>(std::min(m_currSearchTimeIndex, NUM_SEARCH_TIMES));
+const std::vector<std::vector<unsigned int>>& NodeSystem::getConnections() const {
+	return m_connections;
 }
 
 const unsigned int NodeSystem::getXMax() const {
@@ -149,21 +160,64 @@ void NodeSystem::stop() {
 }
 
 #ifdef _DEBUG_NODESYSTEM
+void NodeSystem::colorPath(const std::vector<NodeSystem::Node>& path, const unsigned int colourID) {
+	Model* modelToSet = m_pathNodes[colourID];
+	for (int i = 0; i < path.size(); i++) {
+		// Colour all affected nodes
+		m_nodeEntities[path[i].index]->getComponent<ModelComponent>()->setModel(modelToSet);
+
+		// Colour all affected backward-connections
+		if (i > 0) {
+			for (int j = 0; j < m_connectionEntities[path[i].index].size(); j++) {
+				if (m_connectionEntities[path[i].index][j].first == path[i - 1].index) {
+					m_connectionEntities[path[i].index][j].second->getComponent<ModelComponent>()->setModel(modelToSet);
+				}
+			}
+		}
+		// Colour all affected forward-connections
+		if (i < path.size() - 1) {
+			for (int j = 0; j < m_connectionEntities[path[i].index].size(); j++) {
+				if (m_connectionEntities[path[i].index][j].first == path[i + 1].index) {
+					m_connectionEntities[path[i].index][j].second->getComponent<ModelComponent>()->setModel(modelToSet);
+				}
+			}
+		}
+	}
+}
+
 void NodeSystem::setDebugModelAndScene(Shader* shader) {
 	m_shader = shader;
 
-	m_connectionModel = &Application::getInstance()->getResourceManager().getModelCopy("sphere.fbx", m_shader);
-	m_connectionModel->getMesh(0)->getMaterial()->setAlbedoTexture("missing.tga");
-	m_connectionModel->getMesh(0)->getMaterial()->setColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
-	m_connectionModel->setCastShadows(false);
-}
+	Application::getInstance()->getResourceManager().getModel("NodeSystemBall", m_shader);
 
-std::vector<Entity::SPtr>& NodeSystem::getNodeEntities() {
-	return m_nodeEntities;
+	m_blockedNode = &Application::getInstance()->getResourceManager().getModelCopy("NodeSystemBall", m_shader);
+	m_blockedNode->getMesh(0)->getMaterial()->setAlbedoTexture("missing.tga");
+	m_blockedNode->getMesh(0)->getMaterial()->setColor(glm::vec4(1.f, 0.f, 0.f, 1.f));
+	m_blockedNode->setCastShadows(false);
+
+	for (int i = 0; i < m_maxColourID; i++) {
+		m_pathNodes.emplace_back(&Application::getInstance()->getResourceManager().getModelCopy("NodeSystemBall", m_shader));
+		m_pathNodes[i]->getMesh(0)->getMaterial()->setAlbedoTexture("missing.tga");
+		m_pathNodes[i]->getMesh(0)->getMaterial()->setColor(glm::vec4(glm::linearRand(0.5f, 1.f), glm::linearRand(0.5f, 1.f), glm::linearRand(0.5f, 1.f), 1.f));
+		m_pathNodes[i]->setCastShadows(false);
+	}
+
+	m_pathNodes.emplace_back(&Application::getInstance()->getResourceManager().getModelCopy("NodeSystemBall", m_shader));
+	m_pathNodes[m_maxColourID]->getMesh(0)->getMaterial()->setAlbedoTexture("missing.tga");
+	m_pathNodes[m_maxColourID]->getMesh(0)->getMaterial()->setColor(glm::vec4(0.3f, 0.3f, 0.3f, 1.f));
+	m_pathNodes[m_maxColourID]->setCastShadows(false);
 }
 #endif
 
 #ifdef DEVELOPMENT
+const unsigned int NodeSystem::getAverageSearchTime() const {
+	float searchTime = 0.f;
+	for (unsigned int i = 0; i < std::min(m_currSearchTimeIndex, NUM_SEARCH_TIMES); i++) {
+		searchTime += m_pathSearchTimes[i];
+	}
+	return searchTime / static_cast<float>(std::min(m_currSearchTimeIndex, NUM_SEARCH_TIMES));
+}
+
 unsigned int NodeSystem::getByteSize() const {
 	unsigned int size = sizeof(*this);
 	size += m_connections.size() * sizeof(std::vector<unsigned int>);

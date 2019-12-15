@@ -30,7 +30,7 @@ D3D12_STATE_SUBOBJECT* DXRUtils::PSOBuilder::append(D3D12_STATE_SUBOBJECT_TYPE t
 	return so;
 }
 
-void DXRUtils::PSOBuilder::addLibrary(const std::string& shaderPath, const std::vector<LPCWSTR> names) {
+void DXRUtils::PSOBuilder::addLibrary(const std::string& shaderPath, const std::vector<LPCWSTR>& names, const std::vector<DxcDefine>& defines) {
 
 	// Add names to the list of names/export to be configured in generate()
 	m_shaderNames.insert(m_shaderNames.end(), names.begin(), names.end());
@@ -44,6 +44,7 @@ void DXRUtils::PSOBuilder::addLibrary(const std::string& shaderPath, const std::
 	shaderDesc.filePath = stemp.c_str();
 	shaderDesc.entryPoint = L"";
 	shaderDesc.targetProfile = L"lib_6_3";
+	shaderDesc.defines = defines;
 
 	IDxcBlob* pShaders = nullptr;
 	ThrowIfFailed(m_dxilCompiler.compile(&shaderDesc, &pShaders));

@@ -31,6 +31,7 @@ cbuffer PSSceneCBuffer : register(b0) {
     PointlightInput pointLights[NUM_POINT_LIGHTS];
     SpotlightInput spotLights[NUM_SPOT_LIGHTS];
     IndexMap shadowTextureIndexMap[NUM_TOTAL_LIGHTS]; // Maps light indices to shadow texture indices
+    uint numShadowTextures;
 }
 
 Texture2D<float4> albedoBounceOne : register(t0);
@@ -83,15 +84,10 @@ Outputs PSMain(PSIn input) {
 
     float shadowOne[NUM_TOTAL_LIGHTS];
     float shadowTwo[NUM_TOTAL_LIGHTS];
-    for (uint i = 0; i < NUM_SHADOW_TEXTURES; i++) {
+    for (uint i = 0; i < numShadowTextures; i++) {
         float2 shadowAmount = shadows.Sample(PSss, float3(input.texCoord, i)).rg; // z parameter in texCoords is the array index
         shadowOne[i] = shadowAmount.r;
         shadowTwo[i] = shadowAmount.g;
-    }
-    // Fill out the rest of the array with zeros if NUM_SHADOW_TEXTURES < NUM_TOTAL_LIGHTS
-    for (uint j = NUM_SHADOW_TEXTURES; j < NUM_TOTAL_LIGHTS; j++) {
-        shadowOne[j] = 0.f;
-        shadowTwo[j] = 0.f;
     }
     
     pixelOne.invViewDir = cameraPosition - pixelOne.worldPosition;

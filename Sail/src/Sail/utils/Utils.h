@@ -92,6 +92,7 @@ namespace Utils {
 	bool writeFileTrunc(const std::string& filepath, const std::string& content);
 	bool writeFileAppend(const std::string& filepath, const std::string& content);
 	std::wstring toWStr(const glm::vec3& vec);
+	std::string toStr(const glm::vec4& vec);
 	std::string toStr(const glm::vec3& vec);
 	std::string toStr(const glm::vec2& vec);
 	float rnd();
@@ -111,6 +112,15 @@ namespace Utils {
 		ind3d.y = ind / xMax;
 		ind3d.x = ind % xMax;
 		return ind3d;
+	}
+	inline int testSign(float x) {
+		if (x > 0.f) {
+			return 1;
+		} else if (x < 0.f) {
+			return -1;
+		} else {
+			return 0;
+		}
 	}
 
 	uint32_t packQuarterFloat(uint8_t a, uint8_t b, uint8_t c, uint8_t d);

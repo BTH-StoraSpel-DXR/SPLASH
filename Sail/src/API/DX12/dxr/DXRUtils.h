@@ -9,7 +9,7 @@ namespace DXRUtils {
 		~PSOBuilder();
 
 		D3D12_STATE_SUBOBJECT* append(D3D12_STATE_SUBOBJECT_TYPE type, const void* desc);
-		void addLibrary(const std::string& shaderPath, const std::vector<LPCWSTR> names);
+		void addLibrary(const std::string& shaderPath, const std::vector<LPCWSTR>& names, const std::vector<DxcDefine>& defines = std::vector<DxcDefine>());
 		void addHitGroup(LPCWSTR exportName, LPCWSTR closestHitShaderImport, LPCWSTR anyHitShaderImport = nullptr, LPCWSTR intersectionShaderImport = nullptr, D3D12_HIT_GROUP_TYPE type = D3D12_HIT_GROUP_TYPE_TRIANGLES);
 		void addSignatureToShaders(const std::vector<LPCWSTR>& shaderNames, ID3D12RootSignature** rootSignature);
 		void setGlobalSignature(ID3D12RootSignature** rootSignature);

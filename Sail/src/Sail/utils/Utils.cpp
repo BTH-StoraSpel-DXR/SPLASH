@@ -33,6 +33,13 @@ std::wstring Utils::toWStr(const glm::vec3& vec) {
 	return ss.str();
 }
 
+std::string Utils::toStr(const glm::vec4& vec) {
+	std::stringstream ss;
+	ss.precision(2);
+	ss << "[X: " << vec.x << ", Y: " << vec.y << ", Z: " << vec.z << ", W: " << vec.w << "]";
+	return ss.str();
+}
+
 std::string Utils::toStr(const glm::vec3& vec) {
 	std::stringstream ss;
 	ss.precision(2);

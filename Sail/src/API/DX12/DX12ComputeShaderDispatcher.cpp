@@ -27,6 +27,7 @@ Shader::ComputeShaderOutput& DX12ComputeShaderDispatcher::dispatch(Shader& compu
 	assert(computeShader.getPipeline()->isComputeShader()); // Not a compute shader
 	auto* dxShaderPipeline = static_cast<DX12ShaderPipeline*>(computeShader.getPipeline());
 	
+
 	auto* dxCmdList = static_cast<ID3D12GraphicsCommandList4*>(cmdList);
 	const auto& settings = computeShader.getComputeSettings();
 
@@ -42,7 +43,7 @@ Shader::ComputeShaderOutput& DX12ComputeShaderDispatcher::dispatch(Shader& compu
 	// Bind input textures
 	for (unsigned int i = 0; i < settings->numInputTextures; i++) {
 		auto& tex = computeShader.getComputeInputForIndex(input, i);
-		DX12ATexture* texture = static_cast<DX12ATexture*>(tex.second);
+		DX12ATexture* texture = (DX12ATexture*)tex.second;
 		
 		if (texture->isRenderable()) {
 			dxShaderPipeline->setTexture2D(tex.first, (RenderableTexture*)texture, dxCmdList);

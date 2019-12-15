@@ -71,6 +71,8 @@ void CandlePlacementSystem::toggleCandlePlacement(Entity* e) {
 				moveC->oldVelocity = glm::vec3(0.f);
 			}
 			candleTransComp->setCenter(glm::vec3(0.0f));
+			
+
 		} else {
 			candleComp->isCarried = false;
 		}
@@ -97,6 +99,13 @@ void CandlePlacementSystem::toggleCandlePlacement(Entity* e) {
 				// position and rotation.
 				senderC->removeMessageType(Netcode::MessageType::CHANGE_LOCAL_POSITION);
 				senderC->removeMessageType(Netcode::MessageType::CHANGE_LOCAL_ROTATION);
+				NWrapperSingleton::getInstance().queueGameStateNetworkSenderEvent(
+					Netcode::MessageType::SET_CENTER,
+					SAIL_NEW Netcode::MessageSetCenter{
+						e->getComponent<NetworkReceiverComponent>()->m_id,
+						glm::vec3(0.0f)
+					}, false
+				);
 			} else {
 				// If we're no longer holding the candle then start sending its position and rotation
 				// so that other people will be able to see it when we throw it.

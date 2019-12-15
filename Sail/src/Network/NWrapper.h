@@ -38,8 +38,8 @@ struct Player {
 	bool justJoined = true;
 	StateStatus lastStateStatus;
 
-	Player(Netcode::PlayerID setID = HOST_ID, std::string setName = "Hans")
-		: name(setName), id(setID)
+	Player(Netcode::PlayerID setID = HOST_ID, std::string setName = "Hans", char team = -1)
+		: name(setName), id(setID), team(team)
 	{
 		name.reserve(MAX_NAME_LENGTH);
 	}
@@ -74,7 +74,7 @@ public:
 
 	virtual bool host(int port = 54000) = 0;
 	virtual bool connectToIP(char* = "127.0.0.1:54000") = 0;
-
+	virtual void setAllowJoining(bool b) {};
 	virtual void sendChatMsg(std::string msg) = 0;
 
 	void sendSerializedDataAllClients(const std::string& data);

@@ -41,6 +41,8 @@ public:
 	// Sends events to the state
 
 protected:
+	bool m_isHost = false;
+
 	Application* m_app = nullptr;
 	Input* m_input = nullptr;
 	NWrapper* m_network = nullptr;

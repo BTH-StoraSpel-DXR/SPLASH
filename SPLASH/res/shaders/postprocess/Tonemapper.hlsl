@@ -1,5 +1,5 @@
 Texture2D sourceTexture : register(t0);
-RWTexture2D<float4> output : register(u10);
+RWTexture2D<float4> output : register(u10) : SAIL_IGNORE;
 
 SamplerState CSss : register(s2);
 

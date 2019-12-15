@@ -47,9 +47,16 @@ namespace FSM {
 		virtual void reset(Entity* entity) = 0;
 
 		virtual void init(Entity* entity) = 0;
+		
+#ifdef DEVELOPMENT
+		const std::string getName() {
+			return typeid(*this).name();
+		}
+#endif
 
 	protected:
 		std::vector<std::pair<Transition*, BaseState*>> m_transitions;
+		float m_stateTimer;
 
 	};
 

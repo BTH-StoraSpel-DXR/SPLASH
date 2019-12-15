@@ -29,10 +29,18 @@ private:
 	bool loadModels(Application* app);
 	bool loadTextures(Application* app);
 
+	void loadModel(ResourceManager& rm, std::string filename, Shader* shader = nullptr, const ResourceManager::ImporterType type = ResourceManager::ImporterType::SAIL_FBXSDK);
+	void loadTexture(ResourceManager& rm, const char* filename);
+
+	void waitUntilMemoryIsBelow(size_t size);
+	size_t MB_to_Byte(size_t sizeMB);
 
 private:
 	Input* m_input = nullptr;
 	Application* m_app = nullptr;
 	std::future<bool> m_modelThread;
+
+	std::mutex m_waitMutex;
+	size_t m_nrOfWaits = 0;
 };
 

@@ -51,5 +51,6 @@ private:
 	void dealWithDeathSound(AudioComponent* audioC, float dt);
 	void dealwithInsanitySound(AudioComponent* audioC, float dt);
 	void hotFixAmbiance(Entity* e, AudioComponent* audioC);
+
 };
 

@@ -2,6 +2,7 @@
 
 #include "Sail/Application.h"
 #include "Sail/api/RenderableTexture.h"
+#include "API/DX12/resources/DX12RenderableTexture.h"
 #include "Sail/api/ComputeShaderDispatcher.h"
 
 class PostProcessPipeline final : public EventReceiver {
@@ -29,7 +30,7 @@ public:
 		m_stages.insert({name, StageData(std::make_unique<T>(), resolutionScale, textureSizeDifference)});
 	}
 
-	RenderableTexture* run(RenderableTexture* baseTexture, void* cmdList = nullptr);
+	RenderableTexture* run(RenderableTexture* baseTexture, DX12RenderableTexture** gbufferTextures, void* cmdList = nullptr);
 
 	void setBloomInput(RenderableTexture* bloomTexture);
 

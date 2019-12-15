@@ -125,9 +125,10 @@ void InGameMenuState::renderMenu() {
 	);
 	ImGui::SetNextWindowPos(pos);
 	ImGui::SetNextWindowSize(size);
-	ImGui::PushFont(m_imGuiHandler->getFont("Beb60"));
+	//ImGui::PushFont(m_imGuiHandler->getFont("Beb60"));
 
 	if (ImGui::Begin("##Pause Menu", nullptr, m_standaloneButtonflags)) {
+		ImGui::SetWindowFontScale(m_imGuiHandler->getFontScaling("Header0"));
 		if (SailImGui::TextButton("Close menu") || (!m_openedThisFrame && ImGui::IsKeyPressed(KeyBinds::SHOW_IN_GAME_MENU))) {
 			Input::HideCursor(true);
 			this->requestStackPop();
@@ -161,7 +162,7 @@ void InGameMenuState::renderMenu() {
 	}
 
 	ImGui::End();
-	ImGui::PopFont();
+	//ImGui::PopFont();
 
 }
 
@@ -173,9 +174,11 @@ void InGameMenuState::renderOptions() {
 
 	if (ImGui::Begin("##OptionWindow", NULL, m_backgroundOnlyflags)) {
 
-		ImGui::PushFont(m_imGuiHandler->getFont("Beb40"));
+		//ImGui::PushFont(m_imGuiHandler->getFont("Beb40"));
+		ImGui::SetWindowFontScale(m_imGuiHandler->getFontScaling("Header2"));
 		SailImGui::HeaderText("Options");
-		ImGui::PopFont();
+		ImGui::SetWindowFontScale(m_imGuiHandler->getFontScaling("text"));
+		//ImGui::PopFont();
 		ImGui::Separator();
 		m_optionsWindow.renderWindow();
 	}

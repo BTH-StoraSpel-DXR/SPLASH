@@ -1,0 +1,1 @@
+All ".SPLASH" files in this folder will be removed by SPLASH when a new lobby is hosted on this computer.
