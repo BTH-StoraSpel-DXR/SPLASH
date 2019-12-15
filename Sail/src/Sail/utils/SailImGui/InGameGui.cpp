@@ -59,7 +59,7 @@ void InGameGui::renderWindow() {
 
 		SanityComponent* c1 = m_player->getComponent<SanityComponent>();
 		SprintingComponent* c2 = m_player->getComponent<SprintingComponent>();
-		CandleComponent* c3;
+		CandleComponent* c3 = nullptr;
 		GunComponent* c4 = m_player->getComponent<GunComponent>();
 		PowerUpComponent* c5 = m_player->getComponent<PowerUpComponent>();
 		ImGui::Begin("GUI", NULL, flags);
@@ -94,41 +94,41 @@ void InGameGui::renderWindow() {
 			}
 			CustomImGui::CustomProgressBar(val, ImVec2(-1, 0), "Stamina", color);
 		}
-		if (c3) {
-			float health = c3->health / 20;
-			CustomImGui::CustomProgressBar(health, ImVec2(-1, 0), "Health", ImVec4(1,0,0,1));
-		}
+		//if (c3) {
+		//	float health = c3->health / 20;
+		//	CustomImGui::CustomProgressBar(health, ImVec2(-1, 0), "Health", ImVec4(1,0,0,1));
+		//}
 		ImGui::End();
 
 		ImGui::Begin("TorchThrowButton", NULL, flags);
 		ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("text"));
 
 		auto* imguiHandler = app->getImGuiHandler();
-		if (c3) {
-			Texture& testTexture = app->getResourceManager().getTexture("Icons/TorchThrow2.tga");
+		//if (c3) {
+		//	Texture& testTexture = app->getResourceManager().getTexture("Icons/TorchThrow2.tga");
 
-			if (c3->isLit && c3->isCarried && c3->candleToggleTimer > 2.f) {
-				ImGui::Image(imguiHandler->getTextureID(&testTexture), ImVec2(55, 55), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1));
-			}
-			else {
-				ImGui::Image(imguiHandler->getTextureID(&testTexture), ImVec2(55, 55), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0.3f, 0.3f, 0.3f, 1));
-			}
-			ImGui::SetWindowPos(ImVec2(screenWidth - ImGui::GetWindowSize().x - 300, screenHeight - ImGui::GetWindowSize().y - 50));
-		}
+		//	if (c3->isLit && c3->isCarried && c3->candleToggleTimer > 2.f) {
+		//		ImGui::Image(imguiHandler->getTextureID(&testTexture), ImVec2(55, 55), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1));
+		//	}
+		//	else {
+		//		ImGui::Image(imguiHandler->getTextureID(&testTexture), ImVec2(55, 55), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0.3f, 0.3f, 0.3f, 1));
+		//	}
+		//	ImGui::SetWindowPos(ImVec2(screenWidth - ImGui::GetWindowSize().x - 300, screenHeight - ImGui::GetWindowSize().y - 50));
+		//}
 		ImGui::End();
-		if (c3 && !c3->isLit) {
-			Texture& cantShootTexture = app->getResourceManager().getTexture("Icons/CantShootIcon1.tga");
-			ImGui::Begin("CantShoot", nullptr, flags);
-			ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("text"));
+		//if (c3 && !c3->isLit) {
+		//	Texture& cantShootTexture = app->getResourceManager().getTexture("Icons/CantShootIcon1.tga");
+		//	ImGui::Begin("CantShoot", nullptr, flags);
+		//	ImGui::SetWindowFontScale(Application::getInstance()->getImGuiHandler()->getFontScaling("text"));
 
-			ImGui::Image(imguiHandler->getTextureID(&cantShootTexture), ImVec2(64, 64));
-			ImGui::SetWindowPos(ImVec2(
-				screenWidth * 0.505f - 40,
-				screenHeight * 0.55f - 40
-			));
-			ImGui::End();
-			drawCrossHair = false;
-		}
+		//	ImGui::Image(imguiHandler->getTextureID(&cantShootTexture), ImVec2(64, 64));
+		//	ImGui::SetWindowPos(ImVec2(
+		//		screenWidth * 0.505f - 40,
+		//		screenHeight * 0.55f - 40
+		//	));
+		//	ImGui::End();
+		//	drawCrossHair = false;
+		//}
 
 		int nrOfTorchesLeft = GameDataTracker::getInstance().getTorchesLeft();
 		Texture& testTexture = app->getResourceManager().getTexture("Icons/TorchLeft.tga");
@@ -142,9 +142,10 @@ void InGameGui::renderWindow() {
 				screenHeight - ImGui::GetWindowSize().y - 110
 			));
 		}
+		ImGui::End();
 	}
 
-	ImGui::End();
+	
 
 	if (false) {
 		//int nrOfPlayersLeft = GameDataTracker::getInstance().getPlayersLeft();

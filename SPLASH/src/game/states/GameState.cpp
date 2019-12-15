@@ -169,34 +169,34 @@ GameState::GameState(StateStack& stack)
 		extraCandles[i]->addComponent<RenderInActiveGameComponent>();
 		//this->m_player->addChildEntity(this->extraCandles[i].get());
 	}
-	extraCandles[0]->getComponent<TransformComponent>()->setTranslation({ 15.5f, 2.6f, 24.3f });
+	extraCandles[0]->getComponent<TransformComponent>()->setTranslation({ 23.3f, 3.6f, 44.6f });
 	extraCandles[0]->getComponent<TransformComponent>()->setRotations({ 5.383f, 0.0f, 0.0f });
 
-	extraCandles[1]->getComponent<TransformComponent>()->setTranslation({ 27.4f, 4.1f, 17.7f });
+	extraCandles[1]->getComponent<TransformComponent>()->setTranslation({ 21.0f, 4.1f, 14.0f });
 	extraCandles[1]->getComponent<TransformComponent>()->setRotations({ 0.0f, 0.0f, 3.2f });
 
-	extraCandles[2]->getComponent<TransformComponent>()->setTranslation({ 40.8f, 2.8f, 28.1f });
+	extraCandles[2]->getComponent<TransformComponent>()->setTranslation({ 35.0f, 3.8f, 38.4f });
 	extraCandles[2]->getComponent<TransformComponent>()->setRotations({ 0.0f, 0.0f, 1.5f });
 
-	extraCandles[3]->getComponent<TransformComponent>()->setTranslation({ 30.4f, 2.6f, 70.2f });
+	extraCandles[3]->getComponent<TransformComponent>()->setTranslation({ 7.9f, 3.8f, 35.0f });
 	extraCandles[3]->getComponent<TransformComponent>()->setRotations({ 0.0f, 0.0f, 5.0f });
 
-	extraCandles[4]->getComponent<TransformComponent>()->setTranslation({ 12.45f, 2.6f, 24.3f });
+	extraCandles[4]->getComponent<TransformComponent>()->setTranslation({ 21.00f, 3.6f, 27.0f });
 	extraCandles[4]->getComponent<TransformComponent>()->setRotations({ 5.383f, 0.0f, 0.0f });
 
-	extraCandles[5]->getComponent<TransformComponent>()->setTranslation({ 0.4f, 4.1f, 17.7f });
+	extraCandles[5]->getComponent<TransformComponent>()->setTranslation({ 38.2f, 4.0f, 24.2f });
 	extraCandles[5]->getComponent<TransformComponent>()->setRotations({ 0.0f, 0.0f, 3.2f });
 
-	extraCandles[6]->getComponent<TransformComponent>()->setTranslation({ 0.4f, 4.1f, 1.8f });
+	extraCandles[6]->getComponent<TransformComponent>()->setTranslation({ 35.0f, 4.0f, 3.4f });
 	extraCandles[6]->getComponent<TransformComponent>()->setRotations({ 0.0f, 0.0f, 3.2f });
 
-	extraCandles[7]->getComponent<TransformComponent>()->setTranslation({ 27.4f, 4.1f, 1.8f });
+	extraCandles[7]->getComponent<TransformComponent>()->setTranslation({ 13.0f, 4.2f, 3.5f });
 	extraCandles[7]->getComponent<TransformComponent>()->setRotations({ 0.0f, 0.0f, 3.2f });
 
-	extraCandles[8]->getComponent<TransformComponent>()->setTranslation({ 14.0f, 4.1f, 1.8f });
+	extraCandles[8]->getComponent<TransformComponent>()->setTranslation({ -0.89f, 4.3f, 10.5f });
 	extraCandles[8]->getComponent<TransformComponent>()->setRotations({ 0.0f, 0.0f, 3.2f });
 
-	extraCandles[9]->getComponent<TransformComponent>()->setTranslation({ 45.2f, 2.2f, 59.7f });
+	extraCandles[9]->getComponent<TransformComponent>()->setTranslation({ 10.5f, 4.2f, 21.6f });
 	extraCandles[9]->getComponent<TransformComponent>()->setRotations({ 0.9f, 0.0f, 0.0f });
 
 	
@@ -604,7 +604,6 @@ void GameState::initSystems(const unsigned char playerID) {
 
 void GameState::initConsole() {
 	auto& console = Application::getInstance()->getConsole();
-#ifdef DEVELOPMENT
 	console.addCommand("state <string>", [&](const std::string& param) {
 		bool stateChanged = false;
 		std::string returnMsg = "Invalid state. Available states are \"menu\" and \"pbr\"";
@@ -1569,24 +1568,5 @@ void GameState::createLevel(Shader* shader, Model* boundingBoxModel) {
 		}
 	}
 
-
-
-
 }
 
-#ifdef _PERFORMANCE_TEST
-void GameState::populateScene(Model* lightModel, Model* bbModel, Model* projectileModel, Shader* shader) {
-	/* 13 characters that are constantly shooting their guns */
-	for (int i = 0; i < 13; i++) {
-		SAIL_LOG("Adding performance test player.");
-		float spawnOffsetX = 43.f + float(i) * 2.f;
-		float spawnOffsetZ = 52.f + float(i) * 1.3f;
-
-		auto e = ECS::Instance()->createEntity("Performance Test Entity " + std::to_string(i));
-
-		EntityFactory::CreatePerformancePlayer(e, i, glm::vec3(spawnOffsetX, -0.9f, spawnOffsetZ));
-
-		m_performanceEntities.push_back(e);
-	}
-}
-#endif
