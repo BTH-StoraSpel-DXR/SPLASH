@@ -8,7 +8,7 @@
 class Entity;
 
 // TODO: Replace with game settings
-constexpr float MAX_HEALTH = 20.f;
+constexpr float MAX_HEALTH = 6.f;
 
 
 // TODO: Remove as many functions as possible
