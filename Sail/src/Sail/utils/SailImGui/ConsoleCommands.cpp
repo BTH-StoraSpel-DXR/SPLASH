@@ -14,6 +14,7 @@ ConsoleCommands::ConsoleCommands()
 	, m_grabKeyboard(false)
 {
 	init();
+	addLog("Done", LOG_COLOR);
 }
 ConsoleCommands::ConsoleCommands(bool showWindow)
 	: SailImGuiWindow(showWindow) 
