@@ -75,9 +75,7 @@ void DX12ParticleRenderer::present(PostProcessPipeline* postProcessPipeline, Ren
 
 		command.model.mesh->draw(*this, cmdList.Get());
 	}
-
-	// Lastly - transition back buffer to present
-	m_context->prepareToPresent(cmdList.Get());
+	
 	// Close command list
 	cmdList->Close();
 

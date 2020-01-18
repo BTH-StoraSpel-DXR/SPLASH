@@ -27,7 +27,7 @@ namespace DXRShaderCommon {
 
 #endif
 
-#define MAX_RAY_RECURSION_DEPTH 15
+#define MAX_RAY_RECURSION_DEPTH 3
 #define MAX_INSTANCES 400
 #define NUM_POINT_LIGHTS 12
 #define NUM_SPOT_LIGHTS 12

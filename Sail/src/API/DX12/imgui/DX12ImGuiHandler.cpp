@@ -113,8 +113,6 @@ void DX12ImGuiHandler::end() {
 	ImGui::Render();
 	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmdList.Get());
 
-	// Transition back buffer to present
-	m_context->prepareToPresent(cmdList.Get());
 	// Execute command list
 	cmdList->Close();
 	m_context->getDirectQueue()->executeCommandLists({ cmdList.Get() });

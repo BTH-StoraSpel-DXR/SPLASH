@@ -21,7 +21,7 @@ void BeginEndFrameSystem::renderNothing() {
 
 void BeginEndFrameSystem::beginFrame(Camera& camera) {
 	Application::getInstance()->getRenderWrapper()->getCurrentRenderer()->begin(&camera);
-	Application::getInstance()->getRenderWrapper()->getScreenSpaceRenderer()->begin(&camera);
+	//Application::getInstance()->getRenderWrapper()->getScreenSpaceRenderer()->begin(&camera);
 	Application::getInstance()->getRenderWrapper()->getParticleRenderer()->begin(&camera);
 }
 
@@ -34,7 +34,7 @@ void BeginEndFrameSystem::endFrameAndPresent() {
 	renderWrapper->getParticleRenderer()->end();
 	renderWrapper->getParticleRenderer()->present();
 
-	renderWrapper->getScreenSpaceRenderer()->end();
-	renderWrapper->getScreenSpaceRenderer()->present();
+	//renderWrapper->getScreenSpaceRenderer()->end();
+	//renderWrapper->getScreenSpaceRenderer()->present();
 
 }
