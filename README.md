@@ -1,18 +1,24 @@
+<p align="center"><img src="GitHubMedia/splash_logo.png?raw=true" alt="SPLASH20 logo"></p>
+
 # SPLASH<sub>2</sub>0
+
+> *A fluid first-person shooter.*
 
 [![Build Status](https://dev.azure.com/BTH-StoraSpel-DXR/Stora%20Spel/_apis/build/status/Master%20pipeline?branchName=master)](https://dev.azure.com/BTH-StoraSpel-DXR/Stora%20Spel/_build/latest?definitionId=1&branchName=master)
 
-***S**cientists **P**acking **L**ights **A**nd **S**hooting **H<sub>2</sub>0***
 
-> *"A fluid first person shooter"*
+*SPLASH*<sub>*2*</sub>*0* (***S**cientists **P**acking **L**ights **A**nd **S**hooting **H**<sub>**2**</sub>**0***) is a game developed by 12 students at the [Blekinge Institute of Technology](https://www.bth.se/) in Sweden, as part of the 14-week-long course *Large Game Project (PA2526)* in 2019.
 
-A game developed by 12 people as part of a 14 week-long course under the name *Large Game Project (PA2526)* at [Blekinge Institute of Technology](https://www.bth.se/) in Sweden, 2019.
+## Trailer
 
-## Features and used techniques
+[![Watch the trailer](GitHubMedia/splash_youtube.png)](https://www.youtube.com/watch?v=NXo2Lea5HGo)
+
+
+## Features and techniques used
 - Hybrid raytracer
-    - Tracing from GBuffers
+    - Tracing from G-Buffers
     - Reflections for one bounce
-- Raytraced soft shadows
+- Ray-traced soft shadows
     - Support for many light sources
     - Using spatiotemporal filtering for denoising
 - Water "blob" rendering
@@ -22,13 +28,13 @@ A game developed by 12 people as part of a 14 week-long course under the name *L
 - Post processing
     - Bloom
     - FXAA
-    - Tonemapping
+    - Tone mapping
 - PBR
     - With support for emissive materials
 - Skeletal animations
     - Updated on GPU
 - Our own physics engine
-    - Octree (for collisions, raycasting, and frustum culling)
+    - Octree (for collisions, ray casting, and frustum culling)
     - AABB-AABB collisions
     - AABB-Mesh collisions
     - Swept sphere collision detection for fast moving objects
@@ -46,36 +52,25 @@ A game developed by 12 people as part of a 14 week-long course under the name *L
 - Procedurally generated maps
 - Instant replay (kill cam)
 
-#### Devs:
-[Samuel Asp](https://github.com/Smaugmuel)
+## Developed by
+- [Samuel Asp](https://github.com/Smaugmuel)
+- [David Bengtsson](https://github.com/Discojanne)
+- [Gustav Björk](https://github.com/Praccen)
+- [Viktor Enfeldt](https://github.com/viktor4006094)
+- [Tobias Fast](https://github.com/tofb15)
+- [Daniel Fredriksson](https://github.com/DanielFredriksson)
+- [Henrik Johansson](https://github.com/h3nx)
+- [Fredrik Junede](https://github.com/Skratzy)
+- [Peter Meunier](https://github.com/soridanm)
+- [Emil Wahl](https://github.com/whalemane)
+- [Alexander Wester](https://github.com/Piratkopia13)
+- [Oliver Glandberger](https://github.com/OliverGlandberger)
 
-[David Bengtsson](https://github.com/Discojanne)
+![](/GitHubMedia/RTXON_200x200.jpg "RTX ON")
 
-[Gustav Björk](https://github.com/Praccen)
+## Licenses
 
-[Viktor Enfeldt](https://github.com/viktor4006094)
-
-[Tobias Fast](https://github.com/tofb15)
-
-[Daniel Fredriksson](https://github.com/DanielFredriksson)
-
-[Henrik Johansson](https://github.com/h3nx)
-
-[Fredrik Junede](https://github.com/Skratzy)
-
-[Peter Meunier](https://github.com/soridanm)
-
-[Emil Wahl](https://github.com/whalemane)
-
-[Alexander Wester](https://pirat.dev)
-
-[Oliver Glandberger](https://github.com/OliverGlandberger)
-
-![](https://pbs.twimg.com/profile_images/1162476165736456194/NUBsjYSV_200x200.jpg "RTX ON")
-
-Licenses
-----
-Our code (Sail/src/ and SPLASH/src/) is published under the MIT license
+Our code (Sail/src/ and SPLASH/src/) is published under the MIT license.
 
 We also make use of the FBX SDK:
 
